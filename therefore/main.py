@@ -9,24 +9,32 @@ date: May 9th 2022
 
 
 import numpy as np
-import matplotlib as pyplot
+import matplotlib.pyplot as plt
 
 #utility functions
 def ScalarFlux(angular_flux, weights):
-    return(np.sum(weights * angular_flux, axis=1))
+    scalar_flux = np.zeros(angular_flux.shape[1])
+    for i in range(angular_flux.shape[0]):
+    
+        scalar_flux += weights[i] * angular_flux[i,:]
+        
+    return(scalar_flux)
 
-def Current(angular_flux, angles)
-    return(np.sum(weights * angular_flux * angles, axis=1))
+def Current(angular_flux, angles, weights):
+    current = np.zeros(angular_flux.shape[1])
+    for i in range(angular_flux.shape[0]):
+        current += weights[i] * angles[i] * angular_flux[i,:]
+    return(current)
 
-def HasItConverged(scalar_flux_next, scalar_flux):
+def HasItConverged(scalar_flux_next, scalar_flux, tol=1e-4):
    np.allclose(scalar_flux_next, scalar_flux, rtol=tol)
 
 #Simple Corner balence sweep
-def SCBRun(angular_flux, Q, xsec, dx, mu, BCl, BCr):
+def SCBRun(angular_flux, Q, xsec, dx, mu, BCl, BCr, N_mesh):
     
     for angle in range(mu.size):
-    psi_l = np.zeros(N_mesh, data_type)
-    psi_r = np.zeros(N_mesh, data_type)
+        psi_l = np.zeros(N_mesh, np.float64)
+        psi_r = np.zeros(N_mesh, np.float64)
     
         if angle < 0:
             for i in range(-N_mesh):
@@ -73,7 +81,7 @@ def SCBKernel(Q_l, Q_r, psi_mh, xsec, dx, mu):
     return(psi_l, psi_r)
 
 
-def BoundaryCondition(BC, i):
+def BoundaryCondition(BC, i, N_mesh, angular_flux=None, incident_flux_mag=None, angle=None):
 
     if BC == 'reflecting':
         if i == 1:
@@ -107,7 +115,7 @@ def find_nearest(array, value):
     idx = (np.abs(array - value)).argmin()
     return (idx)
 
-def RHS_transport():
+def RHS_transport(scalar_flux, scattering_xsec, source, N_mesh):
     Q = np.zeros(N_mesh*2)
     for i in range(N_mesh):
         Q[2*i]   = scalar_flux[2*i]   * scattering_xsec[i]/2 + source/2
@@ -140,8 +148,8 @@ def main():
     data_type = np.float64
 
     # TODO: Mesh building
-    dx = dx*np.ones(N_mesh, data_type)
-    xsex = = xsec*np.ones(N_mesh, data_type)
+    dx_mesh = dx*np.ones(N_mesh, data_type)
+    xsex_mesh = xsec*np.ones(N_mesh, data_type)
     scattering_xsec = scattering_xsec*np.ones(N_mesh, data_type)
     np.ones(N_mesh, data_type)
     
@@ -155,32 +163,45 @@ def main():
 
     # TODO: Source itterations
     source_converged = False
+    source_counter = 0
     while source_converged == False:
         
-        BCr = BoundaryCondition(boundary_condition_left, 0)
-        BCl = BoundaryCondition(boundary_condition_right, 1)
+        BCr = BoundaryCondition(boundary_condition_left, 0, N_mesh, angular_flux)
+        BCl = BoundaryCondition(boundary_condition_right, 1, N_mesh, angular_flux)
         
-        Q = RHS_transport()
+        Q = RHS_transport(scalar_flux, scattering_xsec, source, N_mesh)
         
         # TODO: simple corner balance
-        angular_flux = SCBRun(scalar_flux, angular_flux, Q, xsec, dx, angles_gq, BCl, BCr)
+        angular_flux = SCBRun(angular_flux, Q, xsex_mesh, dx_mesh, angles_gq, BCl, BCr, N_mesh)
         
         # TODO: calculate current
-        current = Current(angular_flux_next, weights_gq, angles_gq)
+        current = Current(angular_flux, weights_gq, angles_gq)
         
         # TODO: calculate scalar flux for next itteration
-        scalar_flux_next = ScalarFlux(angular_flux_next, weights_gq)
+        scalar_flux_next = ScalarFlux(angular_flux, weights_gq)
+        
         
         # TODO: Check for convergence
         source_converged = HasItConverged(scalar_flux_next, scalar_flux)
+        print(scalar_flux_next)
+        print()
+        print()
+        print(scalar_flux)
+        
         
         scalar_flux = scalar_flux_next
+        source_counter += 1
         
     # TODO: Negativie flux fixups
     # not required for balance methods
 
+    print(source_counter)
 
     # TODO: Plot scalar flux and current
+    X = np.arange(N_mesh*2)
+    plt.figure(1)
+    plt.plot(X, scalar_flux)
+    plt.show()
     
 if __name__ == '__main__':
     main()

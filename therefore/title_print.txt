@@ -9,3 +9,5 @@ A Python Based Simplified Corner Balence Code
 Author: Jackson P. Morgan
 Prof:   Todd S. Palmer
 Date:   May 9th 2022
+
+
