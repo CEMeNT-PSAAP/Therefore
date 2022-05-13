@@ -7,9 +7,11 @@ prof: Todd Palmer
 date: May 9th 2022
 """
 
-
 import numpy as np
 import matplotlib.pyplot as plt
+import src
+
+[angles_gq, weights_gq] = np.polynomial.legendre.leggauss(2)
 
 #utility functions
 def ScalarFlux(angular_flux, weights):
@@ -34,73 +36,22 @@ def HasItConverged(scalar_flux_next, scalar_flux, tol=1e-8):
 def SCBRun(angular_flux, Q, xsec, dx, mu, BCl, BCr, N_mesh):
     
     for angle in range(mu.size):
-        psi_l = np.zeros(N_mesh, np.float64)
-        psi_r = np.zeros(N_mesh, np.float64)
-    
-        if mu[angle] < 0:
+        if mu[angle] < 0: #goin back
             for i in range(N_mesh-1, -1, -1):
                 #check bound
                 if i == N_mesh-1:
-                    psi_mh = BCr[angle]
+                    psi_mh = BCr[angle] #
                 else:
-                    psi_mh = psi_l[i+1]
-                
-                # inputs switch around when going to the left
-                # in kernel l to r and r to l
-                
-                #entering  exiting               entering  exiting
-                [psi_r[i], psi_l[i]] = SCBKernel_Linalg(Q[2*i+1], Q[2*i], psi_mh, xsec[i], dx[i], mu[angle])
-                '''
-                print('--------------------------------------------')
-                print('Angle: {0}   Cell: {1}'.format(mu[angle], i))
-                print()
-                print('Q_l:    {0}'.format(Q[2*i+1]))
-                print('Q_r:    {0}'.format(Q[2*i]))
-                print('psi_mh: {0}'.format(psi_mh))
-                print('xsec:   {0}'.format(xsec[i]))
-                print('dx:     {0}'.format(dx[i]))
-                print('mu:     {0}'.format(mu[angle]))
-                print('psi_l:  {0}'.format(psi_l[i]))
-                print('psi_r:  {0}'.format(psi_r[i]))
-                print()
-                print()
-                '''
-        else:
+                    psi_mh = angular_flux[angle, 2*(i+1)]
+                [angular_flux[angle, 2*i+1], angular_flux[angle, 2*i]] = SCBKernel_Linalg(Q[2*i+1], Q[2*i], psi_mh, xsec[i], dx[i], mu[angle])
+        else: #goin forward
             for i in range(N_mesh):
-                #print(i)
-                #check bound
                 if i == 0:
-                    psi_mh = BCl[angle]
+                    psi_mh = BCl[angle] #
                 else:
-                    psi_mh = psi_r[i-1]
+                    psi_mh = angular_flux[angle, 2*(i-1)+1]
+                [angular_flux[angle, 2*i], angular_flux[angle, 2*i+1]] = SCBKernel_Linalg(Q[2*i], Q[2*i+1], psi_mh, xsec[i], dx[i], mu[angle])
                 
-                [psi_l[i], psi_r[i]] = SCBKernel_Linalg(Q[2*i], Q[2*i+1], psi_mh, xsec[i], dx[i], mu[angle])
-                '''
-                print('--------------------------------------------')
-                print('Angle: {0}   Cell: {1}'.format(mu[angle], i))
-                print()
-                print('Q_l:    {0}'.format(Q[2*i+1]))
-                print('Q_r:    {0}'.format(Q[2*i]))
-                print('psi_mh: {0}'.format(psi_mh))
-                print('xsec:   {0}'.format(xsec[i]))
-                print('dx:     {0}'.format(dx[i]))
-                print('mu:     {0}'.format(mu[angle]))
-                print('psi_l:  {0}'.format(psi_l[i]))
-                print('psi_r:  {0}'.format(psi_r[i]))
-                print()
-                print()
-                '''
-        #print('Angle! {0}'.format(mu[angle]))
-        #print()
-        ##print(psi_l)
-        #print()
-        #print(psi_r)
-        #print()
-        
-        for i in range(N_mesh):
-            angular_flux[angle, 2*i]   = psi_l[i]
-            angular_flux[angle, 2*i+1] = psi_r[i]
-        
     return(angular_flux)
     
 
@@ -124,33 +75,36 @@ def SCBKernel_Linalg(Q_entering, Q_exiting, psi_mh, xsec, dx, mu):
     
     A = np.array([[mannaz, -mu/2], [mu/2, mannaz]])
     
-    b = np.array([[dx/2 * Q_exiting],[dx/2*Q_entering - mu*psi_mh]])
+    b = np.array([[dx/2 * Q_exiting],[dx/2*Q_entering + mu*psi_mh]])
     
     [psi_exiting, psi_entering] = np.linalg.solve(A,b)
     
     return(psi_entering, psi_exiting)
 
-def BoundaryCondition(BC, i, N_mesh, angular_flux=None, incident_flux_mag=None, angle=None, angles=None):
+def BoundaryCondition(BC, i, N_mesh, angular_flux=None, incident_flux_mag=None, angles=None):
 
     if BC == 'reflecting':
         N_angles: int = angular_flux.shape[0]
         half = int(N_angles/2)
         psi_required = np.zeros(N_angles)
         
-        if i == 0:
-            psi_required[:half] = angular_flux[half:, -1]
-        else:
+        print(half)
+        
+        if i == 0: #left edge
             psi_required[half:] = angular_flux[:half, 0]
+            
+        else:
+            psi_required[:half] = angular_flux[half:, -1]
 
         
     elif BC == 'vacuum':
         psi_required = np.zeros(angular_flux.shape[0])
     
     elif BC == 'incident_iso':
-        psi_required = BC_isotropic(incident_flux_mag[i])
+        psi_required = BC_isotropic(incident_flux_mag)
         
     elif BC == 'incident_ani':
-        psi_required = BC_ani(incident_flux_mag[i], angle[i])
+        psi_required = BC_ani(incident_flux_mag, angle)
         
     else:
         print()
@@ -192,15 +146,16 @@ def main():
     #Inputs
     order_gauss_quad = 2
     scattering_xsec = 0
-    xsec = 3
-    dx = 0.01
+    xsec = 5
+    dx = 0.25
     L = 1
     N_mesh = int(L/dx)
+    N_angles = order_gauss_quad
     incident_flux_mag = [0,0]
     incidnet_flux_angle = [0,0]
-    boundary_condition_right = 'reflecting' #'reflecting'
+    boundary_condition_right = 'incident_iso' #'reflecting'
     boundary_condition_left =  'reflecting'
-    source = 1
+    source = 0
     
     
     data_type = np.float64
@@ -211,7 +166,7 @@ def main():
     scattering_xsec = scattering_xsec*np.ones(N_mesh, data_type)
     np.ones(N_mesh, data_type)
     
-    [angles_gq, weights_gq] = np.polynomial.legendre.leggauss(order_gauss_quad)
+    
     
     # angles_gq = np.cos(angles_gq)
     
@@ -226,29 +181,16 @@ def main():
     # TODO: Source itterations
     source_converged = False
     source_counter = 0
-    BCr = np.zeros(2)
-    BCl = np.zeros(2)
     
     while source_converged == False:
     
         print('Next Itteration! {0}'.format(source_counter))
-        #print('Angular flux {0}'.format(angular_flux))
-        #print()
-        #print()
-        #BCr = angular_flux[:,-1]
-        #BCl = angular_flux[:,0]
         
-        #BCr = BoundaryCondition(boundary_condition_left, -1, N_mesh, angular_flux, angles=angles_gq)
-        #print('BCr {0}'.format(BCr))
+        BCr = BoundaryCondition(boundary_condition_left, -1, N_mesh, angular_flux, angles=angles_gq)
+        BCl = BoundaryCondition(boundary_condition_right, 0, N_mesh, incident_flux_mag=5)
         
-        #BCl = BoundaryCondition(boundary_condition_right, 0, N_mesh, angular_flux, angles=angles_gq)
-        #print('BCl {0}'.format(BCl))
-        
-        BCr = angular_flux[:, -1]
-        #BCr[1] = angular_flux[0, -1]
-        
-        BCl = angular_flux[:, 0]
-        #BCl[1] = angular_flux[0, 0]
+        print(BCr)
+        print(BCl)
         
         Q = RHS_transport(scalar_flux, scattering_xsec, source, N_mesh, dx)
         
@@ -270,31 +212,15 @@ def main():
             print()
             source_converged = True
         
-        #print()
-        #print(error)
-        #print()
-        #print(scalar_flux_next)
-        """
-        
-        print()
-        print()
-        print('================================================')
-        print()
-        print()
-        print(scalar_flux_next)
-        """
-        
         scalar_flux = scalar_flux_next
         source_counter += 1
     
     print()
     print('Source counter: {0}'.format(source_counter))
     print()
-    
-    # TODO: Negativie flux fixups
+    print(scalar_flux)
     # not required for balance methods
 
-    #print(source_counter)
     print()
 
     # TODO: Plot scalar flux and current
@@ -302,6 +228,7 @@ def main():
     X = np.arange(N_mesh*2)
     plt.figure(1)
     plt.plot(X, scalar_flux)
+    plt.ylim([0,max(scalar_flux)*1.5])
     plt.show()
     print('plotted')
     
