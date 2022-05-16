@@ -11,11 +11,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import numba as nb
 import therefore.src as src
+#import os
+#import sys
 
 def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh):
     
         #print title contents
-    #with open("title_print.txt", "r", encoding="utf-8") as file:
+    #with open(os.path.join(sys.path[0], "title_print.txt"), "r", encoding="utf-8") as file:
     #    for line in file:
     #        print(line.strip())
     
@@ -83,4 +85,4 @@ def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_m
     
     
 if __name__ == '__main__':
-    main()
+    x=0
