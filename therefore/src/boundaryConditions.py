@@ -30,7 +30,7 @@ def BoundaryCondition(BC, i, N_mesh, angular_flux=None, incident_flux_mag=None, 
     return(psi_required)
 
 def BC_isotropic(incident_flux_mag, angles):
-    BC = (incident_flux_mag/angles.size)*np.ones(angles.size)
+    BC = (incident_flux_mag)*np.ones(angles.size)
     return(BC)
 
 def BC_ani(incident_flux_mag, angle, angles):
