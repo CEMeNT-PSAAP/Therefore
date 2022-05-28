@@ -2,10 +2,18 @@ import numpy as np
 import numba as nb
 
 #Simple Corner balence sweep
-#@nb.jit(nopython=True)
+@nb.jit(nopython=True, parallel=True)
 def SCBRun(angular_flux, Q, xsec, dx, mu, BCl, BCr, N_mesh):
+    '''Return angular flux
     
-    for angle in range(mu.size):
+    Runs a parallelized and jit compiled simple corner balance source 
+    (aka Richardson aka Fixed Point) itteration. Launches a parallelized job over 
+    the number of angles as each angular flux is calculated independently of one another
+    
+    Returns 2D Numpy array of angular flux (size: [N_angles, N_cells])
+    '''
+    
+    for angle in nb.prange(mu.size):
         if mu[angle] < 0: #goin back
             for i in range(N_mesh-1, -1, -1):
                 #check bound
@@ -18,7 +26,7 @@ def SCBRun(angular_flux, Q, xsec, dx, mu, BCl, BCr, N_mesh):
                 
         else: #goin forward
             for i in range(N_mesh):
-                
+                #check bound
                 if i == 0:
                     psi_mh = BCl[angle] #
                 else:
@@ -26,11 +34,11 @@ def SCBRun(angular_flux, Q, xsec, dx, mu, BCl, BCr, N_mesh):
                 
                 [angular_flux[angle, 2*i], angular_flux[angle, 2*i+1]] = SCBKernel_Linalg_ltor(Q[2*i], Q[2*i+1], psi_mh, xsec[i], dx[i], mu[angle])
                 
-                
     return(angular_flux)
     
 @nb.njit
 def SCBKernel_Linalg_ltor(Q_r, Q_l, psi_mh, xsec, dx, mu):
+    '''SCB going from the left to the right (mu>0)'''
     
     mannaz = mu/2 + xsec*dx/2
     
@@ -42,10 +50,12 @@ def SCBKernel_Linalg_ltor(Q_r, Q_l, psi_mh, xsec, dx, mu):
     
     [psi_l, psi_r] = np.linalg.solve(A,b)
     
-    return(psi_l, psi_r)
+    return(psi_l[0], psi_r[0])
 
 @nb.njit
 def SCBKernel_Linalg_rtol(Q_r, Q_l, psi_ph, xsec, dx, mu):
+    '''SCB going from right to the left (mu<0)'''
+    
     mannaz = xsec*dx/2 - mu/2 
     
     A = np.array([[mannaz, mu/2],
@@ -56,4 +66,4 @@ def SCBKernel_Linalg_rtol(Q_r, Q_l, psi_ph, xsec, dx, mu):
     
     [psi_l, psi_r] = np.linalg.solve(A,b)
     
-    return(psi_l, psi_r)
+    return(psi_l[0], psi_r[0])

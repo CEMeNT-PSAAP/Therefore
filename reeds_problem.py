@@ -25,8 +25,7 @@ sigma_s = np.array([.9, .9, 0, 0, 0], data_type)
 sigma_t = np.array([1, 1, 0, 5, 50], data_type)
 Source = np.array([0, 1, 0, 0, 50], data_type)
 dx = .1/sigma_t
-dx[2] = .25
-print(dx)
+dx[2] = .25  #fix a nan
 N_region = np.array(region_widths/dx, int)
 
 N_mesh: int = sum(N_region)
@@ -38,6 +37,7 @@ source_mesh = np.empty(N_mesh, data_type)
 region_id_mesh = np.empty(N_mesh, data_type)
 region_id_mesh_2 = np.empty(N_mesh*2, data_type)
 
+#build the mesh
 for i in range(region_widths.size):
     LB = sum(N_region[:i])
     RB = sum(N_region[:i+1])
@@ -51,7 +51,7 @@ for i in range(N_mesh):
     region_id_mesh_2[2*i] = region_id_mesh[i]
     region_id_mesh_2[2*i+1] = region_id_mesh[i]
     
-
+#set sim peramweters
 sim_perams = {'data_type': data_type,
               'N_angles': 4,
               'L': 0,
@@ -63,10 +63,11 @@ sim_perams = {'data_type': data_type,
               'left_in_angle': 0,
               'right_in_angle': 0}
 
-
+#launch source itterations
 [scalar_flux, current] = therefore.SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh)
 
 
+#post process and plot
 Y_reg = [0, max(scalar_flux)*2]
 X_reg = [0,0]
 
