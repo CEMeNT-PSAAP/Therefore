@@ -9,9 +9,11 @@ def BoundaryCondition(BC, i, N_mesh, angular_flux=None, incident_flux_mag=None, 
         
         if i == 0: #left edge
             psi_required[half:] = angular_flux[:half, 0]
+            psi_required[:half] = angular_flux[half:, 0]
             
         else:
             psi_required[:half] = angular_flux[half:, -1]
+            psi_required[half:] = angular_flux[:half, -1]
         
     elif BC == 'vacuum':
         psi_required = np.zeros(angular_flux.shape[0])

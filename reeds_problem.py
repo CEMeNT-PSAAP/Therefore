@@ -47,6 +47,10 @@ for i in range(region_widths.size):
     source_mesh[LB:RB] = Source[i]
     region_id_mesh[LB:RB] = region_id[i]
 
+print(region_id_mesh[39])
+print(region_id_mesh[40])
+print(region_id_mesh[41])
+
 for i in range(N_mesh):
     region_id_mesh_2[2*i] = region_id_mesh[i]
     region_id_mesh_2[2*i+1] = region_id_mesh[i]
@@ -64,7 +68,7 @@ sim_perams = {'data_type': data_type,
               'right_in_angle': 0}
 
 #launch source itterations
-[scalar_flux, current] = therefore.SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh)
+[scalar_flux, current] = therefore.OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh)
 
 
 #post process and plot
