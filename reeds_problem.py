@@ -68,7 +68,7 @@ sim_perams = {'data_type': data_type,
               'right_in_angle': 0}
 
 #launch source itterations
-[scalar_flux, current] = therefore.OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh)
+[scalar_flux, current] = therefore.SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh)
 
 
 #post process and plot

@@ -2,7 +2,7 @@ import numpy as np
 import numba as nb
 
 #Simple Corner balence sweep
-@nb.jit(nopython=True, parallel=True)
+@nb.jit(nopython=True, parallel=False)
 def SCBRun(angular_flux, Q, xsec, dx, mu, BCl, BCr, N_mesh):
     '''Return angular flux
     

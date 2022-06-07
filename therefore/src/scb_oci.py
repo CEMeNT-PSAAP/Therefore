@@ -1,24 +1,23 @@
 import numpy as np
 import numba as nb
 
+#@nb.jit(nopython=True, parallel=True)
 def OCIRun(angular_flux, source, xsec, xsec_scatter, dx, mu, weight, BCl, BCr):
     
     n_mesh = int(dx.size)
     angular_flux_next = np.zeros_like(angular_flux)
     
-    for i in range(n_mesh):
-        #print(i)
-        #print()
+    for i in nb.prange(n_mesh):
         
-        bound_ang_flux = np.zeros([mu.size, 2])
+        bound_ang_flux = np.zeros((mu.size, 2), dtype=np.float64)
         
-        if i == n_mesh-1: 
+        if i == n_mesh-1:   #RHS BC
             bound_ang_flux[:,0] = angular_flux[:,-3]
-            bound_ang_flux[:,1] = BCr
-        elif i == 0:
+            bound_ang_flux[:,1] = BCr 
+        elif i == 0:        #LHS BC
             bound_ang_flux[:,0] = BCl
             bound_ang_flux[:,1] = angular_flux[:,2]
-        else:
+        else:               #interior cell
             bound_ang_flux[:,0] = angular_flux[:,i*2-1]
             bound_ang_flux[:,1] = angular_flux[:,i*2+2]
             
@@ -26,31 +25,21 @@ def OCIRun(angular_flux, source, xsec, xsec_scatter, dx, mu, weight, BCl, BCr):
         
         angular_flux_next[:,2*i] = angular_flux_cell[:,0]
         angular_flux_next[:,2*i+1] = angular_flux_cell[:,1]
-        
-    #print(angular_flux_next)
-    #print(angular_flux_next.shape)
     
     return(angular_flux_next)    
-        
-    
+
+
+
+#@nb.jit(nopython=True)
 def SCB_OneCellInv_Cell(angular_flux, source, xsec, xsec_scatter, dx, mu, weight):
     
     n_angle = mu.size
     
-    A = np.zeros([n_angle*2, n_angle*2])
-    b = np.zeros([n_angle*2])
+    A = np.zeros((n_angle*2, n_angle*2), dtype=np.float64)
+    b = np.zeros(n_angle*2, dtype=np.float64)
     
     const = -(xsec_scatter*dx) / 2
-    '''
-    print('================================================================')
-    print(xsec*dx/2)
-    print(mu[0]/2)
-    print(mu[1]/2)
-    print()
-    print(angular_flux)
-    print()
-    print()
-    '''
+    
     alpha = xsec*dx/2
     #build matrix
     #lefts [k,i], [row, col] so we are filling in col by col
@@ -71,36 +60,37 @@ def SCB_OneCellInv_Cell(angular_flux, source, xsec, xsec_scatter, dx, mu, weight
             A[2*k+1,2*i+1] += const*weight[i]
             
     for i in range (n_angle):
-        b[2*i] =    source*dx/2 + mu[i] * angular_flux[i, 0]
-        b[2*i+1] =  source*dx/2 - mu[i] * angular_flux[i, 1]
-    '''
-    print('A mat')
-    print()
-    print(A)
-    print()
-    print(b)
-    print()
-    '''
+        b[2*i]   = (source*dx)/2 + mu[i] * angular_flux[i, 0]
+        b[2*i+1] = (source*dx)/2 - mu[i] * angular_flux[i, 1]
+
+    #print(A)
+    #print()
+    #print(b)    
+    #print()
+    #print('Spec rad: {0}'.format(max(abs(np.linalg.eigvals(A)))))
+    
+    
     next_angflux = np.linalg.solve(A, b).reshape((-1, 2))
     
-    '''
-    returned = np.zeros([2,2])
-    returned[0,0] = next_angflux[0]
-    returned[0,1] = next_angflux[1]
-    returned[1,0] = next_angflux[2]
-    returned[1,1] = next_angflux[3]
-    '''
+    #print()
+    #print(next_angflux)
     
     return(next_angflux)
-    
-    
+
+
+
+def neg_flux_fixup(next_angflux):
+    for i in range(next_angflux.shape[0]):
+        for k in range(next_angflux.shape[1]):
+            if next_angflux[i,k] < 0:
+                next_angflux[i,k] = 0
     
 if __name__ == '__main__':
     
     
     angular_flux  = np.array([[1,1],[1,1]])
     xsec = 1
-    xsec_scatter = 1
+    xsec_scatter = 0
     dx = 2
     mu = np.array([1,1])
     weights = np.array([1,1])

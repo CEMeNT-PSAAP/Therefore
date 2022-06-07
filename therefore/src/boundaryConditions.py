@@ -1,7 +1,8 @@
 import numpy as np
 
 def BoundaryCondition(BC, i, N_mesh, angular_flux=None, incident_flux_mag=None, angles=None, angle=None):
-
+    
+    
     if BC == 'reflecting':
         N_angles: int = angular_flux.shape[0]
         half = int(N_angles/2)
@@ -10,7 +11,6 @@ def BoundaryCondition(BC, i, N_mesh, angular_flux=None, incident_flux_mag=None, 
         if i == 0: #left edge
             psi_required[half:] = angular_flux[:half, 0]
             psi_required[:half] = angular_flux[half:, 0]
-            
         else:
             psi_required[:half] = angular_flux[half:, -1]
             psi_required[half:] = angular_flux[:half, -1]
@@ -19,7 +19,7 @@ def BoundaryCondition(BC, i, N_mesh, angular_flux=None, incident_flux_mag=None, 
         psi_required = np.zeros(angular_flux.shape[0])
     
     elif BC == 'incident_iso':
-        psi_required = BC_isotropic(incident_flux_mag, angles)
+        psi_required = BC_isotropic(incident_flux_mag, angles, i)
         
     elif BC == 'incident_ani':
         psi_required = BC_ani(incident_flux_mag, angle, angles)
@@ -31,8 +31,17 @@ def BoundaryCondition(BC, i, N_mesh, angular_flux=None, incident_flux_mag=None, 
     
     return(psi_required)
 
-def BC_isotropic(incident_flux_mag, angles):
+def BC_isotropic(incident_flux_mag, angles, i):
+
     BC = (incident_flux_mag)*np.ones(angles.size)
+    half = int(angles.size/2)
+    
+    #required for OCI as to not "push in" radiation that isn't physical (- in psi)
+    #if i == 0:
+    #    BC[:half] = np.zeros(half)
+    #else:
+    #    BC[half:] = np.zeros(half)
+    
     return(BC)
 
 def BC_ani(incident_flux_mag, angle, angles):
