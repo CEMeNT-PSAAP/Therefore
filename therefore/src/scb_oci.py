@@ -2,31 +2,21 @@ import numpy as np
 import numba as nb
 import scipy.linalg as sci
 
-#@nb.jit(nopython=True, parallel=True)
+@nb.jit(nopython=True, parallel=True)
 def OCIRun(angular_flux, source, xsec, xsec_scatter, dx, mu, weight, BCl, BCr):
     
     n_mesh = int(dx.size)
     angular_flux_next = np.zeros_like(angular_flux)
     half = int(mu.size/2)
     
-    print(angular_flux)
-    print()
     for i in nb.prange(n_mesh):
         
         bound_ang_flux = np.zeros((mu.size, 2), dtype=np.float64)
         
         if i == n_mesh-1:   #RHS BC
-            #print()
-            #print('Bcr')
-            #print(BCr)
-            #print()
             bound_ang_flux[:,0] = angular_flux[:,-3]
             bound_ang_flux[:,1] = BCr
         elif i == 0:        #LHS BC
-            print()
-            print('BCL')
-            print(BCl)
-            print()
             bound_ang_flux[:,0] = BCl
             bound_ang_flux[:,1] = angular_flux[:,2]
         else:               #interior cell
@@ -37,17 +27,13 @@ def OCIRun(angular_flux, source, xsec, xsec_scatter, dx, mu, weight, BCl, BCr):
         
         angular_flux_next[:,2*i] = angular_flux_cell[:,0]
         angular_flux_next[:,2*i+1] = angular_flux_cell[:,1]
-        
-    print(angular_flux_next)
-    print()
-    print()
-    print()
+
     
     return(angular_flux_next)
 
 
 
-#@nb.jit(nopython=True)
+@nb.jit(nopython=True)
 def SCB_OneCellInv_Cell(angular_flux, source, xsec, xsec_scatter, dx, mu, weight):
     
     n_angle = mu.size
@@ -84,21 +70,16 @@ def SCB_OneCellInv_Cell(angular_flux, source, xsec, xsec_scatter, dx, mu, weight
     b[2] = (source*dx)/2 + (mu[1] * angular_flux[1, 0])
     b[3] = (source*dx)/2
     
-    #print(A)
-    #print()
-    #print(b)    
-    #print()
-    #print('Spec rad: {0}'.format(max(abs(np.linalg.eigvals(A)))))
     
     
-    next_linalg_exp = np.linalg.solve(A, b)
+    next_angflux = np.linalg.solve(A, b).reshape((-1, 2))
     #next_angflux = next_angflux.reshape((-1, 2))
-    next_angflux = np.zeros([2,2])
+    #next_angflux = np.zeros([2,2])
     
-    next_angflux[0,0] = next_linalg_exp[0]
-    next_angflux[0,1] = next_linalg_exp[1]
-    next_angflux[1,0] = next_linalg_exp[2]
-    next_angflux[1,1] = next_linalg_exp[3]
+    #next_angflux[0,0] = next_linalg_exp[0]
+    #next_angflux[0,1] = next_linalg_exp[1]
+    #next_angflux[1,0] = next_linalg_exp[2]
+    #next_angflux[1,1] = next_linalg_exp[3]
     
     
     #print()

@@ -137,6 +137,7 @@ def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh):
     right_in_angle = sim_perams['right_in_angle']
     L = sim_perams['L']
     N_mesh = sim_perams['N_mesh']
+    max_itter = sim_perams['max loops']
     
     #snag some GL angles
     [angles_gq, weights_gq] = np.polynomial.legendre.leggauss(order_gauss_quad)
@@ -163,18 +164,11 @@ def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh):
     
     while source_converged == False:
         
-        print('Next Itteration: {0}'.format(source_counter),end='\r')
+        #print('Next Itteration: {0}'.format(source_counter),end='\r')
         
         #detemine bounds bounds for next itteration
         BCl = src.BoundaryCondition(boundary_condition_left,   0, N_mesh, angular_flux=angular_flux, incident_flux_mag=left_in_mag, angle=left_in_angle, angles=angles_gq)
         BCr = src.BoundaryCondition(boundary_condition_right, -1, N_mesh, angular_flux=angular_flux, incident_flux_mag=right_in_mag, angle=right_in_angle, angles=angles_gq)
-        
-        #only incidents
-        #angular_flux_incident = np.zeros([order_gauss_quad, int(N)], data_type)
-        #for i in range(N_mesh):
-        #    angular_flux_incident[:half,i*2]   = angular_flux[:half,i*2]
-        #    angular_flux_incident[half:,i*2+1] = angular_flux[half:,i*2+1]
-            
         
         #simple corner balance to find angular flux for next itteration
         angular_flux_next = src.OCIRun(angular_flux, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles_gq, weights_gq, BCl, BCr)
@@ -188,35 +182,10 @@ def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh):
         if source_counter > 2:
             #check for convergence
             source_converged = src.HasItConverged(angular_flux_next, angular_flux)
-            
-            #if (np.isinf())
-            '''
-            for l in range(angular_flux_next.shape[0]):
-                for m in range(angular_flux_next.shape[1]):
-                    if math.isinf(angular_flux_next[l,m]) == True:
-                        print()
-                        print('WAS inf')
-                        return(10, True)
-                    if math.isnan(angular_flux_next[l,m]) == True:
-                        print()
-                        print('WAS nan')
-                        return(10, True)
-            
-            if ((np.isinf(angular_flux_next).all) == False):
-                if ((np.isinf(angular_flux).all) == False):
-                    if ((np.isinf(angular_flux_last).any) == False):
-                    '''
             spec_rad = np.linalg.norm(angular_flux_next - angular_flux, ord=2) / np.linalg.norm((angular_flux - angular_flux_last), ord=2)
-            #else:
-            #    print('3: FUCK FUCK FUCK')
-            #    spec_rad = 10
-            #    no_convergence = True
-                
-            #spec_rad_vec = spec_rad_vec.append(spec_rad)
-            #print(spec_rad)
         
         #if stuck, display error then cut n run
-        if source_counter > 1000:
+        if source_counter > max_itter:
             #print()
             #print('>>>WARNING: source not converged after 1000 itterations<<<')
             #print()
@@ -230,17 +199,10 @@ def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh):
         scalar_flux_last = scalar_flux
         scalar_flux = scalar_flux_next
         source_counter += 1
-        
-        
-        
-        
-    print()
-    print(source_counter)
-    print()
+
+    #spec_rad, no_convergence
     
-    #average = np.normspec_rad, no_convergence
-    
-    return(scalar_flux, current) #scalar_flux, current, 
+    return(spec_rad, no_convergence) #scalar_flux, current, 
     
     
     

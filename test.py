@@ -19,7 +19,7 @@ data_type = np.float64
 L = 10
 dx = 1
 xsec = 10
-ratio = 0.999
+ratio = 0.9999
 scattering_xsec = xsec*ratio
 source_mat = 0
 source_a = 2
@@ -38,11 +38,12 @@ sim_perams = {'data_type': data_type,
               'L': L,
               'N_mesh': N_mesh,
               'boundary_condition_left':  'incident_iso',
-              'boundary_condition_right': 'vacuum',
+              'boundary_condition_right': 'incident_iso',
               'left_in_mag': 10,
               'right_in_mag': 10,
               'left_in_angle': .3,
-              'right_in_angle': 0}
+              'right_in_angle': 0,
+              'max loops': 10000}
 
 [scalar_flux, current] = therefore.OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh)
 
