@@ -38,9 +38,9 @@ def BC_isotropic(incident_flux_mag, angles, i):
     
     #required for OCI as to not "push in" radiation that isn't physical (- in psi)
     #if i == 0:
-    #    BC[:half] = np.zeros(half)
-    #else:
     #    BC[half:] = np.zeros(half)
+    #else:
+    #    BC[:half] = np.zeros(half)
     
     return(BC)
 

@@ -17,11 +17,11 @@ def flatLinePlot(x, y):
 data_type = np.float64
 
 L = 10
-dx = .01
+dx = 1
 xsec = 10
-ratio = 0
+ratio = 0.999
 scattering_xsec = xsec*ratio
-source_mat = 12
+source_mat = 0
 source_a = 2
 N_mesh = int(L/dx)
 
@@ -30,17 +30,18 @@ xsec_mesh = xsec*np.ones(N_mesh, data_type)
 xsec_scatter_mesh = scattering_xsec*np.ones(N_mesh, data_type)
 source_mesh = source_mat*np.ones(N_mesh, data_type)
 
-psi_in = source_a / (xsec*(1-ratio)/2)
+psi_in = source_mat / (xsec*(1-ratio)/2)
+print(psi_in)
 
 sim_perams = {'data_type': data_type,
               'N_angles': 2,
               'L': L,
               'N_mesh': N_mesh,
               'boundary_condition_left':  'incident_iso',
-              'boundary_condition_right': 'incident_iso',
+              'boundary_condition_right': 'vacuum',
               'left_in_mag': 10,
               'right_in_mag': 10,
-              'left_in_angle': -.3,
+              'left_in_angle': .3,
               'right_in_angle': 0}
 
 [scalar_flux, current] = therefore.OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh)

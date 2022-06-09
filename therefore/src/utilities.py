@@ -18,9 +18,9 @@ def Current(angular_flux, angles, weights):
         
     return(current)
 
-def HasItConverged(scalar_flux_next, scalar_flux, tol=1e-6):
-   error = max(abs((scalar_flux_next - scalar_flux) / scalar_flux_next))
-   return(error < tol, error)
+def HasItConverged(a, b, tol=1e-6):
+   close = np.allclose(a, b, rtol=tol)
+   return(close)
    
 def RHSTransport(scalar_flux, scattering_xsec, source, N_mesh, dx):
     Q = np.zeros(N_mesh*2)
