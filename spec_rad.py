@@ -59,6 +59,7 @@ for i in range(ratio.size):
 
         #launch source itterations #SourceItteration
         [spec_rad[i,k], no_converge[i,k]] = therefore.OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh)
+        #print(spec_rad[i,k])
 
 if ((no_converge == True).any):
     print()
@@ -66,15 +67,15 @@ if ((no_converge == True).any):
     print('            Recomend grow max_itter value and run again  <<<')
     print('')
 
+mfp = xsec*dx
 np.savez('spectral_radius_s4', mfp=mfp, ratio=ratio, spec_rad=spec_rad)
 
-mfp = xsec*dx
 [Xx, Yy] = np.meshgrid(mfp,ratio)
 
 fig = plt.figure(1)
 ax = fig.gca(projection='3d')
 surf = ax.plot_surface(Xx,Yy,spec_rad)
-plt.title('OCI SCB Spectral Radius Plot')
+plt.title('SI SCB Spectral Radius Plot')
 plt.xlabel('mfp [σ*Δx]')
 plt.ylabel('Scattering Ratio [$σ_s$/σ]')
 ax.set_zlabel('Spectrial Radius [ρ]')

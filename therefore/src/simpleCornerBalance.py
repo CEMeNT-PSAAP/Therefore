@@ -3,7 +3,7 @@ import numba as nb
 
 #Simple Corner balence sweep
 @nb.jit(nopython=True, parallel=False)
-def SCBRun(angular_flux, Q, xsec, dx, mu, BCl, BCr, N_mesh):
+def SCBRun(Q, xsec, dx, mu, BCl, BCr, N_mesh):
     '''Return angular flux
     
     Runs a parallelized and jit compiled simple corner balance source 
@@ -12,6 +12,7 @@ def SCBRun(angular_flux, Q, xsec, dx, mu, BCl, BCr, N_mesh):
     
     Returns 2D Numpy array of angular flux (size: [N_angles, N_cells])
     '''
+    angular_flux = np.zeros((mu.size, 2*N_mesh), np.float64)
     
     for angle in nb.prange(mu.size):
         if mu[angle] < 0: #goin back

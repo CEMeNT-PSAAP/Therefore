@@ -9,11 +9,11 @@ import matplotlib.pyplot as plt
 import therefore
 
 
-def flatLinePlot(x, y):
+def flatLinePlot(x, y, pl):
     for i in range(y.size):
         xx = x[i:i+2]
         yy = [y[i], y[i]]
-        plt.plot(xx, yy, '-k')
+        plt.plot(xx, yy, pl)
 
 data_type = np.float64
 
@@ -47,17 +47,13 @@ for i in range(region_widths.size):
     source_mesh[LB:RB] = Source[i]
     region_id_mesh[LB:RB] = region_id[i]
 
-print(region_id_mesh[39])
-print(region_id_mesh[40])
-print(region_id_mesh[41])
-
 for i in range(N_mesh):
     region_id_mesh_2[2*i] = region_id_mesh[i]
     region_id_mesh_2[2*i+1] = region_id_mesh[i]
     
 #set sim peramweters
 sim_perams = {'data_type': data_type,
-              'N_angles': 4,
+              'N_angles': 2,
               'L': 0,
               'N_mesh': N_mesh,
               'boundary_condition_left': 'vacuum',
@@ -65,10 +61,12 @@ sim_perams = {'data_type': data_type,
               'left_in_mag': 0,
               'right_in_mag': 0,
               'left_in_angle': 0,
-              'right_in_angle': 0}
+              'right_in_angle': 0,
+              'max loops': 10000}
 
 #launch source itterations
 [scalar_flux, current] = therefore.SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh)
+[scalar_flux2, current2] = therefore.OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh)
 
 
 #post process and plot
@@ -87,9 +85,12 @@ for i in range(N_mesh):
 
 x_plot[-1] = 8.00001
 
-flatLinePlot(x_plot, scalar_flux)
-plt.title('Problem 2: Reeds Problem')
-plt.xlabel('Distance')
+scalar_flux2 /= 2
+
+flatLinePlot(x_plot, scalar_flux, '-k')
+flatLinePlot(x_plot, scalar_flux2, '-r')
+#plt.title('Problem 2: Reeds Problem')
+plt.xlabel('Distance [cm]')
 plt.ylabel('Scalar Flux')
 plt.ylim([0,max(scalar_flux)*1.25])
 
@@ -98,6 +99,24 @@ for i in range(5):
     X_reg[0] = region_bounds[i]
     X_reg[1] = region_bounds[i]
     plt.plot(X_reg, Y_reg, c='lightgrey')
-
-
 plt.show()
+
+
+f = 2
+plt.figure(f)
+
+
+flatLinePlot(x_plot, current, '-k')
+flatLinePlot(x_plot, current2, '-r')
+#plt.title('Problem 2: Reeds Problem')
+plt.xlabel('Distance [cm]')
+plt.ylabel('Current')
+plt.ylim([0,max(scalar_flux)*1.25])
+
+# plot region demarkers
+for i in range(5):
+    X_reg[0] = region_bounds[i]
+    X_reg[1] = region_bounds[i]
+    plt.plot(X_reg, Y_reg, c='lightgrey')
+plt.show()
+

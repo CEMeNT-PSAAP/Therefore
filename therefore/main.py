@@ -57,6 +57,7 @@ def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_m
     source_converged = False
     source_counter = 0
     no_convergence = False
+    spec_rad = 0
     
     while source_converged == False:
         
@@ -70,7 +71,7 @@ def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_m
         Q = src.RHSTransport(scalar_flux, xsec_scatter_mesh, source_mesh, N_mesh, dx_mesh)
         
         #simple corner balance to find angular flux for next itteration
-        angular_flux = src.SCBRun(angular_flux, Q, xsec_mesh, dx_mesh, angles_gq, BCl, BCr, N_mesh)
+        angular_flux = src.SCBRun(Q, xsec_mesh, dx_mesh, angles_gq, BCl, BCr, N_mesh)
         
         #calculate current
         current = src.Current(angular_flux, weights_gq, angles_gq)
@@ -78,7 +79,11 @@ def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_m
         #calculate scalar flux for next itteration
         scalar_flux_next = src.ScalarFlux(angular_flux, weights_gq)
         
-        spec_rad = np.linalg.norm(scalar_flux_next - scalar_flux, ord=2) / np.linalg.norm(scalar_flux - scalar_flux_last, ord=2)
+        if source_counter > 2:
+            #check for convergence
+            source_converged = src.HasItConverged(scalar_flux_next, scalar_flux)
+            spec_rad = np.linalg.norm(scalar_flux_next - scalar_flux, ord=2) / np.linalg.norm((scalar_flux - scalar_flux_last), ord=2)
+            
         #print()
         #print('Spec Rad {0}'.format(spec_rad))
         #print()
@@ -89,7 +94,7 @@ def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_m
         
         #if stuck, display error then cut n run
         if source_counter > 10000:
-            print('Error source not converged after 1000 itterations')
+            print('Error source not converged after 10000 itterations')
             print()
             source_converged = True
             no_convergence = True
@@ -99,12 +104,9 @@ def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_m
         scalar_flux = scalar_flux_next
         source_counter += 1
         
-        angular_flux_last = angular_flux
-        angular_flux = angular_flux
-        
         
     #print()
-    #print(source_counter)spec_rad, no_convergence
+    #print(source_counter)#spec_rad, no_convergence
     #print()scalar_flux, current
     
     return(scalar_flux, current)
@@ -199,7 +201,8 @@ def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh):
         scalar_flux_last = scalar_flux
         scalar_flux = scalar_flux_next
         source_counter += 1
-
+    
+    #print(source_counter)
     #spec_rad, no_convergence
     
     return(spec_rad, no_convergence) #scalar_flux, current, 
