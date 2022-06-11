@@ -53,7 +53,7 @@ for i in range(N_mesh):
     
 #set sim peramweters
 sim_perams = {'data_type': data_type,
-              'N_angles': 2,
+              'N_angles': 8,
               'L': 0,
               'N_mesh': N_mesh,
               'boundary_condition_left': 'vacuum',
@@ -85,7 +85,7 @@ for i in range(N_mesh):
 
 x_plot[-1] = 8.00001
 
-scalar_flux2 /= 2
+#scalar_flux2 /= 2
 
 flatLinePlot(x_plot, scalar_flux, '-k')
 flatLinePlot(x_plot, scalar_flux2, '-r')
@@ -99,6 +99,7 @@ for i in range(5):
     X_reg[0] = region_bounds[i]
     X_reg[1] = region_bounds[i]
     plt.plot(X_reg, Y_reg, c='lightgrey')
+plt.ylim([0,8])
 plt.show()
 
 
@@ -118,5 +119,6 @@ for i in range(5):
     X_reg[0] = region_bounds[i]
     X_reg[1] = region_bounds[i]
     plt.plot(X_reg, Y_reg, c='lightgrey')
+plt.ylim([0,3])
 plt.show()
 

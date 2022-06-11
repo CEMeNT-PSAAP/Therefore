@@ -24,6 +24,9 @@ source = 0
 dx = np.linspace(.01, 2, 75)
 ratio = np.linspace(0, .99, 75)
 
+mfp = xsec*dx
+#print(mfp)
+
 no_converge = np.zeros([ratio.size, dx.size])
 spec_rad = np.zeros([ratio.size, dx.size])
 

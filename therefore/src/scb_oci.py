@@ -45,30 +45,48 @@ def SCB_OneCellInv_Cell(angular_flux, source, xsec, xsec_scatter, dx, mu, weight
     
     alpha = xsec*dx/2
     
+    for i in range(n_angle/2): #negative ordinants
+        A[2*i, 2*i] = -mu[i]/2
+        A[2*i, 2*i+1] = -mu[i]/2 + alpha
+        A[2*i+1, 2*i] = -mu[i]/2 + alpha
+        A[2*i+1, 2*i+1] = mu[i]/2
+        
+        b[2*i] = (source*dx)/2 - (mu[i] * angular_flux[i, 1])
+        b[2*i+1] = (source*dx)/2
+    
+    for i in range(n_angle/2, n_angle, 1): #positive ordinants
+        A[2*i, 2*i] = mu[i]/2 + alpha
+        A[2*i, 2*i+1] = mu[i]/2
+        A[2*i+1, 2*i] = -mu[i]/2
+        A[2*i+1, 2*i+1] = mu[i]/2 + alpha
+    
+        b[2*i] = (source*dx)/2 + (mu[i] * angular_flux[i, 0])
+        b[2*i+1] = (source*dx)/2
+        
     #build matrix
     #lefts [k,i], [row, col] so we are filling in col by col
-    A[0,0] = -mu[0]/2
-    A[0,1] = -mu[0]/2 + alpha
+    #A[0,0] = -mu[0]/2
+    #A[0,1] = -mu[0]/2 + alpha
     
-    A[1,0] = -mu[0]/2 + alpha
-    A[1,1] =  mu[0]/2
+    #A[1,0] = -mu[0]/2 + alpha
+    #A[1,1] =  mu[0]/2
     
-    A[2,2] =  mu[1]/2 + alpha
-    A[2,3] =  mu[1]/2
+    #A[2,2] =  mu[1]/2 + alpha
+    #A[2,3] =  mu[1]/2
     
-    A[3,2] = -mu[1]/2
-    A[3,3] =  mu[1]/2 + alpha
+    #A[3,2] = -mu[1]/2
+    #A[3,3] =  mu[1]/2 + alpha
     
-    
+    #scalar flux
     for k in range (0, n_angle):
         for i in range (0, n_angle):
             A[2*k,2*i]     += const*weight[i]
             A[2*k+1,2*i+1] += const*weight[i]
             
-    b[0] = (source*dx)/2 - (mu[0] * angular_flux[0, 1])
-    b[1] = (source*dx)/2
-    b[2] = (source*dx)/2 + (mu[1] * angular_flux[1, 0])
-    b[3] = (source*dx)/2
+    #b[0] = (source*dx)/2 - (mu[0] * angular_flux[0, 1])
+    #b[1] = (source*dx)/2
+    #b[2] = (source*dx)/2 + (mu[1] * angular_flux[1, 0])
+    #b[3] = (source*dx)/2
     
     
     

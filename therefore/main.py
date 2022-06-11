@@ -143,7 +143,6 @@ def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh):
     
     #snag some GL angles
     [angles_gq, weights_gq] = np.polynomial.legendre.leggauss(order_gauss_quad)
-    
     N = 2*N_mesh 
     
     #initilize some numpy soultion and problem space arrays
@@ -205,7 +204,7 @@ def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh):
     #print(source_counter)
     #spec_rad, no_convergence
     
-    return(spec_rad, no_convergence) #scalar_flux, current, 
+    return(scalar_flux, current) #scalar_flux, current, 
     
     
     
