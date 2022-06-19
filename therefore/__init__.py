@@ -1,1 +1,2 @@
-from .main import SourceItteration, OCI
+from .itterationSchemes import SourceItteration, OCI
+from .timeDependence import TimeLoop

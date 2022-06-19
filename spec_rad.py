@@ -7,7 +7,7 @@ Created on Sun May 15 20:34:03 2022
 import numpy as np
 import matplotlib.pyplot as plt
 import therefore
-
+from timeit import default_timer as timer
 
 def flatLinePlot(x, y):
     for i in range(y.size):
@@ -27,10 +27,15 @@ ratio = np.linspace(0, .99, 75)
 mfp = xsec*dx
 #print(mfp)
 
-no_converge = np.zeros([ratio.size, dx.size])
-spec_rad = np.zeros([ratio.size, dx.size])
+no_converge_oci = np.zeros([ratio.size, dx.size])
+spec_rad_oci = np.zeros([ratio.size, dx.size])
+no_converge_si = np.zeros([ratio.size, dx.size])
+spec_rad_si = np.zeros([ratio.size, dx.size])
 
 total_runs = ratio.size * dx.size
+
+time_oci = 0
+time_si = 0
 
 for i in range(ratio.size):
     for k in range(dx.size):
@@ -60,24 +65,50 @@ for i in range(ratio.size):
                       'right_in_angle': -.3,
                       'max loops': 10000}
 
-        #launch source itterations #SourceItteration
-        [sf, cur, spec_rad[i,k], no_converge[i,k]] = therefore.OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh)
+        start = timer()
+        [sf, cur, spec_rad_oci[i,k], no_converge_oci[i,k]] = therefore.OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh)
+        time_oci += timer() - start
+        start = timer()
+        [sf, cur, spec_rad_si[i,k], no_converge_si[i,k]] = therefore.SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh)
+        time_si += timer() - start
         #print(spec_rad[i,k])
 
-if ((no_converge == True).any):
+if ((no_converge_si == True).any):
     print()
-    print('>>>WARNING: Some runs did not converge before itter kick.')
+    print('>>>WARNING: Some runs of SI did not converge before itter kick.')
     print('            Recomend grow max_itter value and run again  <<<')
     print('')
 
+if ((no_converge_oci == True).any):
+    print()
+    print('>>>WARNING: Some runs of OCI did not converge before itter kick.')
+    print('            Recomend grow max_itter value and run again  <<<')
+    print('')
+
+print()
+print('Total time for OCI computations: {0}'.format(time_oci))
+print('Total time for SI computations:  {0}'.format(time_si))
+print()
+
 mfp = xsec*dx
-np.savez('spectral_radius_s4', mfp=mfp, ratio=ratio, spec_rad=spec_rad)
+np.savez('spectral_radius_s4', mfp=mfp, ratio=ratio, spec_rad_oci=spec_rad_oci, spec_rad_si=spec_rad_si)
 
 [Xx, Yy] = np.meshgrid(mfp,ratio)
 
+
 fig = plt.figure(1)
 ax = fig.gca(projection='3d')
-surf = ax.plot_surface(Xx,Yy,spec_rad)
+surf = ax.plot_surface(Xx,Yy,spec_rad_oci)
+plt.title('OCI SCB Spectral Radius Plot')
+plt.xlabel('mfp [σ*Δx]')
+plt.ylabel('Scattering Ratio [$σ_s$/σ]')
+ax.set_zlabel('Spectrial Radius [ρ]')
+plt.show()
+
+
+fig = plt.figure(2)
+ax = fig.gca(projection='3d')
+surf = ax.plot_surface(Xx,Yy,spec_rad_si)
 plt.title('SI SCB Spectral Radius Plot')
 plt.xlabel('mfp [σ*Δx]')
 plt.ylabel('Scattering Ratio [$σ_s$/σ]')
