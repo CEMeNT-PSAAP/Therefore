@@ -109,7 +109,7 @@ def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_m
     #print(source_counter)#spec_rad, no_convergence
     #print()scalar_flux, current
     
-    return(scalar_flux, current)
+    return(scalar_flux, current, spec_rad, source_converged)
 
 
 
@@ -204,7 +204,7 @@ def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh):
     #print(source_counter)
     #spec_rad, no_convergence
     
-    return(scalar_flux, current) #scalar_flux, current, 
+    return(scalar_flux, current, spec_rad, source_converged) #scalar_flux, current, 
     
     
     

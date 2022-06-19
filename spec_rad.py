@@ -61,7 +61,7 @@ for i in range(ratio.size):
                       'max loops': 10000}
 
         #launch source itterations #SourceItteration
-        [spec_rad[i,k], no_converge[i,k]] = therefore.OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh)
+        [sf, cur, spec_rad[i,k], no_converge[i,k]] = therefore.OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh)
         #print(spec_rad[i,k])
 
 if ((no_converge == True).any):

@@ -65,9 +65,13 @@ sim_perams = {'data_type': data_type,
               'max loops': 10000}
 
 #launch source itterations
-[scalar_flux, current] = therefore.SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh)
-[scalar_flux2, current2] = therefore.OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh)
+[scalar_flux, current, spec_rad, source_converged] = therefore.SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh)
+[scalar_flux2, current2, spec_rad2, source_converged] = therefore.OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh)
 
+print()
+print('Overall spectral radius of SI: {0}'.format(spec_rad))
+print('Overall spectral radius of OCI: {0}'.format(spec_rad2))
+print()
 
 #post process and plot
 Y_reg = [0, max(scalar_flux)*2]

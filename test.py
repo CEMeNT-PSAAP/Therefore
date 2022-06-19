@@ -45,7 +45,11 @@ sim_perams = {'data_type': data_type,
               'right_in_angle': 0,
               'max loops': 10000}
 
-[scalar_flux, current] = therefore.OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh)
+[scalar_flux, current, spec_rad, conver] = therefore.OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh)
+
+print('')
+print('Did the implementaiton converge?'.format(conver))
+print('Spectral radius of the lst run'.format(spec_rad))
 
 print(scalar_flux)
 
