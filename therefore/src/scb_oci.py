@@ -2,13 +2,13 @@ import numpy as np
 import numba as nb
 import scipy.linalg as sci
 
-@nb.jit(nopython=True, parallel=True)
+#@nb.jit(nopython=True, parallel=True)
 def OCIRun(angular_flux, source, xsec, xsec_scatter, dx, mu, weight, BCl, BCr):
     
     n_mesh = int(dx.size)
     angular_flux_next = np.zeros_like(angular_flux)
     half = int(mu.size/2)
-    
+    #print(n_mesh)
     for i in nb.prange(n_mesh):
         
         bound_ang_flux = np.zeros((mu.size, 2), dtype=np.float64)
@@ -23,7 +23,7 @@ def OCIRun(angular_flux, source, xsec, xsec_scatter, dx, mu, weight, BCl, BCr):
             bound_ang_flux[:,0] = angular_flux[:,i*2-1]
             bound_ang_flux[:,1] = angular_flux[:,i*2+2]
             
-        angular_flux_cell = SCB_OneCellInv_Cell(bound_ang_flux, source[i], xsec[i], xsec_scatter[i], dx[i], mu, weight)
+        angular_flux_cell = SCB_OneCellInv_Cell(bound_ang_flux, source[:,i], xsec[i], xsec_scatter[i], dx[i], mu, weight)
         
         angular_flux_next[:,2*i] = angular_flux_cell[:,0]
         angular_flux_next[:,2*i+1] = angular_flux_cell[:,1]
@@ -33,10 +33,11 @@ def OCIRun(angular_flux, source, xsec, xsec_scatter, dx, mu, weight, BCl, BCr):
 
 
 
-@nb.jit(nopython=True)
+#@nb.jit(nopython=True)
 def SCB_OneCellInv_Cell(angular_flux, source, xsec, xsec_scatter, dx, mu, weight):
     
     n_angle = mu.size
+    half = int(n_angle/2)
     
     A = np.zeros((n_angle*2, n_angle*2), dtype=np.float64)
     b = np.zeros(n_angle*2, dtype=np.float64)
@@ -45,37 +46,24 @@ def SCB_OneCellInv_Cell(angular_flux, source, xsec, xsec_scatter, dx, mu, weight
     
     alpha = xsec*dx/2
     
-    for i in range(n_angle/2): #negative ordinants
+    for i in range(half): #negative ordinants
         A[2*i, 2*i] = -mu[i]/2
         A[2*i, 2*i+1] = -mu[i]/2 + alpha
         A[2*i+1, 2*i] = -mu[i]/2 + alpha
         A[2*i+1, 2*i+1] = mu[i]/2
         
-        b[2*i] = (source*dx)/2 - (mu[i] * angular_flux[i, 1])
-        b[2*i+1] = (source*dx)/2
+        b[2*i] = (source[i]*dx)/2 - (mu[i] * angular_flux[i, 1])
+        b[2*i+1] = (source[i]*dx)/2
     
-    for i in range(n_angle/2, n_angle, 1): #positive ordinants
+    for i in range(half, n_angle, 1): #positive ordinants
         A[2*i, 2*i] = mu[i]/2 + alpha
         A[2*i, 2*i+1] = mu[i]/2
         A[2*i+1, 2*i] = -mu[i]/2
         A[2*i+1, 2*i+1] = mu[i]/2 + alpha
     
-        b[2*i] = (source*dx)/2 + (mu[i] * angular_flux[i, 0])
-        b[2*i+1] = (source*dx)/2
+        b[2*i] = (source[i]*dx)/2 + (mu[i] * angular_flux[i, 0])
+        b[2*i+1] = (source[i]*dx)/2
         
-    #build matrix
-    #lefts [k,i], [row, col] so we are filling in col by col
-    #A[0,0] = -mu[0]/2
-    #A[0,1] = -mu[0]/2 + alpha
-    
-    #A[1,0] = -mu[0]/2 + alpha
-    #A[1,1] =  mu[0]/2
-    
-    #A[2,2] =  mu[1]/2 + alpha
-    #A[2,3] =  mu[1]/2
-    
-    #A[3,2] = -mu[1]/2
-    #A[3,3] =  mu[1]/2 + alpha
     
     #scalar flux
     for k in range (0, n_angle):
@@ -83,25 +71,7 @@ def SCB_OneCellInv_Cell(angular_flux, source, xsec, xsec_scatter, dx, mu, weight
             A[2*k,2*i]     += const*weight[i]
             A[2*k+1,2*i+1] += const*weight[i]
             
-    #b[0] = (source*dx)/2 - (mu[0] * angular_flux[0, 1])
-    #b[1] = (source*dx)/2
-    #b[2] = (source*dx)/2 + (mu[1] * angular_flux[1, 0])
-    #b[3] = (source*dx)/2
-    
-    
-    
     next_angflux = np.linalg.solve(A, b).reshape((-1, 2))
-    #next_angflux = next_angflux.reshape((-1, 2))
-    #next_angflux = np.zeros([2,2])
-    
-    #next_angflux[0,0] = next_linalg_exp[0]
-    #next_angflux[0,1] = next_linalg_exp[1]
-    #next_angflux[1,0] = next_linalg_exp[2]
-    #next_angflux[1,1] = next_linalg_exp[3]
-    
-    
-    #print()
-    #print(next_angflux)
     
     return(next_angflux)
 

@@ -51,7 +51,7 @@ for i in range(ratio.size):
         dx_mesh = dx[k]*np.ones(N_mesh, data_type)
         xsec_mesh = xsec*np.ones(N_mesh, data_type)
         xsec_scatter_mesh = scattering_xsec*np.ones(N_mesh, data_type)
-        source_mesh = source*np.ones(N_mesh, data_type)
+        source_mesh = source*np.ones([N_angle, N_mesh], data_type)
 
         sim_perams = {'data_type': data_type,
                       'N_angles': 2,

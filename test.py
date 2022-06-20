@@ -28,7 +28,7 @@ N_mesh = int(L/dx)
 dx_mesh = dx*np.ones(N_mesh, data_type)
 xsec_mesh = xsec*np.ones(N_mesh, data_type)
 xsec_scatter_mesh = scattering_xsec*np.ones(N_mesh, data_type)
-source_mesh = source_mat*np.ones(N_mesh, data_type)
+source_mesh = source_mat*np.ones([N_angle, N_mesh], data_type)
 
 psi_in = source_mat / (xsec*(1-ratio)/2)
 print(psi_in)

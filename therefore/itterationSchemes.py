@@ -16,7 +16,7 @@ import sys
 import scipy as sci
 import math
 
-def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, ret_angflux=False):
+def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, ang_flux_last=None, ret_angflux=False):
     ''' Return converged scalar flux and current
     
     Implementation of simple corner balance source itterations
@@ -58,6 +58,8 @@ def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_m
     source_counter = 0
     no_convergence = False
     spec_rad = 0
+    
+    
     
     while source_converged == False:
         
@@ -116,7 +118,9 @@ def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_m
 
 
 
-def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, ret_angflux=False):
+
+
+def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, Q_tilde_modifier=None, time_dependent_mode=False):
     ''' Return converged scalar flux and current
     
     Implementation of simple corner balance source itterations
@@ -207,7 +211,7 @@ def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, ret_angf
     #print(source_counter)
     #spec_rad, no_convergence
     
-    if ret_angflux == True: #for time dependence
+    if time_dependent_mode: #for time dependence
         scalar_flux = angular_flux_next
     
     return(scalar_flux, current, spec_rad, source_converged) #scalar_flux, current, 

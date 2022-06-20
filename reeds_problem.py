@@ -33,7 +33,7 @@ N_mesh: int = sum(N_region)
 xsec_mesh = np.empty(N_mesh, data_type)
 xsec_scatter_mesh = np.empty(N_mesh, data_type)
 dx_mesh = np.empty(N_mesh, data_type)
-source_mesh = np.empty(N_mesh, data_type)
+source_mesh = np.empty([N_angle, N_mesh], data_type)
 region_id_mesh = np.empty(N_mesh, data_type)
 region_id_mesh_2 = np.empty(N_mesh*2, data_type)
 
