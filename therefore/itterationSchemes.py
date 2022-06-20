@@ -170,6 +170,12 @@ def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, Q_tilde_
     
     spec_rad_vec = np.empty([0])
     
+    if time_dependent_mode==False:
+        source_mesh = SourceMeshTransform(source_mesh, N_angles)
+    
+    assert (source_mesh.shape[0] == N_angles)
+    assert (source_mesh.shape[1] == N)
+    
     while source_converged == False:
         
         #print('Next Itteration: {0}'.format(source_counter),end='\r')
@@ -216,7 +222,27 @@ def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, Q_tilde_
     
     return(scalar_flux, current, spec_rad, source_converged) #scalar_flux, current, 
     
+
+def SourceMeshTransform(source_mesh_o, N_angles):
+    '''Corrects the size of the source for transport when not time depenedent mode.
+    Source must be [N_angles x 2*N_mesh] N_angles for nonisotropic, 2X for SCB
+    '''
     
+    N_mesh = source_mesh_o.size
+    N_ans = int(2*N_mesh)
+    source_mesh_n = np.zeros([N_angles, N_ans], np.float64)
+    
+    for i in range(N_mesh):
+        for j in range(N_angles):
+            source_mesh_n[j,2*i] = source_mesh_o[i]
+            source_mesh_n[j,2*i+1] = source_mesh_o[i]
+    
+    return(source_mesh_n)
+
     
 if __name__ == '__main__':
     x=0
+    
+    
+    
+    

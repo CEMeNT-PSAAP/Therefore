@@ -1,11 +1,11 @@
 import numpy as np
 from .itterationSchemes import SourceItteration, OCI
+import therefore.src as src
 
-
-def TimeLoop(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, theta=1):
+def TimeLoop(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source, theta=1):
     velocity = sim_perams['velocity']
     dt = sim_perams['dt']
-    N_time = sim_perams['max time']
+    N_time = sim_perams['N_time']
     N_angles = sim_perams['N_angles']
     N_mesh = sim_perams['N_mesh']
     data_type = sim_perams['data_type']
@@ -14,7 +14,17 @@ def TimeLoop(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, the
     angular_flux_total = np.zeros([N_angles, N_ans, N_time], data_type)
     angular_flux_last = np.zeros([N_angles, N_ans], data_type)
     current_total = np.zeros([N_ans, N_time], data_type)
+    scalar_flux = np.zeros([N_ans, N_time], data_type)
     spec_rad = np.zeros(N_time)
+    
+    [angles, weights] = np.polynomial.legendre.leggauss(N_angles)
+    
+    source_mesh = np.ones([N_angles, N_ans], data_type)
+    for i in range(N_mesh):
+        for j in range(N_angles):
+            source_mesh[j,i] = source[i]
+            source_mesh[j,i+1] = source[i]
+    
     
     for t in range(N_time):
         xsec_mesh_t = xsec_mesh + (1/(velocity* theta* dt))
@@ -33,8 +43,9 @@ def TimeLoop(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, the
         print('Time loop! {0}'.format(t))
         
         angular_flux_last = angular_flux_total[:,:,t]
-        
-    return(angular_flux_total, current_total, spec_rad)
+        scalar_flux[:,t] = src.ScalarFlux(angular_flux_last, weights)
+    
+    return(scalar_flux, current_total, spec_rad)
     
     
     
