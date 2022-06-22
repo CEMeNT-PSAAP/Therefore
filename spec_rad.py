@@ -19,39 +19,48 @@ data_type = np.float64
 
 L = 10
 xsec = 10
-source = 0
 
-dx = np.linspace(.01, 2, 75)
+
+#dx = np.linspace(.01, 2, 75)
+dx = .5
+
 ratio = np.linspace(0, .99, 75)
+
+#source = 0
+source = np.linspace(0, 10, 75)
 
 mfp = xsec*dx
 #print(mfp)
 
-no_converge_oci = np.zeros([ratio.size, dx.size])
-spec_rad_oci = np.zeros([ratio.size, dx.size])
-no_converge_si = np.zeros([ratio.size, dx.size])
-spec_rad_si = np.zeros([ratio.size, dx.size])
+xs = ratio.size
+ys = source.size
 
-total_runs = ratio.size * dx.size
+
+no_converge_oci = np.zeros([xs, ys])
+spec_rad_oci = np.zeros([xs, ys])
+no_converge_si = np.zeros([xs, ys])
+spec_rad_si = np.zeros([xs, ys])
+
+total_runs = xs * ys
 
 time_oci = 0
 time_si = 0
 
-for i in range(ratio.size):
-    for k in range(dx.size):
+for i in range(xs):
+    for k in range(ys):
         
-        print('Percent done: %2d' %(((i*dx.size+k)/total_runs)*100),end='\r')
+        print('Percent done: %2d' %(((i*ys+k)/total_runs)*100),end='\r')
         
         scattering_xsec = xsec*ratio[i]
         
-        N_mesh = int(L/dx[k])
+        N_mesh = int(L/dx)
 
-        in_flux = source/((xsec-scattering_xsec)/2)
+        in_flux = source[k]/((xsec-scattering_xsec)/2)
 
-        dx_mesh = dx[k]*np.ones(N_mesh, data_type)
+        dx_mesh = dx*np.ones(N_mesh, data_type)
         xsec_mesh = xsec*np.ones(N_mesh, data_type)
         xsec_scatter_mesh = scattering_xsec*np.ones(N_mesh, data_type)
-        source_mesh = source*np.ones([N_angle, N_mesh], data_type)
+        source_mesh = source[k]*np.ones(N_mesh, data_type)
 
         sim_perams = {'data_type': data_type,
                       'N_angles': 2,
@@ -91,9 +100,9 @@ print('Total time for SI computations:  {0}'.format(time_si))
 print()
 
 mfp = xsec*dx
-np.savez('spectral_radius_s4', mfp=mfp, ratio=ratio, spec_rad_oci=spec_rad_oci, spec_rad_si=spec_rad_si)
+#np.savez('spectral_radius_s4', mfp=mfp, ratio=ratio, spec_rad_oci=spec_rad_oci, spec_rad_si=spec_rad_si)
 
-[Xx, Yy] = np.meshgrid(mfp,ratio)
+[Xx, Yy] = np.meshgrid(source,ratio)
 
 
 fig = plt.figure(1)

@@ -7,6 +7,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import therefore
 
+def analiticalSoultion(t, xsec, inital_flux, source, vel):
+    angular_flux = inital_flux*np.exp(-xsec*vel*t) + (source/xsec)*(1-np.exp(-xsec*vel*t))
+    
+    return(angular_flux)
+    
+#\Psi (t) = \Psi(0) e^(-\sigma*v*t) + Q/(\sigma)*(1-np.exp**(-\sigma*v*t))
 
 def flatLinePlot(x, y, dat):
     for i in range(y.size):
@@ -17,17 +23,17 @@ def flatLinePlot(x, y, dat):
 data_type = np.float64
 
 L = 10
-dx = 1
+dx = .1
 xsec = 10
-ratio = 0
+ratio = 0.99999
 scattering_xsec = xsec*ratio
-source_mat = 1
+source_mat = 0
 #source_a = 2
 N_mesh = int(L/dx)
 N_angle = 2
 
-dt = .01
-max_time = .03
+dt = 1
+max_time = 10
 N_time = int(max_time/dt)
 N_ans = 2*N_mesh
 
@@ -36,15 +42,27 @@ xsec_mesh = xsec*np.ones(N_mesh, data_type)
 xsec_scatter_mesh = scattering_xsec*np.ones(N_mesh, data_type)
 source_mesh = source_mat*np.ones([N_mesh], data_type)
 
-#psi_in = source_mat / (xsec*(1-ratio)/2)
+psi_in = source_mat / (xsec*(1-ratio)/2)
 #print(psi_in)
+
+#setup = np.linspace(0, np.pi, 2*N_mesh)
+inital_angular_flux = np.zeros([N_angle, 2*N_mesh])
+inital_angular_flux[:,N_mesh] = [1,1]
+inital_angular_flux[:,N_mesh-1] = [1,1]
+inital_angular_flux[:,N_mesh+1] = [1,1]
+inital_angular_flux[:,N_mesh-2] = [1,1]
+inital_angular_flux[:,N_mesh+2] = [1,1]
+#inital_angular_flux = np.array([[np.sin(setup)],[np.sin(setup)]]).reshape(2,200) #[:,:N_mesh]
+
+#in_an_flux = 1
+#inital_angular_flux = in_an_flux * np.ones([N_angle, 2*N_mesh])
 
 sim_perams = {'data_type': data_type,
               'N_angles': N_angle,
               'L': L,
               'N_mesh': N_mesh,
-              'boundary_condition_left':  'vacuum',
-              'boundary_condition_right': 'vacuum',
+              'boundary_condition_left':  'reflecting',
+              'boundary_condition_right': 'reflecting',
               'left_in_mag': 10,
               'right_in_mag': 10,
               'left_in_angle': .3,
@@ -56,7 +74,7 @@ sim_perams = {'data_type': data_type,
               'N_time': N_time}
 
 theta = 1 #for discrete diamond
-[scalar_flux, current, spec_rads] = therefore.TimeLoop(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, theta)
+[scalar_flux, current, spec_rads] = therefore.TimeLoop(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, theta)
 
 
 print(scalar_flux.shape)
@@ -67,17 +85,23 @@ print(scalar_flux.shape)
 
 #print(scalar_flux)
 
-co = ['-k','-r','-b','-g','-p','-y']
+co = ['-k','-r','-b','-g','-m','-y', '-c', '-k','-r','-b','-g','-m','-y', '-c', '-k','-r','-b','-g','-m','-y', '-c','-k','-r','-b','-g','-m','-y', '-c']
+print(co[7])
 
 f=1
 X = np.linspace(0, L, int(N_mesh*2+1))
+x = np.linspace(0, L, int(N_mesh*2))
 plt.figure(f)
+plt.plot(x, np.sum(inital_angular_flux, axis=0), '-k')
 for t in range(N_time):
+    #ana = 2*analiticalSoultion(dt*(t+1), xsec, in_an_flux, source_mat, 1)
     flatLinePlot(X, scalar_flux[:,t], co[t])
+    #plt.plot(5, ana, '^'+co[t])
+    #flatLinePlot(X[N_mesh-10:N_mesh+11], scalar_flux[N_mesh-10:N_mesh+10,t], co[t])
 plt.title('Infinte Med')
 plt.xlabel('Distance')
 plt.ylabel('Scalar Flux')
-plt.ylim([0,1.25*np.max(scalar_flux)])
+#plt.ylim([0,1.25*np.max(scalar_flux)]) #1.25*np.max(scalar_flux)
 plt.show()
 
 '''

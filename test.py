@@ -17,11 +17,11 @@ def flatLinePlot(x, y, dat):
 data_type = np.float64
 
 L = 10
-dx = .2
-xsec = 2
+dx = 1
+xsec = 10
 ratio = 0  #0.9999
 scattering_xsec = xsec*ratio
-source_mat = 5
+source_mat = 1
 source_a = 2
 N_mesh = int(L/dx)
 
@@ -37,8 +37,8 @@ sim_perams = {'data_type': data_type,
               'N_angles': 2,
               'L': L,
               'N_mesh': N_mesh,
-              'boundary_condition_left':  'incident_iso',
-              'boundary_condition_right': 'incident_iso',
+              'boundary_condition_left':  'vacuum',
+              'boundary_condition_right': 'vacuum',
               'left_in_mag': 10,
               'right_in_mag': 10,
               'left_in_angle': .3,
