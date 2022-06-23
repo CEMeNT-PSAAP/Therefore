@@ -15,7 +15,7 @@ def Current(angular_flux, angles, weights):
         current += weights[i] * angles[i] * angular_flux[i,:]
     return(current)
 
-def HasItConverged(a, b, tol=1e-6):
+def HasItConverged(a, b, tol=1e-8):
    close = np.allclose(a, b, rtol=tol)
    return(close)
    

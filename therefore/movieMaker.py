@@ -30,13 +30,17 @@ def MovieMaker(scalar_flux, scalar_flux2, L, FLP=False):
     line3, = ax.plot(x, azurv1_spav(x_eval, .9, 0.01), '--b',label="AZURV1")
     text   = ax.text(0.02, 0.9, '', transform=ax.transAxes)
     ax.legend()  
-          
+    plt.ylim([0,2])
+    
     def animate(k):
         line1.set_ydata(scalar_flux[:,k])
         line2.set_ydata(scalar_flux2[:,k])
         line3.set_ydata(azurv1_spav(x_eval, .9, .1*k+.01))
         text.set_text(r'$t \in [%.1f,%.1f]$ s'%(t[k],t[k+1]))
-        return line1, line2, line3, #, text
+        print('Figure production percent done: {0}'.format(int(k/N_time)*100), end = "\r")
+        return line2, line2, line3, #, text
+    print()
+    print()
     
     simulation = animation.FuncAnimation(fig, animate, frames=N_time)
     plt.show()

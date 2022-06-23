@@ -1,5 +1,6 @@
 import numpy as np
-from scipy.integrate import quad
+import numba as nb
+import scipy.integrate as inter
 
 #thanks Aaron!
 
@@ -8,7 +9,6 @@ def azurv1(x, c, t):
     returns a vector
     '''
     N_mesh = x.size
-    
     scalar_flux = np.zeros(N_mesh)
     
     for i in range(N_mesh):
@@ -16,17 +16,15 @@ def azurv1(x, c, t):
     
     return(scalar_flux)
     
-    
 def azurv1_spav(x, c, t):
-    '''Spatially averaged! x vector is location of cell bounds
+    '''Spatially averaged! x vector is location of cell bounds (so N_mesh+1)
     '''
     N_mesh = x.size-1
     dx = x[1] - x[0]
-    
     scalar_flux = np.zeros(N_mesh)
     
     for i in range(N_mesh):
-        scalar_flux[i] = quad(phi, x[i], x[i+1], args=(t, c), limit=1000)[0] / dx
+        scalar_flux[i] = inter.quad(phi, x[i], x[i+1], args=(c, t), limit=1000)[0] / dx
     
     return(scalar_flux)
 
@@ -39,7 +37,7 @@ def phi(x, c, t):
     eta = x / t
     
     if c > 0:
-        integral = quad(integrand,0,np.pi,args=(eta,t,c),limit=1000)[0]
+        integral = inter.quad(integrand,0,np.pi,args=(eta,t,c),limit=1000)[0]
     else:
         integral = 0
         
