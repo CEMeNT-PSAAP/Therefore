@@ -23,16 +23,16 @@ def flatLinePlot(x, y, dat):
 data_type = np.float64
 
 L = 10
-dx = .1
-xsec = 10
-ratio = 0.99999
+dx = .01
+xsec = 1
+ratio = 0.9
 scattering_xsec = xsec*ratio
 source_mat = 0
 #source_a = 2
 N_mesh = int(L/dx)
 N_angle = 2
 
-dt = 1
+dt = .1
 max_time = 10
 N_time = int(max_time/dt)
 N_ans = 2*N_mesh
@@ -47,11 +47,10 @@ psi_in = source_mat / (xsec*(1-ratio)/2)
 
 #setup = np.linspace(0, np.pi, 2*N_mesh)
 inital_angular_flux = np.zeros([N_angle, 2*N_mesh])
-inital_angular_flux[:,N_mesh] = [1,1]
-inital_angular_flux[:,N_mesh-1] = [1,1]
-inital_angular_flux[:,N_mesh+1] = [1,1]
-inital_angular_flux[:,N_mesh-2] = [1,1]
-inital_angular_flux[:,N_mesh+2] = [1,1]
+in_mid = np.ones(N_angle)
+for i in range(int(.45*N_mesh*2), int(.55*N_mesh*2), 1):
+    inital_angular_flux[:,i] = in_mid
+
 #inital_angular_flux = np.array([[np.sin(setup)],[np.sin(setup)]]).reshape(2,200) #[:,:N_mesh]
 
 #in_an_flux = 1
@@ -76,14 +75,7 @@ sim_perams = {'data_type': data_type,
 theta = 1 #for discrete diamond
 [scalar_flux, current, spec_rads] = therefore.TimeLoop(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, theta)
 
-
-print(scalar_flux.shape)
-
-#print('')
-#print('Did the implementaiton converge?'.format(conver))
-#print('Spectral radius of the lst run'.format(spec_rad))
-
-#print(scalar_flux)
+therefore.MovieMaker(scalar_flux, L)
 
 co = ['-k','-r','-b','-g','-m','-y', '-c', '-k','-r','-b','-g','-m','-y', '-c', '-k','-r','-b','-g','-m','-y', '-c','-k','-r','-b','-g','-m','-y', '-c']
 print(co[7])
@@ -95,7 +87,8 @@ plt.figure(f)
 plt.plot(x, np.sum(inital_angular_flux, axis=0), '-k')
 for t in range(N_time):
     #ana = 2*analiticalSoultion(dt*(t+1), xsec, in_an_flux, source_mat, 1)
-    flatLinePlot(X, scalar_flux[:,t], co[t])
+    #flatLinePlot(X, scalar_flux[:,t], co[t])
+    plt.plot(x, scalar_flux[:,t])
     #plt.plot(5, ana, '^'+co[t])
     #flatLinePlot(X[N_mesh-10:N_mesh+11], scalar_flux[N_mesh-10:N_mesh+10,t], co[t])
 plt.title('Infinte Med')

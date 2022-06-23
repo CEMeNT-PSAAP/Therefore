@@ -8,6 +8,7 @@ __pycache__/
 *.npz
 *.png
 *.out
+*.gif
 
 # C extensions
 *.so
