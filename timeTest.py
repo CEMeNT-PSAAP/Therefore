@@ -48,7 +48,9 @@ psi_in = source_mat / (xsec*(1-ratio)/2)
 #setup = np.linspace(0, np.pi, 2*N_mesh)
 inital_angular_flux = np.zeros([N_angle, 2*N_mesh])
 in_mid = np.ones(N_angle)
-for i in range(int(.45*N_mesh*2), int(.55*N_mesh*2), 1):
+
+#inital_angular_flux[:,N_mesh] = in_mid
+for i in range(int(.48*N_mesh*2), int(.52*N_mesh*2), 1):
     inital_angular_flux[:,i] = in_mid
 
 #inital_angular_flux = np.array([[np.sin(setup)],[np.sin(setup)]]).reshape(2,200) #[:,:N_mesh]
