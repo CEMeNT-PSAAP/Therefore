@@ -14,9 +14,8 @@ import therefore.src as src
 import os
 import sys
 import scipy as sci
-import math
 
-def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, ang_flux_last=None, ret_angflux=False):
+def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, time_dependent_mode=False):
     ''' Return converged scalar flux and current
     
     Implementation of simple corner balance source itterations
@@ -28,8 +27,7 @@ def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_m
     #        print(line.strip())
     
     #Inputs: sets inputs from sim_perams tuple
-    order_gauss_quad = sim_perams['N_angles']
-    N_angles = order_gauss_quad
+    N_angles = sim_perams['N_angles']
     
     data_type = sim_perams['data_type']
     
@@ -40,26 +38,29 @@ def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_m
     left_in_angle = sim_perams['left_in_angle']
     right_in_angle = sim_perams['right_in_angle']
     L = sim_perams['L']
-    N_mesh = sim_perams['N_mesh']
+    N_mesh = int(sim_perams['N_mesh'])
+    N = int(2*N_mesh)
     
     #snag some GL angles
-    [angles_gq, weights_gq] = np.polynomial.legendre.leggauss(order_gauss_quad)
+    [angles_gq, weights_gq] = np.polynomial.legendre.leggauss(N_angles)
     
     #initilize some numpy soultion and problem space arrays
-    angular_flux = np.zeros([order_gauss_quad, int(N_mesh*2)], data_type)
-    angular_flux_next = np.zeros([order_gauss_quad, int(N_mesh*2)], data_type)
-    angular_flux_last = np.zeros([order_gauss_quad, int(N_mesh*2)], data_type)
+    angular_flux = np.zeros([N_angles, N], data_type)
     
-    scalar_flux  = np.zeros(int(N_mesh*2), data_type)
-    scalar_flux_next = np.zeros(int(N_mesh*2), data_type)
-    scalar_flux_last =  np.zeros(int(N_mesh*2), data_type)
+    scalar_flux  = np.zeros(N, data_type)
+    scalar_flux_next = np.zeros(N, data_type)
+    scalar_flux_last =  np.zeros(N, data_type)
 
     source_converged = False
     source_counter = 0
     no_convergence = False
     spec_rad = 0
     
+    if time_dependent_mode==False:
+        source_mesh = SourceMeshTransform(source_mesh, N_angles)
     
+    assert (source_mesh.shape[0] == N_angles)
+    assert (source_mesh.shape[1] == N)
     
     while source_converged == False:
         
@@ -106,13 +107,9 @@ def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_m
         scalar_flux = scalar_flux_next
         source_counter += 1
         
-        
-    #print()
-    #print(source_counter)#spec_rad, no_convergence
-    #print()scalar_flux, current
     
-    if ret_angflux == True:
-        scalar_flux = angular_flux_next
+    if time_dependent_mode:
+        scalar_flux = angular_flux
     
     return(scalar_flux, current, spec_rad, source_converged)
 
@@ -120,7 +117,7 @@ def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_m
 
 
 
-def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, Q_tilde_modifier=None, time_dependent_mode=False):
+def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, time_dependent_mode=False):
     ''' Return converged scalar flux and current
     
     Implementation of simple corner balance source itterations
@@ -214,7 +211,7 @@ def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, Q_tilde_
         scalar_flux = scalar_flux_next
         source_counter += 1
     
-    #print(source_counter)
+    print(source_counter)
     #spec_rad, no_convergence
     
     if time_dependent_mode: #for time dependence

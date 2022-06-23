@@ -3,7 +3,7 @@ from .itterationSchemes import SourceItteration, OCI
 import therefore.src as src
 from timeit import default_timer as timer
 
-def TimeLoop(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source, theta=1):
+def TimeLoop(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source, theta=1, backend='OCI'):
     velocity = sim_perams['velocity']
     dt = sim_perams['dt']
     N_time = sim_perams['N_time']
@@ -34,8 +34,18 @@ def TimeLoop(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_m
         
         
         start = timer()
-        [angular_flux_total[:,:,t], current_total[:,t], spec_rad[t], source_converged] = OCI(sim_perams, dx_mesh, xsec_mesh_t, xsec_scatter_mesh, source_mesh_tilde, angular_flux_last, True)
+        
+        if (backend == 'OCI'):
+            [angular_flux_total[:,:,t], current_total[:,t], spec_rad[t], source_converged] = OCI(sim_perams, dx_mesh, xsec_mesh_t, xsec_scatter_mesh, source_mesh_tilde, True)
+        elif (backend == 'SI'):
+            [angular_flux_total[:,:,t], current_total[:,t], spec_rad[t], source_converged] = SourceItteration(sim_perams, dx_mesh, xsec_mesh_t, xsec_scatter_mesh, source_mesh_tilde, True)
+        else:
+            print('>>>ERROR: NO Backend provided')
+            print('     select between OCI and SI!')
+            print()
+            
         end = timer()
+        
         
         if source_converged == False:
             print()

@@ -2,7 +2,7 @@ import numpy as np
 import numba as nb
 
 #Simple Corner balence sweep
-@nb.jit(nopython=True, parallel=False)
+@nb.jit(nopython=True, parallel=True)
 def SCBRun(Q, xsec, dx, mu, BCl, BCr, N_mesh):
     '''Return angular flux
     
@@ -23,7 +23,7 @@ def SCBRun(Q, xsec, dx, mu, BCl, BCr, N_mesh):
                 else:
                     psi_ph = angular_flux[angle, 2*(i+1)]
                 
-                [angular_flux[angle, 2*i], angular_flux[angle, 2*i+1]]  = SCBKernel_Linalg_rtol(Q[2*i], Q[2*i+1], psi_ph, xsec[i], dx[i], mu[angle]) 
+                [angular_flux[angle, 2*i], angular_flux[angle, 2*i+1]]  = SCBKernel_Linalg_rtol(Q[angle, 2*i], Q[angle, 2*i+1], psi_ph, xsec[i], dx[i], mu[angle]) 
                 
         else: #goin forward
             for i in range(N_mesh):
@@ -33,7 +33,7 @@ def SCBRun(Q, xsec, dx, mu, BCl, BCr, N_mesh):
                 else:
                     psi_mh = angular_flux[angle, 2*(i-1)+1]
                 
-                [angular_flux[angle, 2*i], angular_flux[angle, 2*i+1]] = SCBKernel_Linalg_ltor(Q[2*i], Q[2*i+1], psi_mh, xsec[i], dx[i], mu[angle])
+                [angular_flux[angle, 2*i], angular_flux[angle, 2*i+1]] = SCBKernel_Linalg_ltor(Q[angle, 2*i], Q[angle, 2*i+1], psi_mh, xsec[i], dx[i], mu[angle])
                 
     return(angular_flux)
     

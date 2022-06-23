@@ -23,14 +23,14 @@ def flatLinePlot(x, y, dat):
 data_type = np.float64
 
 L = 10
-dx = .01
+dx = .1
 xsec = 1
 ratio = 0.9
 scattering_xsec = xsec*ratio
 source_mat = 0
 #source_a = 2
 N_mesh = int(L/dx)
-N_angle = 2
+N_angle = 64
 
 dt = .1
 max_time = 10
@@ -60,8 +60,8 @@ sim_perams = {'data_type': data_type,
               'N_angles': N_angle,
               'L': L,
               'N_mesh': N_mesh,
-              'boundary_condition_left':  'reflecting',
-              'boundary_condition_right': 'reflecting',
+              'boundary_condition_left':  'vacuum',
+              'boundary_condition_right': 'vacuum',
               'left_in_mag': 10,
               'right_in_mag': 10,
               'left_in_angle': .3,
@@ -73,38 +73,9 @@ sim_perams = {'data_type': data_type,
               'N_time': N_time}
 
 theta = 1 #for discrete diamond
-[scalar_flux, current, spec_rads] = therefore.TimeLoop(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, theta)
+[scalar_flux, current, spec_rads] = therefore.TimeLoop(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, theta, 'SI')
+[scalar_flux2, current, spec_rads] = therefore.TimeLoop(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, theta, 'OCI')
 
-therefore.MovieMaker(scalar_flux, L)
+np.savez('outputs.npz')
 
-co = ['-k','-r','-b','-g','-m','-y', '-c', '-k','-r','-b','-g','-m','-y', '-c', '-k','-r','-b','-g','-m','-y', '-c','-k','-r','-b','-g','-m','-y', '-c']
-print(co[7])
-
-f=1
-X = np.linspace(0, L, int(N_mesh*2+1))
-x = np.linspace(0, L, int(N_mesh*2))
-plt.figure(f)
-plt.plot(x, np.sum(inital_angular_flux, axis=0), '-k')
-for t in range(N_time):
-    #ana = 2*analiticalSoultion(dt*(t+1), xsec, in_an_flux, source_mat, 1)
-    #flatLinePlot(X, scalar_flux[:,t], co[t])
-    plt.plot(x, scalar_flux[:,t])
-    #plt.plot(5, ana, '^'+co[t])
-    #flatLinePlot(X[N_mesh-10:N_mesh+11], scalar_flux[N_mesh-10:N_mesh+10,t], co[t])
-plt.title('Infinte Med')
-plt.xlabel('Distance')
-plt.ylabel('Scalar Flux')
-#plt.ylim([0,1.25*np.max(scalar_flux)]) #1.25*np.max(scalar_flux)
-plt.show()
-
-'''
-f+=1
-plt.figure(f)
-plt.title('Infinte Med')
-plt.xlabel('Distance')
-plt.ylabel('Current')
-plt.ylim([-1,1])
-flatLinePlot(X, current)
-plt.show()
-#launch source itterations #SourceItteration
-'''
+therefore.MovieMaker(scalar_flux, scalar_flux2, L)
