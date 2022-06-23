@@ -49,9 +49,24 @@ psi_in = source_mat / (xsec*(1-ratio)/2)
 inital_angular_flux = np.zeros([N_angle, 2*N_mesh])
 in_mid = np.ones(N_angle)
 
+
+
+[angles_gq, weights_gq] = np.polynomial.legendre.leggauss(N_angle)
+xm = np.linspace(-L/2,L/2, N_ans+1)
+inital_scalar_flux = therefore.azurv1_spav(xm, 0.9, 0.01)
+inital_scalar_flux /= sum(weights_gq)
+
+assert(inital_scalar_flux.size == N_ans)
+
+inital_angular_flux = np.zeros([N_angle, N_ans], data_type)
+for i in range(N_angle):
+    inital_angular_flux[i, :] = inital_scalar_flux
+
+
+
 #inital_angular_flux[:,N_mesh] = in_mid
-for i in range(int(.48*N_mesh*2), int(.52*N_mesh*2), 1):
-    inital_angular_flux[:,i] = in_mid
+#for i in range(int(.48*N_mesh*2), int(.52*N_mesh*2), 1):
+#    inital_angular_flux[:,i] = in_mid
 
 #inital_angular_flux = np.array([[np.sin(setup)],[np.sin(setup)]]).reshape(2,200) #[:,:N_mesh]
 

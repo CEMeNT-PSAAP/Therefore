@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from .azurv1 import azurv1
+from .azurv1 import azurv1_spav
 
 def MovieMaker(scalar_flux, scalar_flux2, L, FLP=False):
     '''You like Qinton Ternintino? Damn, we didn't measure this in feet
@@ -16,7 +16,7 @@ def MovieMaker(scalar_flux, scalar_flux2, L, FLP=False):
     
     t = np.linspace(0, 10, N_time+1)
     x = np.linspace(0, L, int(N_mesh))
-    x_eval = np.linspace(-L/2, L/2, int(N_mesh))
+    x_eval = np.linspace(-L/2, L/2, int(N_mesh+1))
     
     fig,ax = plt.subplots() #plt.figure(figsize=(6,4))
     
@@ -27,14 +27,14 @@ def MovieMaker(scalar_flux, scalar_flux2, L, FLP=False):
     
     line1, = ax.plot(x, scalar_flux[:,0], '-k',label="Therefore SI")
     line2, = ax.plot(x, scalar_flux2[:,0],'-r',label="Therefore OCI")
-    line3, = ax.plot(x, azurv1(x_eval, .9, 0), '--b',label="AZURV1")
+    line3, = ax.plot(x, azurv1_spav(x_eval, .9, 0.01), '--b',label="AZURV1")
     text   = ax.text(0.02, 0.9, '', transform=ax.transAxes)
     ax.legend()  
           
     def animate(k):
         line1.set_ydata(scalar_flux[:,k])
         line2.set_ydata(scalar_flux2[:,k])
-        line3.set_ydata(azurv1(x_eval, .9, .1*k))
+        line3.set_ydata(azurv1_spav(x_eval, .9, .1*k+.01))
         text.set_text(r'$t \in [%.1f,%.1f]$ s'%(t[k],t[k+1]))
         return line1, line2, line3, #, text
     
