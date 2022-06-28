@@ -4,6 +4,14 @@ import scipy.integrate as inter
 
 #thanks Aaron!
 
+def whole_sim(t_init, t_final, dt, x_init, x_final, dx, c):
+	
+	
+	
+	return(scalar_flux)
+
+
+
 def azurv1(x, c, t):
     '''Produce the anaylitical soultion for a vector
     returns a vector
