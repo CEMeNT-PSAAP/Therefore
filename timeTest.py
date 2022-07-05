@@ -23,7 +23,7 @@ def flatLinePlot(x, y, dat):
 data_type = np.float64
 
 L = 10
-dx = .1
+dx = 0.01
 xsec = 1
 ratio = 0.9
 scattering_xsec = xsec*ratio
@@ -33,7 +33,7 @@ N_mesh = int(L/dx)
 N_angle = 64
 
 dt = .1
-max_time = 10
+max_time = .2
 N_time = int(max_time/dt)
 N_ans = 2*N_mesh
 
@@ -50,17 +50,16 @@ inital_angular_flux = np.zeros([N_angle, 2*N_mesh])
 in_mid = np.ones(N_angle)
 
 
-
 [angles_gq, weights_gq] = np.polynomial.legendre.leggauss(N_angle)
 xm = np.linspace(-L/2,L/2, N_ans+1)
 inital_scalar_flux = therefore.azurv1_spav(xm, 0.9, 0.01)
-inital_scalar_flux /= sum(weights_gq)
 
 assert(inital_scalar_flux.size == N_ans)
 
 inital_angular_flux = np.zeros([N_angle, N_ans], data_type)
+total_weight = sum(weights_gq)
 for i in range(N_angle):
-    inital_angular_flux[i, :] = inital_scalar_flux
+    inital_angular_flux[i, :] = inital_scalar_flux / total_weight
 
 
 
@@ -93,6 +92,24 @@ theta = 1 #for discrete diamond
 [scalar_flux, current, spec_rads] = therefore.TimeLoop(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, theta, 'SI')
 [scalar_flux2, current, spec_rads] = therefore.TimeLoop(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, theta, 'OCI')
 
+N_ans = N_mesh * 2
+x = np.linspace(0, L, int(N_ans))
+x_eval = np.linspace(-L/2, L/2, int(N_ans+1))
+
+plt.figure(4)
+plt.plot(x, scalar_flux[:,0] , '-k', label='SI')
+plt.plot(x, scalar_flux2[:,0], '-r', label='OCI')
+plt.plot(x, therefore.azurv1_spav(x_eval, ratio, 0.01+dt),'--k', label='AVURV1')
+plt.plot(x, inital_scalar_flux, '-b', label='Initial Condition')
+plt.xlabel('Distance [cm]')
+plt.ylabel('Scalar Flux [units of scalar flux]')
+plt.title('First time step of transient methods')
+plt.xlim(4.75,5.25)
+plt.legend()
+plt.show()
+
+
+
 np.savez('outputs.npz')
 
-therefore.MovieMaker(scalar_flux, scalar_flux2, L)
+#therefore.MovieMaker(scalar_flux, scalar_flux2, L)
