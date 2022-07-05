@@ -52,7 +52,7 @@ def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_m
     scalar_flux_last =  np.zeros(N, data_type)
 
     source_converged = False
-    source_counter = 0
+    source_counter: int = 0
     no_convergence = False
     spec_rad = 0
     
@@ -93,7 +93,7 @@ def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_m
         
         
         #check for convergence
-        source_converged = src.HasItConverged(scalar_flux_next, scalar_flux)
+        #source_converged = src.HasItConverged(scalar_flux_next, scalar_flux)
         
         #if stuck, display error then cut n run
         if source_counter > 10000:
@@ -107,6 +107,7 @@ def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_m
         scalar_flux = scalar_flux_next
         source_counter += 1
         
+    print()
     
     if time_dependent_mode:
         scalar_flux = angular_flux
@@ -174,9 +175,9 @@ def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, time_dep
     assert (source_mesh.shape[1] == N)
     
     while source_converged == False:
-        print()
-        print('NEXT ITTERATION')
-        print()
+        #print()
+        #print('NEXT ITTERATION')
+        #print()
         #print('Next Itteration: {0}'.format(source_counter),end='\r')
         
         #detemine bounds bounds for next itteration

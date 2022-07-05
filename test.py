@@ -34,15 +34,15 @@ psi_in = source_mat / (xsec*(1-ratio)/2)
 print(psi_in)
 
 sim_perams = {'data_type': data_type,
-              'N_angles': 2,
+              'N_angles: 2,
               'L': L,
               'N_mesh': N_mesh,
               'boundary_condition_left':  'incident_iso',
-              'boundary_condition_right': 'vacuum',
+              'boundary_condition_right': 'incident_iso',
               'left_in_mag': 10,
               'right_in_mag': 10,
               'left_in_angle': .3,
-              'right_in_angle': 0,
+              'right_in_angle': 1,
               'max loops': 10000}
 
 [scalar_flux, current, spec_rad, conver] = therefore.OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh)
@@ -58,13 +58,13 @@ print()
 print(scalar_flux2)
 
 f=1
-X = np.linspace(0, L, int(N_mesh*2+1))
+X = np.linspace(0, L, int(N_mesh*2))
 plt.figure(f)
-flatLinePlot(X, scalar_flux[0,:], '-*k')
-flatLinePlot(X, scalar_flux[1,:], '--*k')
-flatLinePlot(X, scalar_flux2[0,:], '-r')
-flatLinePlot(X, scalar_flux2[1,:], '--r')
-plt.title('Infinte Med')
+plt.plot(X, scalar_flux[0,:], '-*k')
+plt.plot(X, scalar_flux[1,:], '--*k')
+plt.plot(X, scalar_flux2[0,:], '-r')
+plt.plot(X, scalar_flux2[1,:], '--r')
+plt.title('Test Flux')
 plt.xlabel('Distance')
 plt.ylabel('Scalar Flux')
 plt.show()
