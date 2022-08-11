@@ -19,7 +19,7 @@ data_type = np.float64
 L = 3
 dx = 1
 xsec = 10
-ratio = 0.5
+ratio = 0.999
 scattering_xsec = xsec*ratio
 source_mat = 0
 source_a = 2
@@ -34,7 +34,7 @@ psi_in = source_mat / (xsec*(1-ratio)/2)
 print(psi_in)
 
 sim_perams = {'data_type': data_type,
-              'N_angles: 2,
+              'N_angles': 2,
               'L': L,
               'N_mesh': N_mesh,
               'boundary_condition_left':  'incident_iso',
@@ -60,6 +60,18 @@ print(scalar_flux2)
 f=1
 X = np.linspace(0, L, int(N_mesh*2))
 plt.figure(f)
+plt.plot(X, scalar_flux[0,:],  '-*k',  label='OCI 1')
+plt.plot(X, scalar_flux[1,:],  '--*k', label='OCI 2')
+plt.plot(X, scalar_flux2[0,:], '-r',  label='SI 1')
+plt.plot(X, scalar_flux2[1,:], '--r', label='SI 2')
+plt.title('Test Flux')
+plt.xlabel('Distance')
+plt.ylabel('Angular Flux')
+plt.savefig('Test Acalar flux')
+'''
+f+=1
+X = np.linspace(0, L, int(N_mesh*2))
+plt.figure(f)
 plt.plot(X, scalar_flux[0,:], '-*k')
 plt.plot(X, scalar_flux[1,:], '--*k')
 plt.plot(X, scalar_flux2[0,:], '-r')
@@ -67,8 +79,7 @@ plt.plot(X, scalar_flux2[1,:], '--r')
 plt.title('Test Flux')
 plt.xlabel('Distance')
 plt.ylabel('Scalar Flux')
-plt.show()
-'''
+plt.savefig('Test Scalar flux')
 f+=1
 plt.figure(f)
 plt.title('Infinte Med')

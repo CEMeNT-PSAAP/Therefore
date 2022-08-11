@@ -61,7 +61,7 @@ def SCB_OneCellInv_Cell(in_angular_flux, source, xsec, xsec_scatter, dx, mu, wei
         b[2*i] =   (source[i,0]*dx)/2 - (mu[i] * in_angular_flux[i])
         b[2*i+1] = (source[i,1]*dx)/2
     
-    #positive ordinants
+    # positive ordinants
     for i in range(half, n_angle, 1): 
         A[2*i, 2*i] = mu[i]/2 + alpha
         A[2*i, 2*i+1] = mu[i]/2
@@ -71,7 +71,7 @@ def SCB_OneCellInv_Cell(in_angular_flux, source, xsec, xsec_scatter, dx, mu, wei
         b[2*i] =   (source[i,0]*dx)/2 + (mu[i] * in_angular_flux[i])
         b[2*i+1] = (source[i,1]*dx)/2
         
-    #scalar flux
+    # scalar flux
     for k in range (0, n_angle):
         for i in range (0, n_angle):
             A[2*k,2*i]     -= const*weight[i]
