@@ -159,9 +159,6 @@ def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, time_dep
     scalar_flux_next  = np.ones(int(N), data_type)
     scalar_flux_last  = np.ones(int(N), data_type)
     
-    angular_flux_next = np.zeros([order_gauss_quad, int(N)], data_type)
-    angular_flux_last = np.zeros([order_gauss_quad, int(N)], data_type)
-    
     no_convergence = False
     source_converged = False
     source_counter = 0
@@ -193,7 +190,7 @@ def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, time_dep
         # calculate scalar flux for next itteration
         scalar_flux_next = src.ScalarFlux(angular_flux_next, weights_gq)
         
-        if source_counter > 500:
+        if source_counter > 2:
             #check for convergence
             source_converged = src.HasItConverged(scalar_flux_next, scalar_flux)
             spec_rad = np.linalg.norm(angular_flux_next - angular_flux, ord=2) / np.linalg.norm((angular_flux - angular_flux_last), ord=2)

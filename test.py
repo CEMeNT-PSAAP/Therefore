@@ -19,7 +19,7 @@ data_type = np.float64
 L = 3
 dx = 1
 xsec = 10
-ratio = 0.999
+ratio = 0.5
 scattering_xsec = xsec*ratio
 source_mat = 0
 source_a = 2
@@ -67,7 +67,7 @@ plt.plot(X, scalar_flux2[1,:], '--r', label='SI 2')
 plt.title('Test Flux')
 plt.xlabel('Distance')
 plt.ylabel('Angular Flux')
-plt.savefig('Test Acalar flux')
+plt.savefig('Test Angular flux')
 '''
 f+=1
 X = np.linspace(0, L, int(N_mesh*2))
