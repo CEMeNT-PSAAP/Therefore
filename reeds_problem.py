@@ -135,15 +135,15 @@ for i in range(N_mesh):
 x_plot[-1] = 8.00001
 
 #scalar_flux2 /= 2
-
+'''
 xx = np.linspace(0,4,32)
 plt.figure(1)
 plt.plot(xx, angular_flux_si[0,:32]- angular_flux_oci[0,:32], label='Angle 1')
 plt.plot(xx, angular_flux_si[1,:32]- angular_flux_oci[1,:32], label='Angle 2')
 plt.legend()
 plt.show()
-
 '''
+
 f = 1
 plt.figure(f)
 flatLinePlot(x_plot, scalar_flux, '-k')
@@ -157,6 +157,8 @@ plt.ylim([0,8])
 plt.title('Problem 2: Reeds Problem')
 plt.xlabel('Distance [cm]')
 plt.ylabel('Scalar Flux')
+
+'''
 top = max(scalar_flux)*1.25
 plt.ylim([0,top])
 plt.plot([0,4])
@@ -183,8 +185,9 @@ plt.text(6.1,top-4.5, ('S: {}, dx: {}'.format(Source[r], dx[r])))
 plt.text(7, top, '{}'.format(region_id[r]))
 
 #plt.legend()
-plt.show()
 '''
+plt.show()
+
 '''
 f = 2
 plt.figure(f)

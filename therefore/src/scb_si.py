@@ -46,8 +46,8 @@ def SCBKernel_Linalg_ltor(Q_r, Q_l, psi_mh, xsec, dx, mu):
     A = np.array([[mannaz, mu/2],
                   [-mu/2, mannaz]])
     
-    b = np.array([[dx*Q_l/2  + mu*psi_mh],
-                  [dx*Q_r/2]])
+    b = np.array([[dx*Q_l/4  + mu*psi_mh],
+                  [dx*Q_r/4]])
     
     [psi_l, psi_r] = np.linalg.solve(A,b)
     
@@ -62,8 +62,8 @@ def SCBKernel_Linalg_rtol(Q_r, Q_l, psi_ph, xsec, dx, mu):
     A = np.array([[mannaz, mu/2],
                   [-mu/2, mannaz]])
     
-    b = np.array([[dx/2*Q_l],
-                  [dx/2*Q_r - mu*psi_ph]])
+    b = np.array([[dx/4*Q_l],
+                  [dx/4*Q_r - mu*psi_ph]])
     
     [psi_l, psi_r] = np.linalg.solve(A,b)
     

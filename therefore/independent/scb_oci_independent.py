@@ -15,8 +15,6 @@ S = 0
 BCl = 10
 BCr = 10
 
-#print('Fuck')
-
 angular_flux      = np.zeros([2, int(N_mesh)])
 angular_flux_next = np.zeros([2, int(N_mesh)])
 angular_flux_last = np.zeros([2, int(N_mesh)])
@@ -48,26 +46,26 @@ while error > tol or max_itter < itter:
         A = np.zeros([4,4])
         b = np.zeros([4,1])
 
-        A = np.array([[-mu1/2 - w1*manaz, -mu1/2 + gamma,    -w2*manaz,                0],
-                      [-mu1/2 + gamma,    mu1/2 - w1*manaz,  0,                        -w2*manaz],
-                      [-w1*manaz,         0,                 mu2/2 + gamma - w2*manaz, mu2/2],
-                      [0,                 -w1*manaz,         -mu2/2,                   mu2/2 + gamma - w2*manaz]])
+        A = np.array([[-mu1/2 - w1*manaz + gamma, mu1/2,                    -w2*manaz,                 0],
+                      [-mu1/2,                    -mu1/2 - w1*manaz + gamma,  0,                       -w2*manaz],
+                      [-w1*manaz,                 0,                         mu2/2 + gamma - w2*manaz, mu2/2],
+                      [0,                         -w1*manaz,                 -mu2/2,                   mu2/2 + gamma - w2*manaz]])
 
         if i == 0: #left bc
-            b = np.array([[dx/2*S - mu1 * angular_flux[0, i*2+2]],
-                          [dx/2*S],
-                          [dx/2*S + mu2 * BCl],
-                          [dx/2*S]])
+            b = np.array([[dx/4*S],
+                          [dx/4*S - mu1 * angular_flux[0, i*2+2]],
+                          [dx/4*S + mu2 * BCl],
+                          [dx/4*S]])
         elif i == N-1: #right bc
-            b = np.array([[dx/2*S - mu1 * BCr],
-                          [dx/2*S],
-                          [dx/2*S + mu2 * angular_flux[1, i*2-1]],
-                          [dx/2*S]])
+            b = np.array([[dx/4*S],
+                          [dx/4*S - mu1 * BCr],
+                          [dx/4*S + mu2 * angular_flux[1, i*2-1]],
+                          [dx/4*S]])
         else: #mid communication
-            b = np.array([[dx/2*S - mu1 * angular_flux[0, i*2+2]],
-                          [dx/2*S],
-                          [dx/2*S + mu2 * angular_flux[1, i*2-1]],
-                          [dx/2*S]])
+            b = np.array([[dx/4*S],
+                          [dx/4*S - mu1 * angular_flux[0, i*2+2]],
+                          [dx/4*S + mu2 * angular_flux[1, i*2-1]],
+                          [dx/4*S]])
         
         print("Large cell %d".format(i))
         print(b)
