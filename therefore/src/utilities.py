@@ -20,12 +20,13 @@ def HasItConverged(a, b, tol=1e-16):
    return(close)
    
 def RHSTransport(scalar_flux, scattering_xsec, source, N_mesh, dx):
-    N = source.shape[1]
-    N_angle = source.shape[0]
-    
-    Q = np.zeros([N_angle, N])
+    N = source.shape[0]
+    #N_angle = source.shape[0]
+    #print(source.shape)
+    #print(scalar_flux.shape)
+    Q = np.zeros([N])
     for i in range(N):
-        for j in range(N_angle):
-            Q[j,i] = scalar_flux[i] * scattering_xsec[int(i/2)]/2 + (source[j,i])
+        #for j in range(N_angle):
+        Q[i] = scalar_flux[i] * scattering_xsec[int(i/2)]/2 + (source[i])
     return(Q)
     

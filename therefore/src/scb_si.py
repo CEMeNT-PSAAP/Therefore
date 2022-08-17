@@ -23,48 +23,50 @@ def SCBRun(Q, xsec, dx, mu, BCl, BCr, N_mesh):
                 else:
                     psi_ph = angular_flux[angle, 2*(i+1)]
                 
-                [angular_flux[angle, 2*i], angular_flux[angle, 2*i+1]]  = SCBKernel_Linalg_rtol(Q[angle, 2*i], Q[angle, 2*i+1], psi_ph, xsec[i], dx[i], mu[angle]) 
+                [angular_flux[angle, 2*i], angular_flux[angle, 2*i+1]]  = SCBKernel_Linalg_rtol(Q[i], Q[i], psi_ph, xsec[i], dx[i], mu[angle]) 
                 
         else: #goin forward
             for i in range(N_mesh):
                 #check bound
                 if i == 0:
-                    psi_mh = BCl[angle] #
+                    psi_mh = BCl[angle] 
                 else:
                     psi_mh = angular_flux[angle, 2*(i-1)+1]
                 
-                [angular_flux[angle, 2*i], angular_flux[angle, 2*i+1]] = SCBKernel_Linalg_ltor(Q[angle, 2*i], Q[angle, 2*i+1], psi_mh, xsec[i], dx[i], mu[angle])
+                [angular_flux[angle, 2*i], angular_flux[angle, 2*i+1]] = SCBKernel_Linalg_ltor(Q[i], Q[i], psi_mh, xsec[i], dx[i], mu[angle])
                 
     return(angular_flux)
-    
+
 #@nb.njit
-def SCBKernel_Linalg_ltor(Q_r, Q_l, psi_mh, xsec, dx, mu):
-    '''SCB going from the left to the right (mu>0)'''
+def SCBKernel_Linalg_rtol(Q_r, Q_l, psi_ph, xsec, dx, mu):
+    '''SCB going from right to the left (mu<0)'''
     
-    mannaz = mu/2 + (xsec*dx)/2
+    #mannaz = xsec*dx/2 - mu/2
     
-    A = np.array([[mannaz, mu/2],
-                  [-mu/2, mannaz]])
+    A = np.array([[xsec*dx/2 - mu/2, mu/2],
+                  [-mu/2,            xsec*dx/2 - mu/2]])
     
-    b = np.array([[dx*Q_l/4  + mu*psi_mh],
-                  [dx*Q_r/4]])
+    b = np.array([[dx/2*Q_l],
+                  [dx/2*Q_r - mu*psi_ph]])
     
     [psi_l, psi_r] = np.linalg.solve(A,b)
     
     return(psi_l[0], psi_r[0])
 
 #@nb.njit
-def SCBKernel_Linalg_rtol(Q_r, Q_l, psi_ph, xsec, dx, mu):
-    '''SCB going from right to the left (mu<0)'''
+def SCBKernel_Linalg_ltor(Q_r, Q_l, psi_mh, xsec, dx, mu):
+    '''SCB going from the left to the right (mu>0)'''
     
-    mannaz = xsec*dx/2 - mu/2 
+    #mannaz = mu/2 + (xsec*dx)/2
     
-    A = np.array([[mannaz, mu/2],
-                  [-mu/2, mannaz]])
+    A = np.array([[(xsec*dx)/2 + mu/2, mu/2],
+                  [-mu/2,              (xsec*dx)/2 + mu/2]])
     
-    b = np.array([[dx/4*Q_l],
-                  [dx/4*Q_r - mu*psi_ph]])
+    b = np.array([[dx*Q_l/2  + mu*psi_mh],
+                  [dx*Q_r/2]])
     
     [psi_l, psi_r] = np.linalg.solve(A,b)
     
     return(psi_l[0], psi_r[0])
+
+
