@@ -22,9 +22,11 @@ def OCIRun(angular_flux, source, xsec, xsec_scatter, dx, mu, weight, BCl, BCr):
         if i == n_mesh-1:   #RHS BC
             in_ang_flux[half:] = angular_flux[half:,-3]
             in_ang_flux[:half] = BCr[:half]
+            print(in_ang_flux)
         elif i == 0:        #LHS BC
             in_ang_flux[half:] = BCl[half:]
             in_ang_flux[:half] = angular_flux[:half,2]
+            print(in_ang_flux)
         else:               #interior cell
             in_ang_flux[half:] = angular_flux[half:,i*2-1] #left
             in_ang_flux[:half] = angular_flux[:half,i*2+2] #right
@@ -50,7 +52,7 @@ def SCB_OneCellInv_Cell(in_angular_flux, source, xsec, xsec_scatter, dx, mu, wei
     const = (xsec_scatter*dx)/4
     
     alpha = xsec*dx/2
-    
+    #'''
     #negative ordinants
     for i in range(half): 
         A[2*i, 2*i] = -mu[i]/2
@@ -58,30 +60,26 @@ def SCB_OneCellInv_Cell(in_angular_flux, source, xsec, xsec_scatter, dx, mu, wei
         A[2*i+1, 2*i] = -mu[i]/2 + alpha
         A[2*i+1, 2*i+1] = mu[i]/2
         
-        b[2*i] =   (source[i,0]*dx)/2 - (mu[i] * in_angular_flux[i])
-        b[2*i+1] = (source[i,1]*dx)/2
+        b[2*i] =   source[i,0]*(dx/2) - (mu[i] * in_angular_flux[i])
+        b[2*i+1] = source[i,1]*(dx/2)
     
     #positive ordinants
     for i in range(half, n_angle, 1): 
-        A[2*i, 2*i] = mu[i]/2 + alpha
+        A[2*i, 2*i]   = mu[i]/2 + alpha
         A[2*i, 2*i+1] = mu[i]/2
         A[2*i+1, 2*i] = -mu[i]/2
         A[2*i+1, 2*i+1] = mu[i]/2 + alpha
     	
-        b[2*i] =   (source[i,0]*dx)/2 + (mu[i] * in_angular_flux[i])
-        b[2*i+1] = (source[i,1]*dx)/2
-        
+        b[2*i] =   source[i,0]*(dx/2) + (mu[i] * in_angular_flux[i])
+        b[2*i+1] = source[i,1]*(dx/2)
+        #'''
     #scalar flux
     for k in range (0, n_angle):
         for i in range (0, n_angle):
-            A[2*k,2*i]     -= const*weight[i]
-            A[2*k+1,2*i+1] -= const*weight[i]
+            A[2*k,2*i]     += -weight[i] * (dx*xsec_scatter/4)
+            A[2*k+1,2*i+1] += -weight[i] * (dx*xsec_scatter/4)
     
     #print(A)
-    #print()
-    #print()
-    #print(b)
-    
     next_angflux = np.linalg.solve(A, b).reshape((-1, 2))
     
     return(next_angflux)
@@ -97,7 +95,7 @@ def neg_flux_fixup(next_angflux):
 if __name__ == '__main__':
     angular_flux  = np.array([[1,0],[0,0]])
     xsec = 1
-    xsec_scatter = 1
+    xsec_scatter = .5
     dx = 2
     mu = np.array([-.235,.235])
     weights = np.array([1,1])

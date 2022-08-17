@@ -70,6 +70,12 @@ def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_m
         BCl = src.BoundaryCondition(boundary_condition_left,   0, N_mesh, angular_flux=angular_flux, incident_flux_mag=left_in_mag,  angle=left_in_angle,  angles=angles_gq)
         BCr = src.BoundaryCondition(boundary_condition_right, -1, N_mesh, angular_flux=angular_flux, incident_flux_mag=right_in_mag, angle=right_in_angle, angles=angles_gq)
         
+        #BCr = [10,0]
+        #BCl = [0,10]
+        
+        print(BCl)
+        print(BCr)
+        
         #find RHS of transport (see problem assigment)
         Q = src.RHSTransport(scalar_flux, xsec_scatter_mesh, source_mesh, N_mesh, dx_mesh)
         
@@ -175,14 +181,17 @@ def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, time_dep
     assert (source_mesh.shape[1] == N)
     
     while source_converged == False:
-        #print()
-        #print('NEXT ITTERATION')
-        #print()
+        print()
+        print('NEXT ITTERATION')
+        print()
         #print('Next Itteration: {0}'.format(source_counter),end='\r')
         
         #detemine bounds bounds for next itteration
         BCl = src.BoundaryCondition(boundary_condition_left,   0, N_mesh, angular_flux=angular_flux, incident_flux_mag=left_in_mag, angle=left_in_angle, angles=angles_gq)
         BCr = src.BoundaryCondition(boundary_condition_right, -1, N_mesh, angular_flux=angular_flux, incident_flux_mag=right_in_mag, angle=right_in_angle, angles=angles_gq)
+        
+        #BCr = [0,0]
+        #BCl = [0,10]
         
         #simple corner balance to find angular flux for next itteration
         angular_flux_next = src.OCIRun(angular_flux, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles_gq, weights_gq, BCl, BCr)

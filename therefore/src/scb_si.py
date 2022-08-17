@@ -41,7 +41,7 @@ def SCBRun(Q, xsec, dx, mu, BCl, BCr, N_mesh):
 def SCBKernel_Linalg_ltor(Q_r, Q_l, psi_mh, xsec, dx, mu):
     '''SCB going from the left to the right (mu>0)'''
     
-    mannaz = mu/2 + xsec*dx/2
+    mannaz = mu/2 + (xsec*dx)/2
     
     A = np.array([[mannaz, mu/2],
                   [-mu/2, mannaz]])
