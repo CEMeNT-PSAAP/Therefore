@@ -26,7 +26,7 @@ def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_m
     #    for line in file:
     #        print(line.strip())
     
-    #Inputs: sets inputs from sim_perams tuple
+    # Inputs: sets inputs from sim_perams tuple
     N_angles = sim_perams['N_angles']
     
     data_type = sim_perams['data_type']
@@ -41,19 +41,19 @@ def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_m
     N_mesh = int(sim_perams['N_mesh'])
     N = int(2*N_mesh)
     
-    #snag some GL angles
+    # snag some GL angles
     [angles_gq, weights_gq] = np.polynomial.legendre.leggauss(N_angles)
     
-    #initilize some numpy soultion and problem space arrays
+    # initilize some numpy soultion and problem space arrays
     angular_flux = np.zeros([N_angles, N], data_type)
     
     scalar_flux  = np.zeros(N, data_type)
     scalar_flux_next = np.zeros(N, data_type)
     scalar_flux_last =  np.zeros(N, data_type)
 
-    source_converged = False
+    source_converged: bool = False
     source_counter: int = 0
-    no_convergence = False
+    no_convergence: bool = False
     spec_rad = 0
     
     if time_dependent_mode==False:
@@ -157,16 +157,13 @@ def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, time_dep
     N = 2*N_mesh 
     
     #initilize some numpy soultion and problem space arrays
-    angular_flux = np.zeros([order_gauss_quad, int(N)], data_type)
+    angular_flux      = np.zeros([order_gauss_quad, int(N)], data_type)
     angular_flux_next = np.zeros([order_gauss_quad, int(N)], data_type)
     angular_flux_last = np.zeros([order_gauss_quad, int(N)], data_type)
     
-    scalar_flux  = np.zeros(int(N), data_type)
+    scalar_flux      = np.zeros(int(N), data_type)
     scalar_flux_next  = np.ones(int(N), data_type)
-    scalar_flux_last = np.ones(int(N), data_type)
-    
-    angular_flux_next = np.zeros([order_gauss_quad, int(N)], data_type)
-    angular_flux_last = np.zeros([order_gauss_quad, int(N)], data_type)
+    scalar_flux_last  = np.ones(int(N), data_type)
     
     no_convergence = False
     source_converged = False
@@ -186,20 +183,24 @@ def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, time_dep
         print()
         #print('Next Itteration: {0}'.format(source_counter),end='\r')
         
-        #detemine bounds bounds for next itteration
+        # detemine bounds bounds for next itteration
         BCl = src.BoundaryCondition(boundary_condition_left,   0, N_mesh, angular_flux=angular_flux, incident_flux_mag=left_in_mag, angle=left_in_angle, angles=angles_gq)
         BCr = src.BoundaryCondition(boundary_condition_right, -1, N_mesh, angular_flux=angular_flux, incident_flux_mag=right_in_mag, angle=right_in_angle, angles=angles_gq)
         
+<<<<<<< HEAD
         #BCr = [0,0]
         #BCl = [0,10]
         
         #simple corner balance to find angular flux for next itteration
+=======
+        # simple corner balance to find angular flux for next itteration
+>>>>>>> 800494d79e530e7c85a7d478be7a974c1f69d86c
         angular_flux_next = src.OCIRun(angular_flux, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles_gq, weights_gq, BCl, BCr)
         
-        #calculate current
+        # calculate current
         current = src.Current(angular_flux_next, weights_gq, angles_gq)
         
-        #calculate scalar flux for next itteration
+        # calculate scalar flux for next itteration
         scalar_flux_next = src.ScalarFlux(angular_flux_next, weights_gq)
         
         if source_counter > 2:
@@ -207,11 +208,8 @@ def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, time_dep
             source_converged = src.HasItConverged(scalar_flux_next, scalar_flux)
             spec_rad = np.linalg.norm(angular_flux_next - angular_flux, ord=2) / np.linalg.norm((angular_flux - angular_flux_last), ord=2)
         
-        #if stuck, display error then cut n run
+        # if stuck, display error then cut n run
         if source_counter > max_itter:
-            #print()
-            #print('>>>WARNING: source not converged after 1000 itterations<<<')
-            #print()
             no_convergence = True
             source_converged = True
         
@@ -223,13 +221,10 @@ def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, time_dep
         scalar_flux = scalar_flux_next
         source_counter += 1
     
-    print(source_counter)
-    #spec_rad, no_convergence
-    
     if time_dependent_mode: #for time dependence
         scalar_flux = angular_flux_next
     
-    return(angular_flux_next, current, spec_rad, source_converged) #scalar_flux, current, 
+    return(angular_flux, current, spec_rad, source_converged) #scalar_flux, current, 
     
 
 def SourceMeshTransform(source_mesh_o, N_angles):

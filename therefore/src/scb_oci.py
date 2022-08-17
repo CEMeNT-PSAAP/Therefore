@@ -9,8 +9,16 @@ def OCIRun(angular_flux, source, xsec, xsec_scatter, dx, mu, weight, BCl, BCr):
     angular_flux_next = np.zeros_like(angular_flux)
     half = int(mu.size/2)
     #print(n_mesh)
+    print('==========================')
+    print('next cycle')
+    print('==========================')
+    print()
+
     for i in nb.prange(n_mesh):
+        print(i)
+        print()
         
+
         in_ang_flux = np.zeros((mu.size), dtype=np.float64)
         #contains the incident angular fluxs from the cells to the left and right
         #one vector [N_angels] where the first half of values are the positive quadrature componenets od the angular flux from the right side of the N-1 cell,
@@ -63,25 +71,46 @@ def SCB_OneCellInv_Cell(in_angular_flux, source, xsec, xsec_scatter, dx, mu, wei
         b[2*i] =   source[i,0]*(dx/2) - (mu[i] * in_angular_flux[i])
         b[2*i+1] = source[i,1]*(dx/2)
     
-    #positive ordinants
+    # positive ordinants
     for i in range(half, n_angle, 1): 
         A[2*i, 2*i]   = mu[i]/2 + alpha
         A[2*i, 2*i+1] = mu[i]/2
         A[2*i+1, 2*i] = -mu[i]/2
         A[2*i+1, 2*i+1] = mu[i]/2 + alpha
     	
+<<<<<<< HEAD
         b[2*i] =   source[i,0]*(dx/2) + (mu[i] * in_angular_flux[i])
         b[2*i+1] = source[i,1]*(dx/2)
         #'''
     #scalar flux
+=======
+        b[2*i] =   (source[i,0]*dx)/2 + (mu[i] * in_angular_flux[i])
+        b[2*i+1] = (source[i,1]*dx)/2
+        
+    # scalar flux
+>>>>>>> 800494d79e530e7c85a7d478be7a974c1f69d86c
     for k in range (0, n_angle):
         for i in range (0, n_angle):
             A[2*k,2*i]     += -weight[i] * (dx*xsec_scatter/4)
             A[2*k+1,2*i+1] += -weight[i] * (dx*xsec_scatter/4)
     
+<<<<<<< HEAD
     #print(A)
+=======
+    print()
+    print()
+    print(A)
+    print()
+    print()
+    print(b)
+    
+>>>>>>> 800494d79e530e7c85a7d478be7a974c1f69d86c
     next_angflux = np.linalg.solve(A, b).reshape((-1, 2))
     
+    print()
+    print()
+    print(next_angflux)
+
     return(next_angflux)
 
 

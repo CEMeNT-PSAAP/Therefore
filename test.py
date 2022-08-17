@@ -77,6 +77,7 @@ print()
 f=1
 X = np.linspace(0, L, int(N_mesh*2))
 plt.figure(f)
+<<<<<<< HEAD
 plt.plot(X, scalar_flux[0,:], '-*k', label='OCI, 0')
 plt.plot(X, scalar_flux[1,:], '--*k', label='OCI, 1')
 plt.plot(X, scalar_flux2[0,:], '-r', label='SI, 0')
@@ -102,6 +103,28 @@ plt.show()
 
 
 '''
+=======
+plt.plot(X, scalar_flux[0,:],  '-*k',  label='OCI 1')
+plt.plot(X, scalar_flux[1,:],  '--*k', label='OCI 2')
+plt.plot(X, scalar_flux2[0,:], '-r',  label='SI 1')
+plt.plot(X, scalar_flux2[1,:], '--r', label='SI 2')
+plt.title('Test Flux')
+plt.xlabel('Distance')
+plt.ylabel('Angular Flux')
+plt.savefig('Test Angular flux')
+'''
+f+=1
+X = np.linspace(0, L, int(N_mesh*2))
+plt.figure(f)
+plt.plot(X, scalar_flux[0,:], '-*k')
+plt.plot(X, scalar_flux[1,:], '--*k')
+plt.plot(X, scalar_flux2[0,:], '-r')
+plt.plot(X, scalar_flux2[1,:], '--r')
+plt.title('Test Flux')
+plt.xlabel('Distance')
+plt.ylabel('Scalar Flux')
+plt.savefig('Test Scalar flux')
+>>>>>>> 800494d79e530e7c85a7d478be7a974c1f69d86c
 f+=1
 plt.figure(f)
 plt.title('Infinte Med')
