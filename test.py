@@ -16,10 +16,10 @@ def flatLinePlot(x, y, dat):
 
 data_type = np.float64
 
-L = 4
+L = 3
 dx = 1
 xsec = 10
-ratio = 0.9
+ratio = 0.5
 scattering_xsec = xsec*ratio
 source_mat = 0
 source_a = 2
@@ -32,7 +32,6 @@ source_mesh = source_mat*np.ones(N_mesh, data_type)
 
 psi_in = source_mat / (xsec*(1-ratio)/2)
 print(psi_in)
-
 
 sim_perams = {'data_type': data_type,
               'N_angles': 2,
@@ -55,55 +54,12 @@ print('Spectral radius of the lst run'.format(spec_rad))
 print()
 print()
 
-print('>>>>OCI angular flux<<<<<<<<')
-print(scalar_flux)
-print()
-print()
-print('>>>>SI angular flux<<<<<<<<')
+
 print(scalar_flux2)
-print()
-print()
-print('>>>>OCI scalar flux<<<<<<<<')
-print(np.sum(scalar_flux, axis=0))
-print()
-print()
-print('>>>>SI scalar flux<<<<<<<<')
-print(np.sum(scalar_flux2, axis=0))
-print()
-print()
-
-
 
 f=1
 X = np.linspace(0, L, int(N_mesh*2))
 plt.figure(f)
-<<<<<<< HEAD
-plt.plot(X, scalar_flux[0,:], '-*k', label='OCI, 0')
-plt.plot(X, scalar_flux[1,:], '--*k', label='OCI, 1')
-plt.plot(X, scalar_flux2[0,:], '-r', label='SI, 0')
-plt.plot(X, scalar_flux2[1,:], '--r', label='SI, 1')
-plt.title('Test Flux')
-plt.xlabel('Distance')
-plt.ylabel('Angular Flux')
-plt.legend()
-plt.show()
-
-f=2
-#X = np.linspace(0, L, int(N_mesh*2))
-X = np.arange(0, L, dx/2)
-print(X)
-plt.figure(f)
-plt.plot(X, np.sum(scalar_flux, axis=0), '-*k', label='OCI')
-plt.plot(X, np.sum(scalar_flux2, axis=0), '-r', label='SI')
-plt.title('Test Flux')
-plt.xlabel('Distance')
-plt.ylabel('Scalar Flux')
-plt.legend()
-plt.show()
-
-
-'''
-=======
 plt.plot(X, scalar_flux[0,:],  '-*k',  label='OCI 1')
 plt.plot(X, scalar_flux[1,:],  '--*k', label='OCI 2')
 plt.plot(X, scalar_flux2[0,:], '-r',  label='SI 1')
@@ -111,7 +67,9 @@ plt.plot(X, scalar_flux2[1,:], '--r', label='SI 2')
 plt.title('Test Flux')
 plt.xlabel('Distance')
 plt.ylabel('Angular Flux')
-plt.savefig('Test Angular flux')
+plt.legend()
+plt.show()
+#plt.savefig('Test Angular flux')
 '''
 f+=1
 X = np.linspace(0, L, int(N_mesh*2))
@@ -124,7 +82,6 @@ plt.title('Test Flux')
 plt.xlabel('Distance')
 plt.ylabel('Scalar Flux')
 plt.savefig('Test Scalar flux')
->>>>>>> 800494d79e530e7c85a7d478be7a974c1f69d86c
 f+=1
 plt.figure(f)
 plt.title('Infinte Med')

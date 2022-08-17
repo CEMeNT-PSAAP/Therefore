@@ -56,17 +56,17 @@ while error > tol or max_itter < itter:
         if i == 0: #left bc
             b = np.array([[dx/2*S - mu1 * angular_flux[0, i*2+2]],
                           [dx/2*S],
-                          [dx/2*S - mu2 * BCl],
+                          [dx/2*S + mu2 * BCl],
                           [dx/2*S]])
         elif i == N-1: #right bc
             b = np.array([[dx/2*S - mu1 * BCr],
                           [dx/2*S],
-                          [dx/2*S - mu2 * angular_flux[1, i*2-1]],
+                          [dx/2*S + mu2 * angular_flux[1, i*2-1]],
                           [dx/2*S]])
         else: #mid communication
             b = np.array([[dx/2*S - mu1 * angular_flux[0, i*2+2]],
                           [dx/2*S],
-                          [dx/2*S - mu2 * angular_flux[1, i*2-1]],
+                          [dx/2*S + mu2 * angular_flux[1, i*2-1]],
                           [dx/2*S]])
         
         print("Large cell %d".format(i))
@@ -98,6 +98,7 @@ plt.plot(X, angular_flux[1,:],  '--*k', label='OCI 2')
 plt.title('Test Flux')
 plt.xlabel('Distance')
 plt.ylabel('Angular Flux')
-plt.savefig('Test Angular flux')
+plt.show()
+#plt.savefig('Test Angular flux')
 
 #

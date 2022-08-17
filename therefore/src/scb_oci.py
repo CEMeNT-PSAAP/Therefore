@@ -78,25 +78,20 @@ def SCB_OneCellInv_Cell(in_angular_flux, source, xsec, xsec_scatter, dx, mu, wei
         A[2*i+1, 2*i] = -mu[i]/2
         A[2*i+1, 2*i+1] = mu[i]/2 + alpha
     	
-<<<<<<< HEAD
         b[2*i] =   source[i,0]*(dx/2) + (mu[i] * in_angular_flux[i])
         b[2*i+1] = source[i,1]*(dx/2)
         #'''
     #scalar flux
-=======
         b[2*i] =   (source[i,0]*dx)/2 + (mu[i] * in_angular_flux[i])
         b[2*i+1] = (source[i,1]*dx)/2
         
     # scalar flux
->>>>>>> 800494d79e530e7c85a7d478be7a974c1f69d86c
     for k in range (0, n_angle):
         for i in range (0, n_angle):
             A[2*k,2*i]     += -weight[i] * (dx*xsec_scatter/4)
             A[2*k+1,2*i+1] += -weight[i] * (dx*xsec_scatter/4)
     
-<<<<<<< HEAD
     #print(A)
-=======
     print()
     print()
     print(A)
@@ -104,7 +99,6 @@ def SCB_OneCellInv_Cell(in_angular_flux, source, xsec, xsec_scatter, dx, mu, wei
     print()
     print(b)
     
->>>>>>> 800494d79e530e7c85a7d478be7a974c1f69d86c
     next_angflux = np.linalg.solve(A, b).reshape((-1, 2))
     
     print()
