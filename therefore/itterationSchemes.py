@@ -10,7 +10,7 @@ date: May 9th 2022
 import numpy as np
 import matplotlib.pyplot as plt
 import numba as nb
-import therefore.src as src0
+import therefore.src as src
 import os
 import sys
 import scipy as sci
@@ -56,13 +56,13 @@ def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_m
     no_convergence: bool = False
     spec_rad = 0
     
-    '''
+    
     if time_dependent_mode==False:
         source_mesh = SourceMeshTransform(source_mesh, N_angles)
     
-        #assert (source_mesh.shape[0] == N_angles)
-        #assert (source_mesh.shape[1] == N)
-    '''
+    assert (source_mesh.shape[0] == N_angles)
+    assert (source_mesh.shape[1] == N)
+    
 
     while source_converged == False:
         

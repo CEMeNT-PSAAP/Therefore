@@ -31,6 +31,7 @@ def MovieMaker(scalar_flux, scalar_flux2, L, FLP=False):
     text   = ax.text(0.02, 0.9, '', transform=ax.transAxes)
     ax.legend()  
     plt.ylim([0,2])
+    plt.xlim([4.9, 5.1])
     
     def animate(k):
         line1.set_ydata(scalar_flux[:,k])

@@ -33,7 +33,7 @@ N_mesh = int(L/dx)
 N_angle = 64
 
 dt = .1
-max_time = .2
+max_time = 2
 N_time = int(max_time/dt)
 N_ans = 2*N_mesh
 
@@ -112,4 +112,4 @@ plt.show()
 
 np.savez('outputs.npz')
 
-#therefore.MovieMaker(scalar_flux, scalar_flux2, L)
+therefore.MovieMaker(scalar_flux, scalar_flux2, L)

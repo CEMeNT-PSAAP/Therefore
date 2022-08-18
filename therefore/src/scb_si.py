@@ -2,7 +2,7 @@ import numpy as np
 import numba as nb
 
 #Simple Corner balence sweep
-@nb.jit(nopython=True, parallel=True)
+@nb.jit(nopython=True, parallel=True, cache=True, nogil=True, fastmath=True)
 def SCBRun(Q, xsec, dx, mu, BCl, BCr, N_mesh):
     '''Return angular flux
     
@@ -23,7 +23,7 @@ def SCBRun(Q, xsec, dx, mu, BCl, BCr, N_mesh):
                 else:
                     psi_ph = angular_flux[angle, 2*(i+1)]
                 
-                [angular_flux[angle, 2*i], angular_flux[angle, 2*i+1]]  = SCBKernel_negative(Q[2*i], Q[2*i+1], psi_ph, xsec[i], dx[i], mu[angle]) 
+                [angular_flux[angle, 2*i], angular_flux[angle, 2*i+1]]  = SCBKernel_negative(Q[angle, 2*i], Q[angle, 2*i+1], psi_ph, xsec[i], dx[i], mu[angle]) 
                 
         else: #goin forward
             for i in range(N_mesh):
@@ -33,12 +33,12 @@ def SCBRun(Q, xsec, dx, mu, BCl, BCr, N_mesh):
                 else:
                     psi_mh = angular_flux[angle, (2*i)-1]
                 
-                [angular_flux[angle, 2*i], angular_flux[angle, 2*i+1]] = SCBKernel_positive(Q[2*i], Q[2*i+1], psi_mh, xsec[i], dx[i], mu[angle])
+                [angular_flux[angle, 2*i], angular_flux[angle, 2*i+1]] = SCBKernel_positive(Q[angle, 2*i], Q[angle, 2*i+1], psi_mh, xsec[i], dx[i], mu[angle])
                 
     return(angular_flux)
 
 # negative mu!
-@nb.njit
+@nb.jit(nopython=True, cache=True, fastmath=True)
 def SCBKernel_negative(Q_l, Q_r, psi_ph, xsec, dx, mu):
     '''SCB going from right to the left (mu<0)'''
     
@@ -55,7 +55,7 @@ def SCBKernel_negative(Q_l, Q_r, psi_ph, xsec, dx, mu):
     return(psi_l[0], psi_r[0])
 
 # positive mu
-@nb.njit
+@nb.jit(nopython=True, cache=True, fastmath=True)
 def SCBKernel_positive(Q_l, Q_r, psi_mh, xsec, dx, mu):
     '''SCB going from the left to the right (mu>0)'''
     
