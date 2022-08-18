@@ -31,7 +31,6 @@ xsec_scatter_mesh = scattering_xsec*np.ones(N_mesh, data_type)
 source_mesh = source_mat*np.ones(N_mesh, data_type)
 
 psi_in = source_mat / (xsec*(1-ratio)/2)
-print(psi_in)
 
 sim_perams = {'data_type': data_type,
               'N_angles': 2,

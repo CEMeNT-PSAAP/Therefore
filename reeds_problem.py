@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import therefore
 
-from tabulate import tabulate
+#from tabulate import tabulate
 
 
 def flatLinePlot(x, y, pl):
@@ -79,7 +79,7 @@ scalar_flux = therefore.src.ScalarFlux(angular_flux_si, [1,1])
 scalar_flux2 = therefore.src.ScalarFlux(angular_flux_oci, [1,1])
 
 #Angular flux printing
-
+'''
 #region 1
 LB = 2*sum(N_region[:0])
 RB = 2*sum(N_region[:0+1])
@@ -113,7 +113,7 @@ print('>>>REGION 2<<<')
 print(tabulate(table, headers=["Cell","SI: ψ, 0", "OCI: ψ, 0","SI: ψ, 1", "OCI: ψ, 2"]))
 print()
 print()
-
+'''
 print()
 print('Overall spectral radius of SI: {0}'.format(spec_rad))
 print('Overall spectral radius of OCI: {0}'.format(spec_rad2))
@@ -157,7 +157,7 @@ plt.ylim([0,8])
 plt.title('Problem 2: Reeds Problem')
 plt.xlabel('Distance [cm]')
 plt.ylabel('Scalar Flux')
-
+plt.savefig('Reeds_scalar)_flux.png')
 '''
 top = max(scalar_flux)*1.25
 plt.ylim([0,top])
