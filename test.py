@@ -69,7 +69,7 @@ plt.xlabel('Distance')
 plt.ylabel('Angular Flux')
 plt.legend()
 plt.show()
-plt.savefig('Test Angular flux')
+plt.savefig('Test_angular_flux.png')
 '''
 f+=1
 X = np.linspace(0, L, int(N_mesh*2))
