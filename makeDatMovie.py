@@ -5,4 +5,4 @@ import therefore
 file = np.load('outputs.npz')
 therefore.MovieMaker(file['SI'], file['OCI'], file['L'])
 
-therefore.MovieMaker(scalar_flux, scalar_flux2, L)
+#therefore.MovieMaker(scalar_flux, scalar_flux2, L)

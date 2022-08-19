@@ -23,7 +23,7 @@ def flatLinePlot(x, y, dat):
 data_type = np.float64
 
 L = 10
-dx = 0.001
+dx = 0.01
 xsec = 1
 ratio = 0.9
 scattering_xsec = xsec*ratio
@@ -33,7 +33,8 @@ N_mesh = int(L/dx)
 N_angle = 64
 
 dt = .1
-max_time = 2
+max_time = 1.9
+inital_offset = .1 #from Avurv1
 N_time = int(max_time/dt)
 N_ans = 2*N_mesh
 
@@ -52,7 +53,7 @@ in_mid = np.ones(N_angle)
 
 [angles_gq, weights_gq] = np.polynomial.legendre.leggauss(N_angle)
 xm = np.linspace(-L/2,L/2, N_ans+1)
-inital_scalar_flux = therefore.azurv1_spav(xm, 0.9, 0.01)
+inital_scalar_flux = therefore.azurv1_spav(xm, 0.9, inital_offset)
 
 assert(inital_scalar_flux.size == N_ans)
 
@@ -99,7 +100,7 @@ x_eval = np.linspace(-L/2, L/2, int(N_ans+1))
 plt.figure(4)
 plt.plot(x, scalar_flux[:,10] , '-k', label='SI')
 plt.plot(x, scalar_flux2[:,10], '-r', label='OCI')
-plt.plot(x, therefore.azurv1_spav(x_eval, ratio, 0.01+dt*10),'--k', label='AVURV1')
+plt.plot(x, therefore.azurv1_spav(x_eval, ratio, inital_offset+dt*10),'--k', label='AVURV1')
 plt.plot(x, inital_scalar_flux, '-b', label='Initial Condition')
 plt.xlabel('Distance [cm]')
 plt.ylabel('Scalar Flux [units of scalar flux]')
