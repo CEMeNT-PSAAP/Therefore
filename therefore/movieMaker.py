@@ -52,3 +52,4 @@ def MovieMaker(scalar_flux, scalar_flux2, L, FLP=False):
 
 #ax.fill_between(x_mid,phi[k,:]-phi_sd[k,:],phi[k,:]+phi_sd[k,:],alpha=0.2,color='b')
 #text.set_text(r'$t \in [%.1f,%.1f]$ s'%(t[k],t[k+1]))
+

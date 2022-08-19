@@ -23,7 +23,7 @@ def flatLinePlot(x, y, dat):
 data_type = np.float64
 
 L = 10
-dx = 0.01
+dx = 0.001
 xsec = 1
 ratio = 0.9
 scattering_xsec = xsec*ratio
@@ -97,19 +97,18 @@ x = np.linspace(0, L, int(N_ans))
 x_eval = np.linspace(-L/2, L/2, int(N_ans+1))
 
 plt.figure(4)
-plt.plot(x, scalar_flux[:,0] , '-k', label='SI')
-plt.plot(x, scalar_flux2[:,0], '-r', label='OCI')
-plt.plot(x, therefore.azurv1_spav(x_eval, ratio, 0.01+dt),'--k', label='AVURV1')
+plt.plot(x, scalar_flux[:,10] , '-k', label='SI')
+plt.plot(x, scalar_flux2[:,10], '-r', label='OCI')
+plt.plot(x, therefore.azurv1_spav(x_eval, ratio, 0.01+dt*10),'--k', label='AVURV1')
 plt.plot(x, inital_scalar_flux, '-b', label='Initial Condition')
 plt.xlabel('Distance [cm]')
 plt.ylabel('Scalar Flux [units of scalar flux]')
 plt.title('First time step of transient methods')
 plt.xlim(4.75,5.25)
 plt.legend()
-plt.show()
+plt.savefig('SF_test.png')
 
 
+np.savez('outputs.npz', SI = scalar_flux, OCI = scalar_flux2, x = x, L = L)
 
-np.savez('outputs.npz')
-
-therefore.MovieMaker(scalar_flux, scalar_flux2, L)
+#therefore.MovieMaker(scalar_flux, scalar_flux2, L)
