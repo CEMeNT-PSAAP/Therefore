@@ -58,9 +58,9 @@ def TimeLoop(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_m
         psi_check = source_mesh_tilde[0,5] / (xsec_mesh_t[5]*(1)/2)
         
         print('Time step: {0}'.format(t))
-        print('     -ρ:         {0}'.format(spec_rad[t]))
-        print('     -run time:  {0}'.format(end-start))
-        print('     -psi check: {0}'.format(psi_check))
+        print('     -ρ:          {0}    '.format(spec_rad[t]))
+        print('     -wall time:  {0} [s]'.format(end-start))
+        print('     -Ψ check:    {0}    '.format(psi_check))
         
         
         angular_flux_last = angular_flux_total[:,:,t]

@@ -3,10 +3,16 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from .azurv1 import azurv1_spav
 
-def MovieMaker(scalar_flux, scalar_flux2, L, FLP=False):
+def MovieMaker(scalar_flux, scalar_flux2, sim_perams, FLP=False):
     '''You like Qinton Ternintino? Damn, we didn't measure this in feet
     '''
     
+
+    dt = sim_perams['dt']
+    offset = sim_perams['offset']
+    L = sim_perams['L']
+    scat_ratio = sim_perams['ratio']
+
     N_mesh = scalar_flux.shape[0]
     N_time = scalar_flux.shape[1]
     
@@ -27,17 +33,17 @@ def MovieMaker(scalar_flux, scalar_flux2, L, FLP=False):
     
     line1, = ax.plot(x, scalar_flux[:,0], '-k',label="Therefore SI")
     line2, = ax.plot(x, scalar_flux2[:,0],'-r',label="Therefore OCI")
-    line3, = ax.plot(x, azurv1_spav(x_eval, .9, 0.01), '--b',label="AZURV1")
-    text   = ax.text(0.02, 0.9, '', transform=ax.transAxes)
+    line3, = ax.plot(x, azurv1_spav(x_eval, scat_ratio, offset+dt), '--b',label="AZURV1")
+    text   = ax.text(offset, scat_ratio, '', transform=ax.transAxes)
     ax.legend()  
-    plt.ylim([0,2])
-    plt.xlim([4.9, 5.1])
+    plt.ylim([0,max(scalar_flux2[:,0])])
+    #plt.xlim([4.9, 5.1])
     
     def animate(k):
         line1.set_ydata(scalar_flux[:,k])
         line2.set_ydata(scalar_flux2[:,k])
-        line3.set_ydata(azurv1_spav(x_eval, .9, .1*k+.01))
-        text.set_text(r'$t \in [%.1f,%.1f]$ s'%(t[k],t[k+1]))
+        line3.set_ydata(azurv1_spav(x_eval, scat_ratio, (dt*(k-1))+offset))
+        text.set_text(r'$t \in [%.1f,%.1f]$ s'%(t[k],t[k]))
         print('Figure production percent done: {0}'.format(int(k/N_time)*100), end = "\r")
         return line2, line2, line3, #, text
     print()

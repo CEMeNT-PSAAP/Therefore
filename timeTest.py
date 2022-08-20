@@ -24,16 +24,16 @@ data_type = np.float64
 
 L = 10
 dx = 0.01
+N_mesh = int(L/dx)
 xsec = 1
 ratio = 0.9
 scattering_xsec = xsec*ratio
 source_mat = 0
 #source_a = 2
-N_mesh = int(L/dx)
 N_angle = 64
 
 dt = .1
-max_time = 1.9
+max_time = 1
 inital_offset = .1 #from Avurv1
 N_time = int(max_time/dt)
 N_ans = 2*N_mesh
@@ -53,7 +53,7 @@ in_mid = np.ones(N_angle)
 
 [angles_gq, weights_gq] = np.polynomial.legendre.leggauss(N_angle)
 xm = np.linspace(-L/2,L/2, N_ans+1)
-inital_scalar_flux = therefore.azurv1_spav(xm, 0.9, inital_offset)
+inital_scalar_flux = therefore.azurv1_spav(xm, ratio, inital_offset)
 
 assert(inital_scalar_flux.size == N_ans)
 
@@ -87,7 +87,9 @@ sim_perams = {'data_type': data_type,
               'velocity': 1,
               'dt': dt,
               'max time': max_time,
-              'N_time': N_time}
+              'N_time': N_time,
+              'offset': inital_offset,
+              'ratio': ratio}
 
 theta = 1 #for discrete diamond
 [scalar_flux, current, spec_rads] = therefore.TimeLoop(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, theta, 'SI')
@@ -96,7 +98,7 @@ theta = 1 #for discrete diamond
 N_ans = N_mesh * 2
 x = np.linspace(0, L, int(N_ans))
 x_eval = np.linspace(-L/2, L/2, int(N_ans+1))
-
+'''
 plt.figure(4)
 plt.plot(x, scalar_flux[:,10] , '-k', label='SI')
 plt.plot(x, scalar_flux2[:,10], '-r', label='OCI')
@@ -108,8 +110,8 @@ plt.title('First time step of transient methods')
 plt.xlim(4.75,5.25)
 plt.legend()
 plt.savefig('SF_test.png')
-
+'''
 
 np.savez('outputs.npz', SI = scalar_flux, OCI = scalar_flux2, x = x, L = L)
 
-#therefore.MovieMaker(scalar_flux, scalar_flux2, L)
+#therefore.MovieMaker(scalar_flux, scalar_flux2, sim_perams)
