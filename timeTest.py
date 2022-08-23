@@ -12,6 +12,11 @@ def analiticalSoultion(t, xsec, inital_flux, source, vel):
     
     return(angular_flux)
     
+
+
+make_soultion = True
+run_sim = False
+
 #\Psi (t) = \Psi(0) e^(-\sigma*v*t) + Q/(\sigma)*(1-np.exp**(-\sigma*v*t))
 
 def flatLinePlot(x, y, dat):
@@ -92,12 +97,32 @@ sim_perams = {'data_type': data_type,
               'ratio': ratio}
 
 theta = 1 #for discrete diamond
-[scalar_flux, current, spec_rads] = therefore.TimeLoop(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, theta, 'SI')
-[scalar_flux2, current, spec_rads] = therefore.TimeLoop(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, theta, 'OCI')
+if run_sim:
+    [scalar_flux, current, spec_rads] = therefore.TimeLoop(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, theta, 'SI')
+    [scalar_flux2, current, spec_rads] = therefore.TimeLoop(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, theta, 'OCI')
 
-N_ans = N_mesh * 2
-x = np.linspace(0, L, int(N_ans))
-x_eval = np.linspace(-L/2, L/2, int(N_ans+1))
+N_ans = int(N_mesh * 2)
+x = np.linspace(0, L, N_ans)
+if run_sim:
+    np.savez('outputs.npz', SI = scalar_flux, OCI = scalar_flux2, x = x, L = L)
+
+if make_soultion == True:
+    x_eval = np.linspace(-L/2, L/2, N_ans+1)
+    tGrid = np.linspace(inital_offset, max_time+inital_offset, N_time+1)
+    #print(tGrid)
+    azurv1_timeSpace = therefore.avurv1_TimeSpaceAvg(x_eval, tGrid, ratio)
+    print(azurv1_timeSpace[int(N_ans/2), N_time])
+    #assert(azurv1_timeSpace.shape[0] == N_ans)
+    #assert(azurv1_timeSpace.shape[1] == N_time)
+
+    np.savez('azurv1.npz', azurv1 = azurv1_timeSpace)
+
+
+
+
+#therefore.MovieMaker(scalar_flux, scalar_flux2, sim_perams)
+
+
 '''
 plt.figure(4)
 plt.plot(x, scalar_flux[:,10] , '-k', label='SI')
@@ -111,7 +136,3 @@ plt.xlim(4.75,5.25)
 plt.legend()
 plt.savefig('SF_test.png')
 '''
-
-np.savez('outputs.npz', SI = scalar_flux, OCI = scalar_flux2, x = x, L = L)
-
-#therefore.MovieMaker(scalar_flux, scalar_flux2, sim_perams)
