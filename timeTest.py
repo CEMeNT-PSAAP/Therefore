@@ -15,7 +15,7 @@ def analiticalSoultion(t, xsec, inital_flux, source, vel):
 
 
 make_soultion = True
-run_sim = False
+run_sim = True
 
 #\Psi (t) = \Psi(0) e^(-\sigma*v*t) + Q/(\sigma)*(1-np.exp**(-\sigma*v*t))
 
@@ -39,7 +39,7 @@ N_angle = 64
 
 dt = .1
 max_time = 1
-inital_offset = .1 #from Avurv1
+inital_offset = 2 #from Avurv1
 N_time = int(max_time/dt)
 N_ans = 2*N_mesh
 
@@ -55,10 +55,13 @@ psi_in = source_mat / (xsec*(1-ratio)/2)
 inital_angular_flux = np.zeros([N_angle, 2*N_mesh])
 in_mid = np.ones(N_angle)
 
-
-[angles_gq, weights_gq] = np.polynomial.legendre.leggauss(N_angle)
 xm = np.linspace(-L/2,L/2, N_ans+1)
 inital_scalar_flux = therefore.azurv1_spav(xm, ratio, inital_offset)
+
+
+[angles_gq, weights_gq] = np.polynomial.legendre.leggauss(N_angle)
+
+
 
 assert(inital_scalar_flux.size == N_ans)
 
@@ -106,12 +109,20 @@ x = np.linspace(0, L, N_ans)
 if run_sim:
     np.savez('outputs.npz', SI = scalar_flux, OCI = scalar_flux2, x = x, L = L)
 
+
 if make_soultion == True:
     x_eval = np.linspace(-L/2, L/2, N_ans+1)
-    tGrid = np.linspace(inital_offset, max_time+inital_offset, N_time+1)
-    #print(tGrid)
-    azurv1_timeSpace = therefore.avurv1_TimeSpaceAvg(x_eval, tGrid, ratio)
-    print(azurv1_timeSpace[int(N_ans/2), N_time])
+    azurv1_timeSpace = np.zeros([N_time+1, N_ans])
+    
+    time = inital_offset
+    for i in range(N_time+1):
+        azurv1_timeSpace[i,:] = therefore.azurv1_spav(x_eval, ratio, time)
+        time += dt
+
+    #plt.figure(1)
+    #plt.plot(x, azurv1_timeSpace[:,1])
+    #plt.plot(x, azurv1_space)
+    #plt.show()
     #assert(azurv1_timeSpace.shape[0] == N_ans)
     #assert(azurv1_timeSpace.shape[1] == N_time)
 

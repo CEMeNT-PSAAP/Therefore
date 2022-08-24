@@ -15,10 +15,13 @@ def TimeLoop(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_m
     angular_flux_total = np.zeros([N_angles, N_ans, N_time], data_type)
     angular_flux_last = np.zeros([N_angles, N_ans], data_type)
     current_total = np.zeros([N_ans, N_time], data_type)
-    scalar_flux = np.zeros([N_ans, N_time], data_type)
+    scalar_flux = np.zeros([N_ans, N_time+1], data_type)
     spec_rad = np.zeros(N_time)
-    
+
     [angles, weights] = np.polynomial.legendre.leggauss(N_angles)
+
+    #sotring the intial scalar_flux
+    scalar_flux[:,0] = src.ScalarFlux(inital_angular_flux, weights)
     
     source_mesh = np.ones([N_angles, N_ans], data_type)
     for i in range(N_mesh):
@@ -64,7 +67,7 @@ def TimeLoop(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_m
         
         
         angular_flux_last = angular_flux_total[:,:,t]
-        scalar_flux[:,t] = src.ScalarFlux(angular_flux_last, weights)
+        scalar_flux[:,t+1] = src.ScalarFlux(angular_flux_last, weights)
         
         print('     -psi mid:   {0}'.format(scalar_flux[6,t]))
         print()
