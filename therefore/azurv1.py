@@ -18,51 +18,6 @@ def azurv1(x, c, t):
     return(scalar_flux)
     
 
-
-#time average
-def avurv1_TimeSpaceAvg(xGrid, tGrid, c):
-    #assuming constant spacining
-    dx = xGrid[1] - xGrid[0]
-    dt = tGrid[1] - tGrid[0]
-
-    Nx = xGrid.size-1
-    Nt = tGrid.size-1
-
-    scalar_flux_avg = np.zeros([Nx, Nt])
-    scalar_flux_grid = np.zeros([Nx, Nt+1])
-
-    print(tGrid[0]-dt)
-    print(tGrid[-1]+dt)
-    print(Nt+1)
-    tGrid_avg = np.linspace(tGrid[0]-dt, tGrid[-1]+dt, Nt+1)
-
-    print(tGrid_avg)
-    print(xGrid)
-    print()
-    print(c)
-    print()
-    half = int(Nx/2)
-
-    #true average in space
-    for i in range(Nt):
-        print(tGrid_avg[i])
-        scalar_flux_grid[:,i] = azurv1_spav(xGrid, tGrid_avg[i], c)
-        print(i)
-        print(scalar_flux_grid[:,i])
-        print(scalar_flux_grid[half,i])
-        print(i)
-
-    #simple average in time
-    #for i in range(Nt):
-    #    for j in range(Nx):
-    #        scalar_flux_avg[j,i] = (scalar_flux_grid[j,i] + scalar_flux_grid[j,i+1]) / 2
-
-    assert(scalar_flux_avg.shape[0] == Nx)
-    assert(scalar_flux_avg.shape[1] == Nt)
-
-    return(scalar_flux_avg)
-
-
 def azurv1_spav(x, c, t):
     '''Spatially averaged! x vector is location of cell bounds (so N_mesh+1)
     '''

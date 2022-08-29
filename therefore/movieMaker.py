@@ -32,7 +32,7 @@ def MovieMaker(OCI_soultion, SI_soultion, AZURV1_soultion, sim_perams, FLP=False
     
     line1, = ax.plot(x, OCI_soultion[:,0], '-k',label="Therefore OCI")
     line2, = ax.plot(x, SI_soultion[:,0],'-r',label="Therefore SI")
-    line3, = ax.plot(x, AZURV1_soultion[:,0], '--b',label="AZURV1")
+    line3, = ax.plot(x, AZURV1_soultion[0,:], '--b',label="AZURV1")
     text   = ax.text(offset, scat_ratio, '', transform=ax.transAxes)
     ax.legend()
     plt.ylim([0, np.max(OCI_soultion[:,0])]) #, OCI_soultion[:,0], AZURV1_soultion[:,0]
@@ -41,7 +41,7 @@ def MovieMaker(OCI_soultion, SI_soultion, AZURV1_soultion, sim_perams, FLP=False
     def animate(k):
         line1.set_ydata(OCI_soultion[:,k])
         line2.set_ydata(SI_soultion[:,k])
-        line3.set_ydata(AZURV1_soultion[:,k])
+        line3.set_ydata(AZURV1_soultion[k,:])
         text.set_text(r'$t \in [%.1f,%.1f]$ s'%(t[k],t[k]))
         print('Figure production percent done: {0}'.format(int(k/N_time)*100), end = "\r")
         return line2, line2, line3, #, text
