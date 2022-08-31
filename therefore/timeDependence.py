@@ -53,7 +53,7 @@ def TimeLoop(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_m
         if source_converged == False:
             print()
             print('>>>WARNING<<<')
-            print('   Method of itteration did not converge!')
+            print('   Method of iteration did not converge!')
             print('')
             
         #angular_flux_total[:,:,t] = TimeDiscretization(angular_flux_last, angular_flux_half)

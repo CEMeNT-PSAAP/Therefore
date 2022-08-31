@@ -30,16 +30,16 @@ data_type = np.float64
 L = 10
 dx = 0.01
 N_mesh = int(L/dx)
-xsec = 1
-ratio = 0.9
+xsec = 10
+ratio = 0.999
 scattering_xsec = xsec*ratio
 source_mat = 0
 #source_a = 2
 N_angle = 64
 
-dt = .1
-max_time = 1
-inital_offset = 2 #from Avurv1
+dt = 0.01
+max_time = 0.3
+inital_offset = 0.1 #from Avurv1
 N_time = int(max_time/dt)
 N_ans = 2*N_mesh
 
