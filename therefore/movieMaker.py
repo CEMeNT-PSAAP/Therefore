@@ -23,7 +23,7 @@ def MovieMaker(OCI_soultion, SI_soultion, AZURV1_soultion, sim_perams, FLP=False
     frames_per = int(N_time/t_gif)
 
 
-    fig,ax = plt.subplots() #plt.figure(figsize=(6,4))
+    fig,ax = plt.subplots() #plt.figure(figsize=(6,4)) 
     
     ax.grid()
     ax.set_xlabel(r'$x$')
