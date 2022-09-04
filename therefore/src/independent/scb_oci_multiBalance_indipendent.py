@@ -80,6 +80,7 @@ scattering_ratio = .5
 xsec_scattering = xsec*scattering_ratio
 
 printer = False
+printer_TS = True
 
 dx = 1
 L = 3
@@ -115,7 +116,6 @@ N_angle = 2
 tol = 1e-6
 error = 1
 max_itter = 1000
-itter = 0
 
 manaz = dx*xsec_scattering/4
 gamma = xsec*dx/2
@@ -126,6 +126,13 @@ final_angular_flux_midstep_solution = np.zeros([N_time, N_angle, N_mesh])
 # the zeroth stored solution is the initial condition
 for k in range(1, N_time, 1):
 
+    if (printer_TS):
+        print()
+        print("========================================")
+        print("next time step!")
+        print("========================================")
+        print()
+
     # iterating on these till convergence
     angular_flux      = np.zeros([2, N_mesh]) 
     angular_flux_last = np.zeros([2, N_mesh])   # last refers to last iteration
@@ -133,9 +140,12 @@ for k in range(1, N_time, 1):
     angular_flux_midstep_last = np.zeros([2, N_mesh])   # last refers to last iteration
 
     #initial guesses?
+    itter = 0
+    while error > tol and max_itter > itter:
+        print(itter)
+        if itter == max_itter:
+            print('SHIT: %d'.format(k))
 
-    while error > tol or max_itter < itter:
-        
         if (printer):
             print()
             print("========================================")
@@ -222,8 +232,10 @@ for k in range(1, N_time, 1):
 f=1
 X = np.linspace(0, L, int(N_mesh))
 plt.figure(f)
-plt.plot(X, angular_flux[0,:],  '-*k',  label='OCI 1')
-plt.plot(X, angular_flux[1,:],  '--*k', label='OCI 2')
+plt.plot(X, angular_flux[1, 0,:],  '-*k',  label='1, 1')
+plt.plot(X, angular_flux[1, 1,:],  '--*k', label='1, 2')
+plt.plot(X, angular_flux[2, 0,:],  '-*k',  label='2, 1')
+plt.plot(X, angular_flux[2, 1,:],  '--*k', label='2, 2')
 #plt.plot(X, scalar_flux2[0,:], '-r',  label='SI 1')
 #plt.plot(X, scalar_flux2[1,:], '--r', label='SI 2')
 plt.title('Test Flux')
