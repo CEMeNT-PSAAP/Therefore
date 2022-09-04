@@ -1,21 +1,96 @@
+from fcntl import I_LINK
 import numpy as np
 import matplotlib.pyplot as plt
 
-"Thomson's Rule for First-Time Telescope Makers: It is faster to make a four-inch mirror then a six-inch mirror than to make a six-inch mirror."
+
+"""Thomson's Rule for First-Time Telescope Makers: It is faster to make a 
+four-inch mirror then a six-inch mirror than to make a six-inch mirror."""
+
+def A_neg(dx, v, dt, mu, xsec_total):
+    gamma = (dx*xsec_total)/2
+    timer = dx/(v*dt)
+    timer2 = dx/(2*v*dt)
+    a = mu/2
+
+    A_n = np.array([[-a + gamma, a,          timer2,            0],
+                      [-a,         -a + gamma, 0,                 timer2],
+                      [-timer2,    0,          timer - a + gamma, a],
+                      [0,          -timer,     -a,                timer -a + gamma]])
+    
+    return(A_n)
+
+
+
+def A_pos(dx, v, dt, mu, xsec_total):
+    gamma = (dx*xsec_total)/2
+    timer = dx/(v*dt)
+    timer2 = dx/(2*v*dt)
+    a = mu/2
+
+    A_p = np.array([[a + gamma, a, timer2, 0],
+                      [-a, a + gamma, 0, timer2],
+                      [-timer, 0, timer + a + gamma, a],
+                      [0, -timer, -a, timer +a + gamma]])
+
+    return(A_p)
+
+
+
+def c_neg(dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi_halfLast_R, psi_rightBound, psi_halfNext_rightBound):
+    timer2 = dx/(2*v*dt)
+
+    c_n = np.array([[dx/4*Ql + timer2*psi_halfLast_L],
+              [dx/4*Qr + timer2*psi_halfLast_R - mu* psi_rightBound],
+              [dx/4*Q_halfNext_L],
+              [dx/4*Q_halfNext_R - mu*psi_halfNext_rightBound]])
+
+    return(c_n)
+
+
+
+def c_pos(dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi_halfLast_R, psi_leftBound, psi_halfNext_leftBound):
+    timer2 = dx/(2*v*dt)
+
+    c_p = np.array([[dx/4*Ql + timer2*psi_halfLast_L + mu * psi_leftBound],
+              [dx/4*Qr + timer2*psi_halfLast_R],
+              [dx/4*Q_halfNext_L + mu*psi_halfNext_leftBound],
+              [dx/4*Q_halfNext_R]])
+    
+    return(c_p)
+
+
+
+def scatter_source(dx, xsec_scattering, N, w):
+    S = np.zeros([2*N,2*N])
+    beta = dx*xsec_scattering/4
+    for i in range(N):
+        for j in range(N):
+            S[i,j] = beta * w[i]
+            S[2*k+1,2*i+1] = beta * w[i]
+        """
+        for k in range (0, n_angle):
+                for i in range (0, n_angle):
+                    A[2*k,2*i]     += -weight[i] * (dx*xsec_scatter/4)
+                    A[2*k+1,2*i+1] += -weight[i] * (dx*xsec_scatter/4)"""
+
+    return(S)
 
 xsec = 10
 scattering_ratio = .5
 xsec_scattering = xsec*scattering_ratio
 
+printer = False
+
 dx = 1
 L = 3
 N = int(L/dx)
 N_mesh = int(2*N)
-S = 0
+Q = 0
 
 dt = 0.1
 N_time = 10
 max_time = dt*(N_time-1)
+v = 1
 
 #BCs incident iso
 BCl = 10
@@ -33,6 +108,9 @@ mu2 = 0.57735
 
 w1 = 1
 w2 = 1
+w = np.array([w1, w2])
+
+N_angle = 2
 
 tol = 1e-6
 error = 1
@@ -42,68 +120,105 @@ itter = 0
 manaz = dx*xsec_scattering/4
 gamma = xsec*dx/2
 
-final_angular_flux_soultion = np.zeros([2, int(N_mesh)])
+final_angular_flux_solution = np.zeros([N_time, N_angle, N_mesh])
+final_angular_flux_midstep_solution = np.zeros([N_time, N_angle, N_mesh])
 
-for k in range(N_time):
+# the zeroth stored solution is the initial condition
+for k in range(1, N_time, 1):
 
-    angular_flux      = np.zeros([2, N_mesh])
-    angular_flux_last = np.zeros([2, N_mesh])
+    # iterating on these till convergence
+    angular_flux      = np.zeros([2, N_mesh]) 
+    angular_flux_last = np.zeros([2, N_mesh])   # last refers to last iteration
     angular_flux_midstep = np.zeros([2, N_mesh])
-    angular_flux_midstep_last = np.zeros([2, N_mesh])
+    angular_flux_midstep_last = np.zeros([2, N_mesh])   # last refers to last iteration
+
+    #initial guesses?
 
     while error > tol or max_itter < itter:
-
-        print()
-        print("========================================")
-        print("next cycle")
-        print("========================================")
-        print()
+        
+        if (printer):
+            print()
+            print("========================================")
+            print("next cycle")
+            print("========================================")
+            print()
 
         # TODO: OCI
         for i in range(N):
-            A = np.zeros([4,4])
-            b = np.zeros([4,1])
+            i_l = int(2*i)
+            i_r = int(2*i+1)
 
-            A = np.array([[-mu1/2 - w1*manaz + gamma, mu1/2,                    -w2*manaz,                 0],
-                        [-mu1/2,                    -mu1/2 - w1*manaz + gamma,  0,                       -w2*manaz],
-                        [-w1*manaz,                 0,                         mu2/2 + gamma - w2*manaz, mu2/2],
-                        [0,                         -w1*manaz,                 -mu2/2,                   mu2/2 + gamma - w2*manaz]])
-
-            if i == 0: #left bc
-                b = np.array([[dx/4*S],
-                            [dx/4*S - mu1 * angular_flux[0, i*2+2]],
-                            [dx/4*S + mu2 * BCl],
-                            [dx/4*S]])
-            elif i == N-1: #right bc
-                b = np.array([[dx/4*S],
-                            [dx/4*S - mu1 * BCr],
-                            [dx/4*S + mu2 * angular_flux[1, i*2-1]],
-                            [dx/4*S]])
-            else: #mid communication
-                b = np.array([[dx/4*S],
-                            [dx/4*S - mu1 * angular_flux[0, i*2+2]],
-                            [dx/4*S + mu2 * angular_flux[1, i*2-1]],
-                            [dx/4*S]])
+            A = np.zeros([8,8])
+            c = np.zeros([8,1])
             
-            print("Large cell %d".format(i))
-            print(b)
-            print()
-            print(A)
-            print()
+            A_small = A_neg(dx, v, dt, mu1, xsec)
+            S_small = scatter_source(dx, xsec_scattering, N_angle, w)
 
-            angular_flux_next[:,2*i:2*i+2] = np.linalg.solve(A,b).reshape(-1,2)
-            
-            print(angular_flux_next[:,2*i:2*i+2])
-            print()
+            assert ((A_small.size == S_small.size))
+
+            A[:4, :4] = A_small - S_small
+
+            A_small = A_neg(dx, v, dt, mu1, xsec)
+            S_small = scatter_source(dx, xsec_scattering, N_angle, w)
+
+            assert ((A_small.size == S_small.size))
+
+            A[4:, 4:] = A_small - S_small
+
+            psi_halfLast_L = final_angular_flux_midstep_solution[k-1, :, i_l] # known
+            psi_halfLast_R = final_angular_flux_midstep_solution[k-1, :, i_r] # known
+
+            # boundary conditions
+            if i == 0:  #left
+                psi_rightBound = angular_flux_last[0, i_r+1] # iterating on (unknown)
+                psi_leftBound =  BCl # known
+
+                psi_halfNext_rightBound = angular_flux_midstep_last[0, i_r+1] # iterating on (unknown)
+                psi_halfNext_leftBound  = BCl # known
+
+            elif i == N-1: #right
+                psi_rightBound = BCr # known
+                psi_leftBound =  angular_flux_last[1, i_l-1] # iterating on (unknown)
+
+                psi_halfNext_rightBound = BCr # known
+                psi_halfNext_leftBound  = angular_flux_midstep_last[1, i_l-1] # iterating on (unknown)
+
+            else: #middles
+                psi_rightBound = angular_flux_last[0, i_r+1] # iterating on (unknown)
+                psi_leftBound =  angular_flux_last[1, i_l-1] # iterating on (unknown)
+
+                psi_halfNext_rightBound = angular_flux_midstep_last[0, i_r+1] # iterating on (unknown)
+                psi_halfNext_leftBound  = angular_flux_midstep_last[1, i_l-1] # iterating on (unknown)
+
+
+            c[:4] = c_neg(dx, v, dt, mu1, Q, Q, Q, Q, psi_halfLast_L[0], psi_halfLast_R[0], psi_rightBound, psi_halfNext_rightBound)
+            c[4:] = c_pos(dx, v, dt, mu2, Q, Q, Q, Q, psi_halfLast_L[1], psi_halfLast_R[1], psi_leftBound, psi_halfNext_leftBound)
+
+            if (printer):
+                print("Large cell %d".format(i))
+                print(c)
+                print()
+                print(A)
+                print()
+
+            angular_flux_raw = np.linalg.solve(A,c)
+
+            # resorting into proper locations in solution vectors
+            for p in range(N_angle):
+                angular_flux[p,i_l:i_r]         = angular_flux_raw[2*p: 2*p+1]
+                angular_flux_midstep[p,i_l:i_r] = angular_flux_raw[2*(p+1): 2*(p+1)+1]
 
             itter += 1 
 
+        final_angular_flux_solution[k, :, :] = angular_flux
+        final_angular_flux_midstep_solution[k, :, :] = angular_flux_midstep
+            
+        angular_flux_last = angular_flux 
+        angular_flux_midstep_last = angular_flux_midstep
+        
         # TODO: Error
         error = np.linalg.norm(angular_flux_next - angular_flux, ord=2)
 
-        angular_flux_last = angular_flux
-        angular_flux = angular_flux_next
-    
 f=1
 X = np.linspace(0, L, int(N_mesh))
 plt.figure(f)
@@ -116,49 +231,3 @@ plt.xlabel('Distance')
 plt.ylabel('Angular Flux')
 plt.show()
 #plt.savefig('Test Angular flux')
-
-#
-def A_neg():
-    gamma = (dx*xsec_total_time)/2
-    timer = dx/(v*dt)
-    timer2 = dx/(2*v*dt)
-    a = mu/2
-
-    np.array([[-a + gamma, a,          timer2,            0],
-              [-a,         -a + gamma, 0,                 timer2],
-              [-timer2,    0,          timer - a + gamma, a],
-              [0,          -timer,     -a,                timer -a + gamma]])
-
-def A_pos():
-    gamma = (dx*xsec_total_time)/2
-    timer = dx/(v*dt)
-    timer2 = dx/(2*v*dt)
-    a = mu/2
-
-    np.array([[a + gamma, a, timer2, 0],
-              [-a, a + gamma, 0, timer2],
-              [-timer, 0, timer + a + gamma, a],
-              [0, -timer, -a, timer +a + gamma]])
-
-def c_neg():
-    timer2 = dx/(2*v*dt)
-
-    np.array([[dx/4],
-              [],
-              [],
-              []])
-
-def c_pos():
-    timer2 = dx/(2*v*dt)
-
-    np.array([[dx/4*Ql + timer2*psi_halfLast_L + mu * psi_leftBound],
-              [dx/4*Qr + timer2*psi_halfLast_R],
-              [dx/4*Q_halfNext_L + mu*psi_halfNext_leftBound],
-              [dx/4*Q_halfNext_R - mu*psi_halfNext_rightBound]])
-
-def scatter_source():
-
-    np.array([[],
-              [],
-              [],
-              []])
