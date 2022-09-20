@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+#import sys
+#np.set_printoptions(edgeitems=50000)
 
 """Thomson's Rule for First-Time Telescope Makers: It is faster to make a 
 four-inch mirror then a six-inch mirror than to make a six-inch mirror."""
@@ -12,9 +14,9 @@ def A_neg(dx, v, dt, mu, xsec_total):
     a = mu/2
 
     A_n = np.array([[-a + gamma, a,          timer2,            0],
-                      [-a,         -a + gamma, 0,                 timer2],
-                      [-timer2,    0,          timer - a + gamma, a],
-                      [0,          -timer,     -a,                timer -a + gamma]])
+                    [-a,         -a + gamma, 0,                 timer2],
+                    [-timer,     0,          timer - a + gamma, a],
+                    [0,          -timer,     -a,                timer -a + gamma]])
     
     return(A_n)
 
@@ -26,10 +28,10 @@ def A_pos(dx, v, dt, mu, xsec_total):
     timer2 = dx/(2*v*dt)
     a = mu/2
 
-    A_p = np.array([[a + gamma, a, timer2, 0],
-                      [-a, a + gamma, 0, timer2],
-                      [-timer, 0, timer + a + gamma, a],
-                      [0, -timer, -a, timer +a + gamma]])
+    A_p = np.array([[a + gamma, a,         timer2,            0],
+                    [-a,        a + gamma, 0,                 timer2],
+                    [-timer,    0,         timer + a + gamma, a],
+                    [0,         -timer,    -a,                timer +a + gamma]])
 
     return(A_p)
 
@@ -39,9 +41,9 @@ def c_neg(dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi
     timer2 = dx/(2*v*dt)
 
     c_n = np.array([[dx/4*Ql + timer2*psi_halfLast_L],
-              [dx/4*Qr + timer2*psi_halfLast_R - mu* psi_rightBound],
-              [dx/4*Q_halfNext_L],
-              [dx/4*Q_halfNext_R - mu*psi_halfNext_rightBound]])
+                    [dx/4*Qr + timer2*psi_halfLast_R - mu* psi_rightBound],
+                    [dx/4*Q_halfNext_L],
+                    [dx/4*Q_halfNext_R - mu*psi_halfNext_rightBound]])
 
     return(c_n)
 
@@ -51,9 +53,9 @@ def c_pos(dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi
     timer2 = dx/(2*v*dt)
 
     c_p = np.array([[dx/4*Ql + timer2*psi_halfLast_L + mu * psi_leftBound],
-              [dx/4*Qr + timer2*psi_halfLast_R],
-              [dx/4*Q_halfNext_L + mu*psi_halfNext_leftBound],
-              [dx/4*Q_halfNext_R]])
+                    [dx/4*Qr + timer2*psi_halfLast_R],
+                    [dx/4*Q_halfNext_L + mu*psi_halfNext_leftBound],
+                    [dx/4*Q_halfNext_R]])
     
     return(c_p)
 
@@ -65,7 +67,7 @@ def scatter_source(dx, xsec_scattering, N, w):
     for i in range(N):
         for j in range(N):
             S[i,j] = beta * w[i]
-            S[2*k+1,2*i+1] = beta * w[i]
+            S[2*i+1,2*j+1] = beta * w[i]
         """
         for k in range (0, n_angle):
                 for i in range (0, n_angle):
@@ -75,26 +77,26 @@ def scatter_source(dx, xsec_scattering, N, w):
     return(S)
 
 xsec = 10
-scattering_ratio = .5
+scattering_ratio = 0
 xsec_scattering = xsec*scattering_ratio
 
-printer = False
+printer = True
 printer_TS = True
 
-dx = 1
-L = 3
+dx = .25
+L = 1
 N = int(L/dx)
 N_mesh = int(2*N)
 Q = 0
 
-dt = 0.1
-N_time = 10
+dt = 0.25
+N_time = 4
 max_time = dt*(N_time-1)
 v = 1
 
 #BCs incident iso
 BCl = 10
-BCr = 10
+BCr = 0
 
 angular_flux      = np.zeros([2, N_mesh])
 angular_flux_next = np.zeros([2, N_mesh])
@@ -122,6 +124,8 @@ gamma = xsec*dx/2
 final_angular_flux_solution = np.zeros([N_time, N_angle, N_mesh])
 final_angular_flux_midstep_solution = np.zeros([N_time, N_angle, N_mesh])
 
+
+
 # the zeroth stored solution is the initial condition
 for k in range(1, N_time, 1):
 
@@ -134,16 +138,17 @@ for k in range(1, N_time, 1):
 
     # iterating on these till convergence
     angular_flux      = np.zeros([2, N_mesh]) 
-    angular_flux_last = np.zeros([2, N_mesh])   # last refers to last iteration
+    angular_flux_last = np.ones([2, N_mesh])   # last refers to last iteration
     angular_flux_midstep = np.zeros([2, N_mesh])
-    angular_flux_midstep_last = np.zeros([2, N_mesh])   # last refers to last iteration
+    angular_flux_midstep_last = np.ones([2, N_mesh])   # last refers to last iteration
 
     #initial guesses?
     itter = 0
-    while error > tol and max_itter > itter:
+    error_eos = 1
+    while error_eos > tol and max_itter > itter:
         print(itter)
         if itter == max_itter:
-            print('SHIT: %d'.format(k))
+            print('Crap: %d'.format(k))
 
         if (printer):
             print()
@@ -214,10 +219,26 @@ for k in range(1, N_time, 1):
 
             # resorting into proper locations in solution vectors
             for p in range(N_angle):
-                angular_flux[p,i_l:i_r]         = angular_flux_raw[2*p: 2*p+1]
-                angular_flux_midstep[p,i_l:i_r] = angular_flux_raw[2*(p+1): 2*(p+1)+1]
+                angular_flux[p,i_l]         = angular_flux_raw[4*p]
+                angular_flux[p,i_r]         = angular_flux_raw[4*p+1]
+                
+                angular_flux_midstep[p,i_l] = angular_flux_raw[4*p+2]
+                angular_flux_midstep[p,i_r] = angular_flux_raw[4*p+3]
+
+            if (printer):
+                print(angular_flux_raw)
+                print()
+                print(angular_flux)
+                print()
+                print(angular_flux_midstep)
+                print()
+
 
             itter += 1 
+
+        # TODO: Error
+        error_eos = np.linalg.norm(angular_flux_midstep - angular_flux_midstep_last, ord=2)
+        error_mos = np.linalg.norm(angular_flux - angular_flux_last, ord=2)
 
         final_angular_flux_solution[k, :, :] = angular_flux
         final_angular_flux_midstep_solution[k, :, :] = angular_flux_midstep
@@ -225,20 +246,24 @@ for k in range(1, N_time, 1):
         angular_flux_last = angular_flux 
         angular_flux_midstep_last = angular_flux_midstep
         
-        # TODO: Error
-        error = np.linalg.norm(angular_flux_next - angular_flux, ord=2)
+        
 
 f=1
 X = np.linspace(0, L, int(N_mesh))
 plt.figure(f)
-plt.plot(X, angular_flux[1, 0,:],  '-*k',  label='1, 1')
-plt.plot(X, angular_flux[1, 1,:],  '--*k', label='1, 2')
-plt.plot(X, angular_flux[2, 0,:],  '-*k',  label='2, 1')
-plt.plot(X, angular_flux[2, 1,:],  '--*k', label='2, 2')
+plt.plot(X, final_angular_flux_solution[0, 1,:],  '--*g', label='0')
+plt.plot(X, final_angular_flux_midstep_solution[0, 1,:],  '-*g',  label='0 + 1/2')
+plt.plot(X, final_angular_flux_solution[1, 1,:],  '--*k', label='1')
+plt.plot(X, final_angular_flux_midstep_solution[1, 1,:],  '-*k',  label='1 + 1/2')
+plt.plot(X, final_angular_flux_solution[2, 1,:],  '--*r', label='2')
+plt.plot(X, final_angular_flux_midstep_solution[2, 1,:],  '-*r',  label='2 + 1/2')
+plt.plot(X, final_angular_flux_solution[-1, 1,:],  '--*b', label='9, 2')
+plt.plot(X, final_angular_flux_midstep_solution[-1, 1,:],  '-*b',  label='3 + 1/2')
 #plt.plot(X, scalar_flux2[0,:], '-r',  label='SI 1')
 #plt.plot(X, scalar_flux2[1,:], '--r', label='SI 2')
-plt.title('Test Flux')
+plt.title('Test Ang Flux: Positive ordinant')
 plt.xlabel('Distance')
 plt.ylabel('Angular Flux')
+plt.legend()
 plt.show()
 #plt.savefig('Test Angular flux')
