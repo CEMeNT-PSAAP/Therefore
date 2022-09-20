@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
+np.set_printoptions(linewidth=np.inf)
 #import sys
 #np.set_printoptions(edgeitems=50000)
 
