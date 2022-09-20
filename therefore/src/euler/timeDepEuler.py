@@ -1,9 +1,11 @@
 import numpy as np
-from .itterationSchemes import SourceItteration, OCI
-import therefore.src as src
+
+import therefore.src.utilities as utl
+import therefore.src.itterationSchemes as ss
+
 from timeit import default_timer as timer
 
-def TimeLoop(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source, theta=1, backend='OCI'):
+def euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source, theta=1, backend='OCI'):
     velocity = sim_perams['velocity']
     dt = sim_perams['dt']
     N_time = sim_perams['N_time']
@@ -21,7 +23,7 @@ def TimeLoop(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_m
     [angles, weights] = np.polynomial.legendre.leggauss(N_angles)
 
     #sotring the intial scalar_flux
-    scalar_flux[:,0] = src.ScalarFlux(inital_angular_flux, weights)
+    scalar_flux[:,0] = utl.ScalarFlux(inital_angular_flux, weights)
     
     source_mesh = np.ones([N_angles, N_ans], data_type)
     for i in range(N_mesh):
@@ -39,9 +41,9 @@ def TimeLoop(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_m
         start = timer()
         
         if (backend == 'OCI'):
-            [angular_flux_total[:,:,t], current_total[:,t], spec_rad[t], source_converged] = OCI(sim_perams, dx_mesh, xsec_mesh_t, xsec_scatter_mesh, source_mesh_tilde, True)
+            [angular_flux_total[:,:,t], current_total[:,t], spec_rad[t], source_converged] = ss.OCI(sim_perams, dx_mesh, xsec_mesh_t, xsec_scatter_mesh, source_mesh_tilde, True)
         elif (backend == 'SI'):
-            [angular_flux_total[:,:,t], current_total[:,t], spec_rad[t], source_converged] = SourceItteration(sim_perams, dx_mesh, xsec_mesh_t, xsec_scatter_mesh, source_mesh_tilde, True)
+            [angular_flux_total[:,:,t], current_total[:,t], spec_rad[t], source_converged] = ss.SourceItteration(sim_perams, dx_mesh, xsec_mesh_t, xsec_scatter_mesh, source_mesh_tilde, True)
         else:
             print('>>>ERROR: NO Backend provided')
             print('     select between OCI and SI!')
@@ -58,18 +60,18 @@ def TimeLoop(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_m
             
         #angular_flux_total[:,:,t] = TimeDiscretization(angular_flux_last, angular_flux_half)
         
-        psi_check = source_mesh_tilde[0,5] / (xsec_mesh_t[5]*(1)/2)
+        #psi_check = source_mesh_tilde[0,5] / (xsec_mesh_t[5]*(1)/2)
         
         print('Time step: {0}'.format(t))
         print('     -ρ:          {0}    '.format(spec_rad[t]))
         print('     -wall time:  {0} [s]'.format(end-start))
-        print('     -Ψ check:    {0}    '.format(psi_check))
+        #print('     -Ψ check:    {0}    '.format(psi_check))
         
         
         angular_flux_last = angular_flux_total[:,:,t]
-        scalar_flux[:,t+1] = src.ScalarFlux(angular_flux_last, weights)
+        scalar_flux[:,t+1] = utl.ScalarFlux(angular_flux_last, weights)
         
-        print('     -psi mid:   {0}'.format(scalar_flux[6,t]))
+        print('     -psi mid:   {0}'.format(scalar_flux[4,t]))
         print()
         print()
     
