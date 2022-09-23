@@ -1,8 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 np.set_printoptions(linewidth=np.inf)
-#import sys
-#np.set_printoptions(edgeitems=50000)
 
 """Thomson's Rule for First-Time Telescope Makers: It is faster to make a 
 four-inch mirror then a six-inch mirror than to make a six-inch mirror."""
@@ -66,36 +64,31 @@ def scatter_source(dx, xsec_scattering, N, w):
     beta = dx*xsec_scattering/4
     for i in range(N):
         for j in range(N):
-            S[i,j] = beta * w[i]
+            S[2*i,2*j] = beta * w[i]
             S[2*i+1,2*j+1] = beta * w[i]
-        """
-        for k in range (0, n_angle):
-                for i in range (0, n_angle):
-                    A[2*k,2*i]     += -weight[i] * (dx*xsec_scatter/4)
-                    A[2*k+1,2*i+1] += -weight[i] * (dx*xsec_scatter/4)"""
 
     return(S)
 
 xsec = 10
-scattering_ratio = 0
+scattering_ratio = .5
 xsec_scattering = xsec*scattering_ratio
 
-printer = True
+printer = False
 printer_TS = True
 
 dx = .25
 L = 1
 N = int(L/dx)
 N_mesh = int(2*N)
-Q = 0
+Q = 1
 
 dt = 0.25
-N_time = 4
+N_time = 5
 max_time = dt*(N_time-1)
 v = 1
 
 #BCs incident iso
-BCl = 10
+BCl = 0
 BCr = 0
 
 angular_flux      = np.zeros([2, N_mesh])
@@ -106,7 +99,7 @@ angular_flux_last = np.zeros([2, N_mesh])
 angular_flux_final = np.zeros([2, int(N_mesh), N_time])
 
 mu1 = -0.57735
-mu2 = 0.57735
+mu2 =  0.57735
 
 w1 = 1
 w2 = 1
@@ -138,9 +131,9 @@ for k in range(1, N_time, 1):
 
     # iterating on these till convergence
     angular_flux      = np.zeros([2, N_mesh]) 
-    angular_flux_last = np.ones([2, N_mesh])   # last refers to last iteration
+    angular_flux_last = np.zeros([2, N_mesh])   # last refers to last iteration
     angular_flux_midstep = np.zeros([2, N_mesh])
-    angular_flux_midstep_last = np.ones([2, N_mesh])   # last refers to last iteration
+    angular_flux_midstep_last = np.zeros([2, N_mesh])   # last refers to last iteration
 
     #initial guesses?
     itter = 0
@@ -148,12 +141,12 @@ for k in range(1, N_time, 1):
     while error_eos > tol and max_itter > itter:
         print(itter)
         if itter == max_itter:
-            print('Crap: %d'.format(k))
+            print('Crap: {0}'.format(k))
 
         if (printer):
             print()
             print("========================================")
-            print("next cycle")
+            print("next cycle: {0}".format(itter))
             print("========================================")
             print()
 
@@ -167,12 +160,15 @@ for k in range(1, N_time, 1):
             
             A_small = A_neg(dx, v, dt, mu1, xsec)
             S_small = scatter_source(dx, xsec_scattering, N_angle, w)
+            #print('>>> S_small <<<')
+            #print(S_small)
+            #print()
 
             assert ((A_small.size == S_small.size))
 
             A[:4, :4] = A_small - S_small
 
-            A_small = A_neg(dx, v, dt, mu1, xsec)
+            A_small = A_pos(dx, v, dt, mu2, xsec)
             S_small = scatter_source(dx, xsec_scattering, N_angle, w)
 
             assert ((A_small.size == S_small.size))
@@ -209,9 +205,14 @@ for k in range(1, N_time, 1):
             c[4:] = c_pos(dx, v, dt, mu2, Q, Q, Q, Q, psi_halfLast_L[1], psi_halfLast_R[1], psi_leftBound, psi_halfNext_leftBound)
 
             if (printer):
-                print("Large cell %d".format(i))
+                print("Large cell {0}".format(i))
+                print('>>> psi_right bound (BC) <<<')
+                print(psi_rightBound)
+                print()
+                print('>>> c vector <<<')
                 print(c)
                 print()
+                print('>>> full A mat <<<')
                 print(A)
                 print()
 
@@ -226,10 +227,13 @@ for k in range(1, N_time, 1):
                 angular_flux_midstep[p,i_r] = angular_flux_raw[4*p+3]
 
             if (printer):
+                print('>>> raw solution <<<')
                 print(angular_flux_raw)
                 print()
+                print('>>> angular flux eos reorganized <<<')
                 print(angular_flux)
                 print()
+                print('>>> angular flux mid step reorganized <<<')
                 print(angular_flux_midstep)
                 print()
 
@@ -251,14 +255,14 @@ for k in range(1, N_time, 1):
 f=1
 X = np.linspace(0, L, int(N_mesh))
 plt.figure(f)
-plt.plot(X, final_angular_flux_solution[0, 1,:],  '--*g', label='0')
-plt.plot(X, final_angular_flux_midstep_solution[0, 1,:],  '-*g',  label='0 + 1/2')
-plt.plot(X, final_angular_flux_solution[1, 1,:],  '--*k', label='1')
-plt.plot(X, final_angular_flux_midstep_solution[1, 1,:],  '-*k',  label='1 + 1/2')
-plt.plot(X, final_angular_flux_solution[2, 1,:],  '--*r', label='2')
-plt.plot(X, final_angular_flux_midstep_solution[2, 1,:],  '-*r',  label='2 + 1/2')
-plt.plot(X, final_angular_flux_solution[-1, 1,:],  '--*b', label='9, 2')
-plt.plot(X, final_angular_flux_midstep_solution[-1, 1,:],  '-*b',  label='3 + 1/2')
+plt.plot(X, final_angular_flux_solution[1, 1,:],  '--*g', label='0')
+#plt.plot(X, final_angular_flux_midstep_solution[1, 1,:],  '-*g',  label='0 + 1/2')
+plt.plot(X, final_angular_flux_solution[2, 1,:],  '--*k', label='1')
+#plt.plot(X, final_angular_flux_midstep_solution[2, 1,:],  '-*k',  label='1 + 1/2')
+plt.plot(X, final_angular_flux_solution[3, 1,:],  '--*r', label='2')
+#plt.plot(X, final_angular_flux_midstep_solution[3, 1,:],  '-*r',  label='2 + 1/2')
+plt.plot(X, final_angular_flux_solution[4, 1,:],  '--*b', label='9, 2')
+#plt.plot(X, final_angular_flux_midstep_solution[-1, 1,:],  '-*b',  label='3 + 1/2')
 #plt.plot(X, scalar_flux2[0,:], '-r',  label='SI 1')
 #plt.plot(X, scalar_flux2[1,:], '--r', label='SI 2')
 plt.title('Test Ang Flux: Positive ordinant')
