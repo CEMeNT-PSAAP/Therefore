@@ -12,7 +12,7 @@ def flatLinePlot(x, y, dat):
 data_type = np.float64
 
 L = 1
-dx = 0.25
+dx = 0.01
 N_mesh = int(L/dx)
 xsec = 10
 ratio = 0.0
@@ -20,8 +20,8 @@ scattering_xsec = xsec*ratio
 source_mat = 0
 N_angle = 2
 
-dt = 0.25
-max_time = 1
+dt = 0.1
+max_time = .4
 
 N_time = int(max_time/dt)
 N_ans = 2*N_mesh
@@ -54,7 +54,7 @@ sim_perams = {'data_type': data_type,
               'right_in_mag': 10,
               'left_in_angle': .3,
               'right_in_angle': 0,
-              'max loops': 100,
+              'max loops': 1000,
               'velocity': 1,
               'dt': dt,
               'max time': max_time,
@@ -69,10 +69,10 @@ sim_perams = {'data_type': data_type,
 
 x = np.linspace(0, L, int(N_mesh*2))
 plt.figure(4)
-plt.plot(x, ang_flux[1,:,0], '-r', label='MB 0')
-plt.plot(x, ang_flux[1,:,1], '--r', label='MB 1')
-plt.plot(x, ang_flux[1,:,2], '-*r', label='MB 2')
-plt.plot(x, ang_flux[1,:,3], '-^r', label='MB 3')
+plt.plot(x, ang_flux[1,:,0], '-k', label='MB 0')
+plt.plot(x, ang_flux[1,:,1], '--k', label='MB 1')
+plt.plot(x, ang_flux[1,:,2], '-*k', label='MB 2')
+plt.plot(x, ang_flux[1,:,3], '-^k', label='MB 3')
 plt.plot(x, scalar_flux[1,:,0], '-b', label='Euler 0')
 plt.plot(x, scalar_flux[1,:,1], '--b', label='Euler 1')
 plt.plot(x, scalar_flux[1,:,2], '-*b', label='Euler 2')
@@ -82,17 +82,3 @@ plt.ylabel('Scalar Flux [units of scalar flux]')
 plt.title('First time step of transient methods')
 plt.legend()
 plt.show()
-
-'''
-plt.figure(4)
-plt.plot(x, scalar_flux[:,10] , '-k', label='SI')
-plt.plot(x, scalar_flux2[:,10], '-r', label='OCI')
-plt.plot(x, therefore.azurv1_spav(x_eval, ratio, inital_offset+dt*10),'--k', label='AVURV1')
-plt.plot(x, inital_scalar_flux, '-b', label='Initial Condition')
-plt.xlabel('Distance [cm]')
-plt.ylabel('Scalar Flux [units of scalar flux]')
-plt.title('First time step of transient methods')
-plt.xlim(4.75,5.25)
-plt.legend()
-plt.savefig('SF_test.png')
-'''

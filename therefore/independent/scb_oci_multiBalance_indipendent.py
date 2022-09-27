@@ -70,17 +70,17 @@ def scatter_source(dx, xsec_scattering, N, w):
     return(S)
 
 xsec = 10
-scattering_ratio = .5
+scattering_ratio = 0.0
 xsec_scattering = xsec*scattering_ratio
 
 printer = False
 printer_TS = True
 
-dx = .25
+dx = .1
 L = 1
 N = int(L/dx)
 N_mesh = int(2*N)
-Q = 1
+Q = 0
 
 dt = 0.25
 N_time = 5
@@ -88,7 +88,7 @@ max_time = dt*(N_time-1)
 v = 1
 
 #BCs incident iso
-BCl = 0
+BCl = 10
 BCr = 0
 
 angular_flux      = np.zeros([2, N_mesh])
@@ -107,7 +107,7 @@ w = np.array([w1, w2])
 
 N_angle = 2
 
-tol = 1e-6
+tol = 1e-9
 error = 1
 max_itter = 1000
 
