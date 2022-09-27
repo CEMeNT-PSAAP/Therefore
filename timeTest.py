@@ -1,9 +1,5 @@
-"""
-Created on Sun May 15 20:34:03 2022
-@author: jacksonmorgan
-"""
-
 import numpy as np
+#np.set_printoptions(threshold=np.inf)
 import matplotlib.pyplot as plt
 import therefore
 
@@ -19,7 +15,7 @@ L = 1
 dx = 0.25
 N_mesh = int(L/dx)
 xsec = 10
-ratio = 0.5
+ratio = 0.0
 scattering_xsec = xsec*ratio
 source_mat = 0
 N_angle = 2
@@ -38,17 +34,10 @@ source_mesh = source_mat*np.ones([N_mesh], data_type)
 psi_in = source_mat / (xsec*(1-ratio)/2)
 #print(psi_in)
 
-#setup = np.linspace(0, np.pi, 2*N_mesh)
-inital_angular_flux = np.zeros([N_angle, 2*N_mesh])
-in_mid = np.ones(N_angle)
-
-xm = np.linspace(-L/2,L/2, N_ans+1)
-inital_scalar_flux = np.zeros(2*N_mesh)
-
-
 [angles_gq, weights_gq] = np.polynomial.legendre.leggauss(N_angle)
 
-assert(inital_scalar_flux.size == N_ans)
+#setup = np.linspace(0, np.pi, 2*N_mesh)
+inital_scalar_flux = np.zeros(2*N_mesh)
 
 inital_angular_flux = np.zeros([N_angle, N_ans], data_type)
 total_weight = sum(weights_gq)
@@ -65,28 +54,29 @@ sim_perams = {'data_type': data_type,
               'right_in_mag': 10,
               'left_in_angle': .3,
               'right_in_angle': 0,
-              'max loops': 10000,
+              'max loops': 100,
               'velocity': 1,
               'dt': dt,
               'max time': max_time,
               'N_time': N_time,
               'offset': 0,
-              'ratio': ratio}
+              'ratio': ratio,
+              'tolerance': 1e-9}
 
-
-[scalar_flux, current, spec_rads] = therefore.euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 1, 'SI')
-[scalar_flux2, current, spec_rads] = therefore.euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 1, 'OCI')
+#inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source, backend='OCI_MB'
+[scalar_flux, current, spec_rads] = therefore.euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 1, 'OCI')
+[ang_flux, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI_MB')
 
 x = np.linspace(0, L, int(N_mesh*2))
 plt.figure(4)
-plt.plot(x, scalar_flux[:,0] , '-k', label='SI 0')
-plt.plot(x, scalar_flux[:,1] , '-k', label='SI 1')
-plt.plot(x, scalar_flux[:,2] , '-k', label='SI 2')
-plt.plot(x, scalar_flux[:,3] , '-k', label='SI 3')
-plt.plot(x, scalar_flux2[:,0], '-r', label='OCI 0')
-plt.plot(x, scalar_flux2[:,1], '-r', label='OCI 1')
-plt.plot(x, scalar_flux2[:,2], '-r', label='OCI 2')
-plt.plot(x, scalar_flux2[:,3], '-r', label='OCI 3')
+plt.plot(x, ang_flux[1,:,0], '-r', label='MB 0')
+plt.plot(x, ang_flux[1,:,1], '--r', label='MB 1')
+plt.plot(x, ang_flux[1,:,2], '-*r', label='MB 2')
+plt.plot(x, ang_flux[1,:,3], '-^r', label='MB 3')
+plt.plot(x, scalar_flux[1,:,0], '-b', label='Euler 0')
+plt.plot(x, scalar_flux[1,:,1], '--b', label='Euler 1')
+plt.plot(x, scalar_flux[1,:,2], '-*b', label='Euler 2')
+plt.plot(x, scalar_flux[1,:,3], '-^b', label='Euler 3')
 plt.xlabel('Distance [cm]')
 plt.ylabel('Scalar Flux [units of scalar flux]')
 plt.title('First time step of transient methods')

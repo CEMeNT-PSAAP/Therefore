@@ -75,7 +75,7 @@ def euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh
         print()
         print()
     
-    return(scalar_flux, current_total, spec_rad)
+    return(angular_flux_total, current_total, spec_rad)
     
     
     
