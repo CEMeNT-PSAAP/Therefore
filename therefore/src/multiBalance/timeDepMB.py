@@ -76,7 +76,7 @@ def multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatt
         print()
         print()
     
-    return(angular_flux, current_total, spec_rad)
+    return(scalar_flux, current_total, spec_rad)
     
     
 #def TimeDiscretization(angular_flux_last, angular_flux_half, theta):

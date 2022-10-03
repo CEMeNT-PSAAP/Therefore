@@ -1,6 +1,7 @@
 import numpy as np
 from .matrix import A_pos, A_neg, c_neg, c_pos, scatter_source
 import therefore.src.utilities as utl
+import numba as nb
 
 
                 #sim_perams, angular_flux_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights
@@ -72,24 +73,26 @@ def OCIMBTimeStep(sim_perams, angular_flux_previous, source_mesh, xsec_mesh, xse
     #angular_flux[:,:,t], angular_flux_mid[:,:,t], current_total[:,t], spec_rad[t], source_converged
 
 # last refers to iteration
-# prev refers to previous time step
+# prev refers to previous time step {"inplace_binop":False}
+@nb.jit(nopython=True, parallel=False, cache=True, nogil=True, fastmath=True)
 def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_last, source, xsec, xsec_scatter, dx, dt, v, mu, weight, BCl, BCr):
     
     N_mesh = int(dx.size)
+    N_ans = int(N_mesh*2)
     sizer = int(mu.size*4)
     N_angle = mu.size
     half = int(mu.size/2)
 
-    angular_flux = np.zeros_like(angular_flux_last)
-    angular_flux_midstep = np.zeros_like(angular_flux_last)
+    angular_flux = np.zeros((N_angle, N_ans), dtype=np.float64)
+    angular_flux_midstep = np.zeros((N_angle, N_ans), dtype=np.float64)
     
-    A = np.zeros([sizer,sizer])
-    c = np.zeros([sizer,1])
+    A = np.zeros((sizer,sizer))
+    c = np.zeros((sizer,1))
 
-    for i in range(N_mesh):
+    for i in nb.prange(N_mesh):
         
-        i_l = int(2*i)
-        i_r = int(2*i+1)
+        i_l: int = int(2*i)
+        i_r: int = int(2*i+1)
 
         Q = source[:,i_l:i_r+1]
 
@@ -131,7 +134,7 @@ def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_
 
             S_small = scatter_source(dx[i], xsec_scatter[i], N_angle, weight)
 
-            A[m*4:(m+1)*4, m*4:(m+1)*4] = A_small - S_small
+            A[m*4:(m+1)*4, m*4:(m+1)*4] = A_small
             c[m*4:(m+1)*4] = c_small
         '''
         print()
@@ -141,15 +144,15 @@ def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_
         print()
         '''
 
-        angular_flux_raw = np.linalg.solve(A, c)
-        #print(angular_flux_raw)
+        angular_flux_raw = np.linalg.solve(A, c).reshape(4*N_angle, 1)
+        #print(angular_flux_raw.shape)
         #print()
 
         for m in range(N_angle):
-                angular_flux[m,i_l]         = angular_flux_raw[4*m]
-                angular_flux[m,i_r]         = angular_flux_raw[4*m+1]
-                
-                angular_flux_midstep[m,i_l] = angular_flux_raw[4*m+2]
-                angular_flux_midstep[m,i_r] = angular_flux_raw[4*m+3]
+            angular_flux[m,i_l]         = angular_flux_raw[4*m, 0]
+            angular_flux[m,i_r]         = angular_flux_raw[4*m+1, 0]
+            
+            angular_flux_midstep[m,i_l] = angular_flux_raw[4*m+2, 0]
+            angular_flux_midstep[m,i_r] = angular_flux_raw[4*m+3, 0]
 
     return(angular_flux, angular_flux_midstep)

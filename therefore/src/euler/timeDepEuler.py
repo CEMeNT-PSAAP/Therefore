@@ -71,11 +71,11 @@ def euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh
         angular_flux_last = angular_flux_total[:,:,t]
         scalar_flux[:,t+1] = utl.ScalarFlux(angular_flux_last, weights)
         
-        print('     -psi mid:   {0}'.format(scalar_flux[4,t]))
+        print('      -psi mid:   {0}'.format(scalar_flux[4,t]))
         print()
         print()
     
-    return(angular_flux_total, current_total, spec_rad)
+    return(scalar_flux, current_total, spec_rad)
     
     
     

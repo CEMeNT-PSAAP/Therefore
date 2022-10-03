@@ -7,12 +7,13 @@ def a_one(x):
 
 @nb.jit(nopython=True, parallel=True)
 def test():
-    N = int(1e6)
+    N = int(1e3)
 
-    a = np.random.random(N).astype(np.float64)
+    a = np.random.random((N,N)).astype(np.float64)
+    b = np.ones(N, dtype=np.float64)
 
     for i in nb.prange(N):
-        a[i] = a_one(a[i])
+        a[i,i] = b[i]
     
     #assert((a.all == test.all))
 
