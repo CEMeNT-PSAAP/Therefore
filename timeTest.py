@@ -24,7 +24,7 @@ source_mat = 0
 N_angle = 2
 
 dt = np.array([.1])
-max_time = .4
+max_time = 1
 
 N_time = int(max_time/dt)
 N_ans = 2*N_mesh
@@ -88,7 +88,7 @@ mcdc.cell([+s1, -s2], m)
 mcdc.source(point=[1E-9,0.0,0.0], time=np.array([0,1]), isotropic=True)
 
 # Tally
-mcdc.tally(scores=['flux', 'flux-t'], x=np.linspace(0, 1, 201), t=np.linspace(0, 0.4, N_time+1)) #np.arange(0, 0.4, dt)
+mcdc.tally(scores=['flux', 'flux-t'], x=np.linspace(0, 1, 201), t=np.linspace(0, max_time, N_time+1)) #np.arange(0, 0.4, dt)
 
 # Setting
 mcdc.setting(N_particle=1E5)
@@ -152,6 +152,7 @@ fig, axs = plt.subplots(4)
 axs[0].plot(x, sfEuler[:,1], label='euler')
 axs[0].plot(x, sfMB[:,1], label='mb')
 axs[0].plot(x, sfRef[:,1], label='ref')
+axs[0].plot(x, sfRef[:,0], label='ref')
 axs[0].set_title('0.1 [s]')
 
 axs[1].plot(x, sfEuler[:,2], label='euler')
@@ -168,6 +169,8 @@ print(' -Reference Solution Shape 2: {0}'.format(sfRef.shape))
 axs[3].plot(x, sfRef[:,0], label='1')
 axs[3].plot(x, sfRef[:,1], label='2')
 axs[3].plot(x, sfRef[:,2], label='3')
+axs[3].plot(x, sfRef[:,3], label='3')
+axs[3].plot(x, sfRef[:,4], label='3')
 axs[3].set_title('0.4 [s]')
 
 for ax in axs.flat:
