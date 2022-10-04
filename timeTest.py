@@ -1,3 +1,4 @@
+from tkinter import X
 import numpy as np
 #np.set_printoptions(threshold=np.inf)
 import matplotlib.pyplot as plt
@@ -23,13 +24,13 @@ N_mesh = int(L/dx)
 xsec = 1
 ratio = 0.0
 scattering_xsec = xsec*ratio
-source_mat = 0
-N_angle = 10
+source_mat = 1
+N_angle = 2
 
-dt = np.array([.1, 0.05, 0.025, 0.0125])
-max_time = 1
+dt = 0.01
+max_time = 0.04
 
-N_time = int(max_time/dt[0])
+N_time = int(max_time/dt)
 
 N_ans = 2*N_mesh
 
@@ -55,7 +56,7 @@ sim_perams = {'data_type': data_type,
               'N_angles': N_angle,
               'L': L,
               'N_mesh': N_mesh,
-              'boundary_condition_left':  'incident_iso',
+              'boundary_condition_left':  'vacuum',
               'boundary_condition_right': 'vacuum',
               'left_in_mag': 10,
               'right_in_mag': 10,
@@ -63,7 +64,7 @@ sim_perams = {'data_type': data_type,
               'right_in_angle': 0,
               'max loops': 1000,
               'velocity': 1,
-              'dt': dt[0],
+              'dt': dt,
               'max time': max_time,
               'N_time': N_time,
               'offset': 0,
@@ -88,97 +89,44 @@ s2 = mcdc.surface('plane-x', x=1E10,  bc="vacuum")
 
 # Set cells
 mcdc.cell([+s1, -s2], m)
-
-mcdc.source(point=[1E-9,0.0,0.0], time=np.array([0,1]), isotropic=True)
-
-# Tally
-mcdc.tally(scores=['flux', 'flux-t'], x=np.linspace(0, 1, 201), t=np.linspace(0, max_time, N_time+1)) #np.arange(0, 0.4, dt)
+mcdc.source(x=[0.0,1.0], time=np.array([0,1]), isotropic=True)
 
 # Setting
-mcdc.setting(N_particle=1E5)
+mcdc.setting(N_particle=1E6)
 
 # =============================================================================
 # Running it
 # =============================================================================
 
+    
+mcdc.tally(scores=['flux'], x=np.linspace(0, 1, 201), t=np.linspace(0, max_time, N_time+1))
+mcdc.run()
 
-errorMB = np.zeros(dt.size)
-errorEuler = np.zeros(dt.size)
-
-for i in range(dt.size):
-    sim_perams['dt'] = dt[i]
-    N_time = int(max_time/dt[i])
-    
-    #mcdc.tally(scores=['flux'], x=np.linspace(0, 1, 201), t=np.linspace(0, max_time, N_time+1))
-    #mcdc.run()
-
-    [sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI_MB')
-    [sfEuler, current, spec_rads] = therefore.euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 1, 'OCI')
-    
-    with h5py.File('output.h5', 'r') as f:
-        sfRef = f['tally/flux/mean'][:]
-        t     = f['tally/grid/t'][:]
-    
-    print(t)
-    sfRef = np.transpose(sfRef)
-    
-    for j in range(sfMB.shape[1]):
-        sfEuler[:,j] = sfEuler[:,j]/max(sfEuler[:,j])
-        sfMB[:,j] = sfMB[:,j]/max(sfMB[:,j])
-    
-    for j in range(sfRef.shape[1]):
-        sfRef[:,j] = sfRef[:,j]/max(sfRef[:,j])
-        
-    
-
-    print()
-    print('dt slice')
-    print(' -Solution Euler Shape:     {0}'.format(sfEuler.shape))
-    print(' -Solution TMDB Shape:      {0}'.format(sfMB.shape))
-    print(' -Reference Solution Shape: {0}'.format(sfRef.shape))
-
-    assert (sfEuler.shape == sfMB.shape)
-    #assert (sfRef.shape == sfEuler.shape)
-    
-    
-    errorMB[i] = np.linalg.norm(sfMB[:,-1]-sfRef[:,-1])
-    errorEuler[i] = np.linalg.norm(sfEuler[:,-1]-sfRef[:,-1])
+[sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI_MB')
+[sfEuler, current, spec_rads] = therefore.euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 1, 'OCI')
 
 
-    print(' -multi balance error:      {0}'.format(errorMB))
-    print(' -euler error:              {0}'.format(errorEuler))
+with h5py.File('output.h5', 'r') as f:
+    sfRef = f['tally/flux/mean'][:]
+    t     = f['tally/grid/t'][:]
+sfRef = np.transpose(sfRef)
+
+for j in range(sfMB.shape[1]):
+    sfEuler[:,j] = sfEuler[:,j]/max(sfEuler[:,j])
+    sfMB[:,j] = sfMB[:,j]/max(sfMB[:,j])
+
+for j in range(sfRef.shape[1]):
+    sfRef[:,j] = sfRef[:,j]/max(sfRef[:,j])
+
     
 
-print()
 x = np.linspace(0, L, int(N_mesh*2))
-
-plt.figure(2)
-for i in range(sfRef.shape[1]):
-    plt.plot(x, sfRef[:,i])
-plt.show()
-
-fig, axs = plt.subplots(4)
-axs[0].plot(x, sfEuler[:,t2p(0.1)], label='euler')
-axs[0].plot(x, sfMB[:,t2p(0.1)], label='mb')
-axs[0].plot(x, sfRef[:,t2p(0.1)], label='ref')
-#axs[0].plot(x, sfRef[:,0], label='ref')
-axs[0].set_title('0.1 [s]')
-
-axs[1].plot(x, sfEuler[:,t2p(0.2)], label='euler')
-axs[1].plot(x, sfMB[:,t2p(0.2)], label='mb')
-axs[1].plot(x, sfRef[:,t2p(0.2)], label='ref')
-axs[1].set_title('0.2 [s]')
-
-axs[2].plot(x, sfEuler[:,t2p(0.3)], label='euler')
-axs[2].plot(x, sfMB[:,t2p(0.3)], label='mb')
-axs[2].plot(x, sfRef[:,t2p(0.1)], label='ref')
-axs[2].set_title('0.3 [s]')
-
-print(' -Reference Solution Shape 2: {0}'.format(sfRef.shape))
-axs[3].plot(x, sfEuler[:,-1], label='euler')
-axs[3].plot(x, sfMB[:,-1], label='mb')
-axs[3].plot(x, sfRef[:,-1], label='ref')
-axs[3].set_title('0.4 [s]')
+fig, axs = plt.subplots(N_time)
+for i in range(N_time):
+    axs[i].plot(x, sfEuler[:,i], label='euler')
+    axs[i].plot(x, sfMB[:,i], label='mb')
+    axs[i].plot(x, sfRef[:,i], label='ref')
+    axs[i].set_title('time step {0}'.format(i))
 
 for ax in axs.flat:
     ax.label_outer()

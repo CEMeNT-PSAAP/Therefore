@@ -74,13 +74,13 @@ def OCIMBTimeStep(sim_perams, angular_flux_previous, source_mesh, xsec_mesh, xse
 
 # last refers to iteration
 # prev refers to previous time step {"inplace_binop":False}
-@nb.njit#(nopython=True, parallel=False, cache=True, nogil=True, fastmath=True)
+#@nb.njit#(nopython=True, parallel=False, cache=True, nogil=True, fastmath=True)
 def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_last, source, xsec, xsec_scatter, dx, dt, v, mu, weight, BCl, BCr):
     
-    N_mesh: np.int32 = dx.size
-    N_ans: np.int32 = (N_mesh*2)
-    sizer: np.int32 = mu.size*4
-    N_angle: np.int32 = mu.size
+    N_mesh = dx.size
+    N_ans = (N_mesh*2)
+    sizer = mu.size*4
+    N_angle = mu.size
     half = int(mu.size/2)
 
     angular_flux = np.zeros_like(angular_flux_last)
@@ -89,7 +89,7 @@ def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_
     A = np.zeros((sizer,sizer))
     c = np.zeros((sizer,1))
 
-    for i in nb.prange(N_mesh):
+    for i in range(N_mesh):
         
         i_l: int = int(2*i)
         i_r: int = int(2*i+1)
