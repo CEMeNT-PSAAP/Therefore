@@ -7,6 +7,9 @@ import mcdc
 import numpy as np
 import h5py
 
+def t2p(time):
+    return(int((time/max_time)*N_time))
+
 
 # =============================================================================
 # Therefore setup
@@ -21,12 +24,13 @@ xsec = 1
 ratio = 0.0
 scattering_xsec = xsec*ratio
 source_mat = 0
-N_angle = 2
+N_angle = 10
 
-dt = np.array([.1])
+dt = np.array([.1, 0.05, 0.025, 0.0125])
 max_time = 1
 
-N_time = int(max_time/dt)
+N_time = int(max_time/dt[0])
+
 N_ans = 2*N_mesh
 
 dx_mesh = dx*np.ones(N_mesh, data_type)
@@ -104,26 +108,28 @@ errorEuler = np.zeros(dt.size)
 for i in range(dt.size):
     sim_perams['dt'] = dt[i]
     N_time = int(max_time/dt[i])
+    
     #mcdc.tally(scores=['flux'], x=np.linspace(0, 1, 201), t=np.linspace(0, max_time, N_time+1))
-    mcdc.run()
+    #mcdc.run()
 
-    [sfEuler, current, spec_rads] = therefore.euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 1, 'OCI')
     [sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI_MB')
-
+    [sfEuler, current, spec_rads] = therefore.euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 1, 'OCI')
+    
     with h5py.File('output.h5', 'r') as f:
         sfRef = f['tally/flux/mean'][:]
         t     = f['tally/grid/t'][:]
     
     print(t)
     sfRef = np.transpose(sfRef)
-
-    for j in range(N_time):
+    
+    for j in range(sfMB.shape[1]):
         sfEuler[:,j] = sfEuler[:,j]/max(sfEuler[:,j])
         sfMB[:,j] = sfMB[:,j]/max(sfMB[:,j])
-    for j in range(3):
+    
+    for j in range(sfRef.shape[1]):
         sfRef[:,j] = sfRef[:,j]/max(sfRef[:,j])
         
-        
+    
 
     print()
     print('dt slice')
@@ -133,44 +139,45 @@ for i in range(dt.size):
 
     assert (sfEuler.shape == sfMB.shape)
     #assert (sfRef.shape == sfEuler.shape)
-    '''
-    for j in range(N_time):
-        errorMB[i] += np.linalg.norm(sfMB[:,j]-sfRef[:,j], ord == 2)
-        errorEuler[i] += np.linalg.norm(sfEuler[:,j]-sfRef[:,j], ord == 2)
-    errorMB[i] /= N_time
-    errorEuler[i] /= N_time
+    
+    
+    errorMB[i] = np.linalg.norm(sfMB[:,-1]-sfRef[:,-1])
+    errorEuler[i] = np.linalg.norm(sfEuler[:,-1]-sfRef[:,-1])
+
 
     print(' -multi balance error:      {0}'.format(errorMB))
     print(' -euler error:              {0}'.format(errorEuler))
-    '''
-
+    
 
 print()
 x = np.linspace(0, L, int(N_mesh*2))
 
+plt.figure(2)
+for i in range(sfRef.shape[1]):
+    plt.plot(x, sfRef[:,i])
+plt.show()
+
 fig, axs = plt.subplots(4)
-axs[0].plot(x, sfEuler[:,1], label='euler')
-axs[0].plot(x, sfMB[:,1], label='mb')
-axs[0].plot(x, sfRef[:,1], label='ref')
-axs[0].plot(x, sfRef[:,0], label='ref')
+axs[0].plot(x, sfEuler[:,t2p(0.1)], label='euler')
+axs[0].plot(x, sfMB[:,t2p(0.1)], label='mb')
+axs[0].plot(x, sfRef[:,t2p(0.1)], label='ref')
+#axs[0].plot(x, sfRef[:,0], label='ref')
 axs[0].set_title('0.1 [s]')
 
-axs[1].plot(x, sfEuler[:,2], label='euler')
-axs[1].plot(x, sfMB[:,2], label='mb')
-axs[1].plot(x, sfRef[:,2], label='ref')
+axs[1].plot(x, sfEuler[:,t2p(0.2)], label='euler')
+axs[1].plot(x, sfMB[:,t2p(0.2)], label='mb')
+axs[1].plot(x, sfRef[:,t2p(0.2)], label='ref')
 axs[1].set_title('0.2 [s]')
 
-axs[2].plot(x, sfEuler[:,3], label='euler')
-axs[2].plot(x, sfMB[:,3], label='mb')
-axs[2].plot(x, sfRef[:,3], label='ref')
+axs[2].plot(x, sfEuler[:,t2p(0.3)], label='euler')
+axs[2].plot(x, sfMB[:,t2p(0.3)], label='mb')
+axs[2].plot(x, sfRef[:,t2p(0.1)], label='ref')
 axs[2].set_title('0.3 [s]')
 
 print(' -Reference Solution Shape 2: {0}'.format(sfRef.shape))
-axs[3].plot(x, sfRef[:,0], label='1')
-axs[3].plot(x, sfRef[:,1], label='2')
-axs[3].plot(x, sfRef[:,2], label='3')
-axs[3].plot(x, sfRef[:,3], label='3')
-axs[3].plot(x, sfRef[:,4], label='3')
+axs[3].plot(x, sfEuler[:,-1], label='euler')
+axs[3].plot(x, sfMB[:,-1], label='mb')
+axs[3].plot(x, sfRef[:,-1], label='ref')
 axs[3].set_title('0.4 [s]')
 
 for ax in axs.flat:

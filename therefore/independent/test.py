@@ -11,11 +11,27 @@ def test():
 
     a = np.random.random((N,N)).astype(np.float64)
     b = np.ones(N, dtype=np.float64)
+    c = np.zeros((N,N), dtype=np.float64)
 
     for i in nb.prange(N):
         a[i,i] = b[i]
     
     #assert((a.all == test.all))
+    return(c)
 
 if __name__ == '__main__':
-    test()
+    c = test()
+    print(c.shape)
+
+import numpy as np
+from numba import njit
+
+tre_n_arr = np.empty((3, 4))
+tre_n_arr.fill(0)
+
+
+@njit
+def emb():
+    tre_n_arr[0][0] = 12
+
+emb()
