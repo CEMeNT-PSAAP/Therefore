@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import therefore
 
-import mcdc
+#import mcdc
 import numpy as np
 import h5py
 
@@ -18,17 +18,17 @@ def t2p(time):
 
 data_type = np.float64
 
-L = 1
-dx = 0.01
+L = 10
+dx = 0.1
 N_mesh = int(L/dx)
-xsec = 1
-ratio = 0.0
+xsec = 0.25
+ratio = 0
 scattering_xsec = xsec*ratio
-source_mat = 1
-N_angle = 2
+source_mat = 0
+N_angle = 4
 
-dt = 0.01
-max_time = 0.04
+dt = 2
+max_time = 10
 
 N_time = int(max_time/dt)
 
@@ -56,9 +56,9 @@ sim_perams = {'data_type': data_type,
               'N_angles': N_angle,
               'L': L,
               'N_mesh': N_mesh,
-              'boundary_condition_left':  'vacuum',
+              'boundary_condition_left':  'incident_iso',
               'boundary_condition_right': 'vacuum',
-              'left_in_mag': 10,
+              'left_in_mag': 0.5,
               'right_in_mag': 10,
               'left_in_angle': .3,
               'right_in_angle': 0,
@@ -71,7 +71,7 @@ sim_perams = {'data_type': data_type,
               'ratio': ratio,
               'tolerance': 1e-9}
 
-
+'''
 # =============================================================================
 # MC/DC setup
 # =============================================================================
@@ -101,11 +101,12 @@ mcdc.setting(N_particle=1E6)
     
 mcdc.tally(scores=['flux'], x=np.linspace(0, 1, 201), t=np.linspace(0, max_time, N_time+1))
 mcdc.run()
+'''
 
 [sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI_MB')
 [sfEuler, current, spec_rads] = therefore.euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 1, 'OCI')
 
-
+'''
 with h5py.File('output.h5', 'r') as f:
     sfRef = f['tally/flux/mean'][:]
     t     = f['tally/grid/t'][:]
@@ -117,21 +118,26 @@ for j in range(sfMB.shape[1]):
 
 for j in range(sfRef.shape[1]):
     sfRef[:,j] = sfRef[:,j]/max(sfRef[:,j])
-
-    
+'''
+v=1
+# analitic soultion
+def psi(x,t):
+    s = x + v*t
+    return(0.5*np.exp((-xsec*s)/(1+angles_gq[1])))
 
 x = np.linspace(0, L, int(N_mesh*2))
-fig, axs = plt.subplots(N_time)
-for i in range(N_time):
-    axs[i].plot(x, sfEuler[:,i], label='euler')
-    axs[i].plot(x, sfMB[:,i], label='mb')
-    axs[i].plot(x, sfRef[:,i], label='ref')
-    axs[i].set_title('time step {0}'.format(i))
+fig, axs = plt.subplots(N_time-1)
+for i in range(1,N_time):
+    axs[i-1].plot(x, sfEuler[:,i], label='euler')
+    axs[i-1].plot(x, sfMB[:,i], label='mb')
+    axs[i-1].plot(x, psi(x, i*dt), label='ref')
+    axs[i-1].set_title('time {0}'.format(i*dt))
+plt.tight_layout()
 
 for ax in axs.flat:
     ax.label_outer()
 
-plt.show()
+plt.savefig('timeTest.png')
 
 '''
 x = np.linspace(0, L, int(N_mesh*2))

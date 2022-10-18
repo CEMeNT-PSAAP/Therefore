@@ -1,7 +1,7 @@
 import numpy as np
 import numba as nb
 
-#@nb.jit(nopython=True)
+@nb.jit(nopython=True)
 def A_neg(dx, v, dt, mu, xsec_total):
     assert(mu < 0)
     gamma = (dx*xsec_total)/2
@@ -16,7 +16,7 @@ def A_neg(dx, v, dt, mu, xsec_total):
     
     return(A_n)
 
-#@nb.jit(nopython=True)
+@nb.jit(nopython=True)
 def A_pos(dx, v, dt, mu, xsec_total):
     assert(mu > 0)
     gamma = (dx*xsec_total)/2
@@ -32,7 +32,7 @@ def A_pos(dx, v, dt, mu, xsec_total):
     return(A_p)
 
 
-#@nb.jit(nopython=True)
+@nb.jit(nopython=True)
 def c_neg(dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi_halfLast_R, psi_rightBound, psi_halfNext_rightBound):
     timer2 = dx/(2*v*dt)
 
@@ -44,7 +44,7 @@ def c_neg(dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi
     return(c_n)
 
 
-#@nb.jit(nopython=True)
+@nb.jit(nopython=True)
 def c_pos(dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi_halfLast_R, psi_leftBound, psi_halfNext_leftBound):
     timer2 = dx/(2*v*dt)
 
@@ -57,7 +57,7 @@ def c_pos(dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi
 
 
 
-#@nb.jit(nopython=True)
+@nb.jit(nopython=True)
 def b_pos(dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi_halfLast_R, psi_leftBound, psi_halfNext_leftBound, xsec_scatter, phi_L, phi_R, phi_halfNext_L, phi_halfNext_R):
     timer2 = dx/(2*v*dt)
 
@@ -68,7 +68,7 @@ def b_pos(dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi
 
     return(b_p)
 
-#@nb.jit(nopython=True)
+@nb.jit(nopython=True)
 def b_neg(dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi_halfLast_R, psi_rightBound, psi_halfNext_rightBound, xsec_scatter, phi_L, phi_R, phi_halfNext_L, phi_halfNext_R):
     timer2 = dx/(2*v*dt)
 
@@ -79,7 +79,7 @@ def b_neg(dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi
 
     return(b_n)
 
-#@nb.jit(nopython=True)
+@nb.jit(nopython=True)
 def scatter_source(dx, xsec_scattering, N, w):
     
     beta = dx*xsec_scattering/4
