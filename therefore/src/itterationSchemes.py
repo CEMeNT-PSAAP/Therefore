@@ -9,11 +9,8 @@ date: May 9th 2022
 
 import numpy as np
 import matplotlib.pyplot as plt
-import numba as nb
-import therefore.src as src
-import os
-import sys
-import scipy as sci
+import therefore.src.utilities as utl
+import therefore.src.steadyState as ss
 
 def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, time_dependent_mode=False):
     ''' Return converged scalar flux and current
@@ -69,24 +66,24 @@ def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_m
         #print('Next Itteration: {0}'.format(source_counter),end='\r')
         
         #detemine bounds bounds for next itteration
-        BCl = src.BoundaryCondition(boundary_condition_left,   0, N_mesh, angular_flux=angular_flux, incident_flux_mag=left_in_mag,  angle=left_in_angle,  angles=angles_gq)
-        BCr = src.BoundaryCondition(boundary_condition_right, -1, N_mesh, angular_flux=angular_flux, incident_flux_mag=right_in_mag, angle=right_in_angle, angles=angles_gq)
+        BCl = utl.BoundaryCondition(boundary_condition_left,   0, N_mesh, angular_flux=angular_flux, incident_flux_mag=left_in_mag,  angle=left_in_angle,  angles=angles_gq)
+        BCr = utl.BoundaryCondition(boundary_condition_right, -1, N_mesh, angular_flux=angular_flux, incident_flux_mag=right_in_mag, angle=right_in_angle, angles=angles_gq)
         
         #find RHS of transport (see problem assigment)
-        Q = src.RHSTransport(scalar_flux, xsec_scatter_mesh, source_mesh, N_mesh, dx_mesh)
+        Q = utl.RHSTransport(scalar_flux, xsec_scatter_mesh, source_mesh, N_mesh, dx_mesh)
         
         #simple corner balance to find angular flux for next itteration
-        angular_flux = src.SCBRun(Q, xsec_mesh, dx_mesh, angles_gq, BCl, BCr, N_mesh)
+        angular_flux = ss.SCBRun(Q, xsec_mesh, dx_mesh, angles_gq, BCl, BCr, N_mesh)
         
         #calculate current
-        current = src.Current(angular_flux, weights_gq, angles_gq)
+        current = utl.Current(angular_flux, weights_gq, angles_gq)
         
         #calculate scalar flux for next itteration
-        scalar_flux_next = src.ScalarFlux(angular_flux, weights_gq)
+        scalar_flux_next = utl.ScalarFlux(angular_flux, weights_gq)
         
         if source_counter > 2:
             #check for convergence
-            source_converged = src.HasItConverged(scalar_flux_next, scalar_flux)
+            source_converged = utl.HasItConverged(scalar_flux_next, scalar_flux)
             spec_rad = np.linalg.norm(scalar_flux_next - scalar_flux, ord=2) / np.linalg.norm((scalar_flux - scalar_flux_last), ord=2)
             
         #print()
@@ -115,8 +112,6 @@ def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_m
         scalar_flux = angular_flux
     
     return(angular_flux, current, spec_rad, source_converged)
-
-
 
 
 
@@ -176,24 +171,24 @@ def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, time_dep
     while source_converged == False:
         
         # detemine bounds bounds for next itteration
-        BCl = src.BoundaryCondition(boundary_condition_left,   0, N_mesh, angular_flux=angular_flux, incident_flux_mag=left_in_mag, angle=left_in_angle, angles=angles_gq)
-        BCr = src.BoundaryCondition(boundary_condition_right, -1, N_mesh, angular_flux=angular_flux, incident_flux_mag=right_in_mag, angle=right_in_angle, angles=angles_gq)
+        BCl = utl.BoundaryCondition(boundary_condition_left,   0, N_mesh, angular_flux=angular_flux, incident_flux_mag=left_in_mag, angle=left_in_angle, angles=angles_gq)
+        BCr = utl.BoundaryCondition(boundary_condition_right, -1, N_mesh, angular_flux=angular_flux, incident_flux_mag=right_in_mag, angle=right_in_angle, angles=angles_gq)
         
         #BCr = [0,0]
         #BCl = [0,10]
         
         # simple corner balance to find angular flux for next itteration
-        angular_flux_next = src.OCIRun(angular_flux, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles_gq, weights_gq, BCl, BCr)
+        angular_flux_next = ss.OCIRun(angular_flux, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles_gq, weights_gq, BCl, BCr)
         
         # calculate current
-        current = src.Current(angular_flux_next, weights_gq, angles_gq)
+        current = utl.Current(angular_flux_next, weights_gq, angles_gq)
         
         # calculate scalar flux for next itteration
-        scalar_flux_next = src.ScalarFlux(angular_flux_next, weights_gq)
+        scalar_flux_next = utl.ScalarFlux(angular_flux_next, weights_gq)
         
         if source_counter > 2:
             #check for convergence
-            source_converged = src.HasItConverged(scalar_flux_next, scalar_flux)
+            source_converged = utl.HasItConverged(scalar_flux_next, scalar_flux)
             spec_rad = np.linalg.norm(angular_flux_next - angular_flux, ord=2) / np.linalg.norm((angular_flux - angular_flux_last), ord=2)
         
         # if stuck, display error then cut n run
