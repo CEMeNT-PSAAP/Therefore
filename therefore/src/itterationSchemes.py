@@ -207,7 +207,7 @@ def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, time_dep
     if time_dependent_mode: #for time dependence
         scalar_flux = angular_flux_next
     
-    return(angular_flux, current, spec_rad, source_converged) #scalar_flux, current, 
+    return(scalar_flux, current, spec_rad, source_converged) #scalar_flux, current, 
     
 
 def SourceMeshTransform(source_mesh_o, N_angles):

@@ -2,7 +2,7 @@ import numpy as np
 import numba as nb
 import scipy.linalg as sci
 
-#@nb.jit(nopython=True, parallel=True, cache=True, nogil=True, fastmath=True)
+@nb.jit(nopython=True, parallel=True, cache=True, nogil=True, fastmath=True)
 def OCIRun(angular_flux, source, xsec, xsec_scatter, dx, mu, weight, BCl, BCr):
     
     n_mesh = int(dx.size)
@@ -38,7 +38,7 @@ def OCIRun(angular_flux, source, xsec, xsec_scatter, dx, mu, weight, BCl, BCr):
 
 
 
-#@nb.jit(nopython=True, cache=True, fastmath=True)
+@nb.jit(nopython=True, cache=True, fastmath=True)
 def SCB_OneCellInv_Cell(in_angular_flux, source, xsec, xsec_scatter, dx, mu, weight):
     
     n_angle = mu.size
