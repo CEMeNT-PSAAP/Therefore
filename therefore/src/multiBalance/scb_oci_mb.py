@@ -35,9 +35,12 @@ def OCIMBTimeStep(sim_perams, angular_flux_previous, source_mesh, xsec_mesh, xse
 
     while source_converged == False:
         BCl = utl.BoundaryCondition(sim_perams['boundary_condition_left'],   0, N_mesh, angular_flux=angular_flux, incident_flux_mag=sim_perams['left_in_mag'],  angle=sim_perams['left_in_angle'],  angles=angles)
-        BCr = utl.BoundaryCondition(sim_perams['boundary_condition_right'], -1, N_mesh, angular_flux=angular_flux, incident_flux_mag=sim_perams['right_in_mag'], angle=['right_in_angle'], angles=angles)
+        BCr = utl.BoundaryCondition(sim_perams['boundary_condition_right'], -1, N_mesh, angular_flux=angular_flux, incident_flux_mag=sim_perams['right_in_mag'], angle=sim_perams['right_in_angle'], angles=angles)
         
         [angular_flux, angular_flux_mid] = OCIMBRun(angular_flux_previous, angular_flux_last, angular_flux_mid_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, dt, velocity, angles, weights, BCl, BCr)
+
+        #neg_flux_fixup(angular_flux)
+        #neg_flux_fixup(angular_flux_mid)
 
         #calculate current
         current = utl.Current(angular_flux, weights, angles)
@@ -134,7 +137,7 @@ def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_
 
             S_small = scatter_source(dx[i], xsec_scatter[i], N_angle, weight)
 
-            A[m*4:(m+1)*4, m*4:(m+1)*4] = A_small
+            A[m*4:(m+1)*4, m*4:(m+1)*4] = A_small - S_small
             c[m*4:(m+1)*4] = c_small
         '''
         print()
@@ -156,3 +159,9 @@ def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_
             angular_flux_midstep[m,i_r] = angular_flux_raw[4*m+3, 0]
 
     return(angular_flux, angular_flux_midstep)
+
+def neg_flux_fixup(next_angflux):
+    for i in range(next_angflux.shape[0]):
+        for k in range(next_angflux.shape[1]):
+            if next_angflux[i,k] < 0:
+                next_angflux[i,k] = 0
