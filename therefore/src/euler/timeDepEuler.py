@@ -12,6 +12,7 @@ def euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh
     N_angles = sim_perams['N_angles']
     N_mesh = sim_perams['N_mesh']
     data_type = sim_perams['data_type']
+    printer = sim_perams['print']
     
     N_ans = int(2*N_mesh)
     angular_flux_total = np.zeros([N_angles, N_ans, N_time], data_type)
@@ -62,18 +63,17 @@ def euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh
         
         #psi_check = source_mesh_tilde[0,5] / (xsec_mesh_t[5]*(1)/2)
         
-        print('Time step: {0}'.format(t))
-        print('     -ρ:          {0}    '.format(spec_rad[t]))
-        print('     -wall time:  {0} [s]'.format(end-start))
+        if (printer):
+            print('Time step: {0}'.format(t))
+            print('     -ρ:          {0}    '.format(spec_rad[t]))
+            print('     -wall time:  {0} [s]'.format(end-start))
+            print()
         #print('     -Ψ check:    {0}    '.format(psi_check))
         
         
         angular_flux_last = angular_flux_total[:,:,t]
         scalar_flux[:,t+1] = utl.ScalarFlux(angular_flux_last, weights)
         
-        print('      -psi mid:   {0}'.format(scalar_flux[4,t]))
-        print()
-        print()
     
     return(scalar_flux, current_total, spec_rad)
     

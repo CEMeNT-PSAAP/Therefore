@@ -2,6 +2,7 @@ import numpy as np
 
 from timeit import default_timer as timer
 from .scb_oci_mb import OCIMBTimeStep
+from .scb_si_mb import OCIMBSITimeStep
 import therefore.src.utilities as utl
 
 
@@ -12,6 +13,7 @@ def multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatt
     N_angles = sim_perams['N_angles']
     N_mesh = sim_perams['N_mesh']
     data_type = sim_perams['data_type']
+    printer = sim_perams['print']
     
     N_ans = int(2*N_mesh)
     current_total = np.zeros([N_ans, N_time], data_type)
@@ -29,6 +31,8 @@ def multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatt
             source_mesh[j,2*i] = source[i]
             source_mesh[j,2*i+1] = source[i]
     
+
+
     angular_flux_last = inital_angular_flux
     angular_flux = np.zeros([N_angles, int(2*N_mesh), N_time])
 
@@ -39,11 +43,11 @@ def multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatt
     for t in range(N_time):
         
         start = timer()
-        
+
         if (backend == 'OCI_MB'):
             [angular_flux[:,:,t], angular_flux_mid[:,:,t], current_total[:,t], spec_rad[t], loops, source_converged] = OCIMBTimeStep(sim_perams, angular_flux_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights)
-        #elif (backend == 'SI_MB'):
-        #    [angular_flux_total[:,:,t], current_total[:,t], spec_rad[t], source_converged] = ss.SourceItteration(sim_perams, dx_mesh, xsec_mesh_t, xsec_scatter_mesh, source_mesh_tilde, True)
+        elif (backend == 'SI_MB'):
+            [angular_flux[:,:,t], angular_flux_mid[:,:,t], current_total[:,t], spec_rad[t], loops, source_converged] = OCIMBSITimeStep(sim_perams, angular_flux_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights)
         else:
             print('>>>ERROR: NO Backend provided')
             print('     select between OCI and SI!')
@@ -62,19 +66,17 @@ def multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatt
         
         #psi_check = source_mesh_tilde[0,5] / (xsec_mesh_t[5]*(1)/2)
         
-        print('Time step: {0}'.format(t))
-        print('     -ρ:          {0}    '.format(spec_rad[t]))
-        print('     -wall time:  {0} [s]'.format(end-start))
-        print('     -loops:      {0}'.format(loops))
+        if (printer):
+            print('Time step: {0}'.format(t))
+            print('     -ρ:          {0}    '.format(spec_rad[t]))
+            print('     -wall time:  {0} [s]'.format(end-start))
+            print('     -loops:      {0}'.format(loops))
+            print()
         #print('     -Ψ check:    {0}    '.format(psi_check))
         
         
         angular_flux_last = angular_flux[:,:,t]
         scalar_flux[:,t+1] = utl.ScalarFlux(angular_flux_last, weights)
-        
-        print('     -psi mid:   {0}'.format(scalar_flux[4,t]))
-        print()
-        print()
     
     return(scalar_flux, current_total, spec_rad)
     
