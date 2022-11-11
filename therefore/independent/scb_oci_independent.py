@@ -1,23 +1,24 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-xsec = 10
-scattering_ratio = .5
+xsec = .25
+scattering_ratio = 0
 xsec_scattering = xsec*scattering_ratio
 
-dx = 1
-L = 3
+dx = 0.01
+L = 10
 N = int(L/dx)
 N_mesh = 2*N
 S = 0
 
-#BCs incident iso
-BCl = 10
-BCr = 10
+dt = 0.01
+t_max = 7
+N_time = int(t_max/dt)
+v = 1
 
-angular_flux      = np.zeros([2, int(N_mesh)])
-angular_flux_next = np.zeros([2, int(N_mesh)])
-angular_flux_last = np.zeros([2, int(N_mesh)])
+#BCs incident iso
+BCl = 1
+BCr = 0
 
 mu1 = -0.57735
 mu2 = 0.57735
@@ -26,66 +27,95 @@ w1 = 1
 w2 = 1
 
 tol = 1e-6
-error = 1
 max_itter = 1000
-itter = 0
+
 
 manaz = dx*xsec_scattering/4
 gamma = xsec*dx/2
 
-while error > tol or max_itter < itter:
 
-    print()
-    print("========================================")
-    print("next cycle")
-    print("========================================")
-    print()
+final_angular_flux_solution = np.zeros([N_time, 2, N_mesh])
+theta = 1
 
-    # TODO: OCI
-    for i in range(N):
-        A = np.zeros([4,4])
-        b = np.zeros([4,1])
+angular_flux      = np.zeros([2, int(N_mesh)])
+angular_flux_next = np.zeros([2, int(N_mesh)])
+angular_flux_last = np.zeros([2, int(N_mesh)])
 
-        A = np.array([[-mu1/2 - w1*manaz + gamma, mu1/2,                    -w2*manaz,                 0],
-                      [-mu1/2,                    -mu1/2 - w1*manaz + gamma,  0,                       -w2*manaz],
-                      [-w1*manaz,                 0,                         mu2/2 + gamma - w2*manaz, mu2/2],
-                      [0,                         -w1*manaz,                 -mu2/2,                   mu2/2 + gamma - w2*manaz]])
+for k in range(N_time):
 
-        if i == 0: #left bc
-            b = np.array([[dx/4*S],
-                          [dx/4*S - mu1 * angular_flux[0, i*2+2]],
-                          [dx/4*S + mu2 * BCl],
-                          [dx/4*S]])
-        elif i == N-1: #right bc
-            b = np.array([[dx/4*S],
-                          [dx/4*S - mu1 * BCr],
-                          [dx/4*S + mu2 * angular_flux[1, i*2-1]],
-                          [dx/4*S]])
-        else: #mid communication
-            b = np.array([[dx/4*S],
-                          [dx/4*S - mu1 * angular_flux[0, i*2+2]],
-                          [dx/4*S + mu2 * angular_flux[1, i*2-1]],
-                          [dx/4*S]])
-        
-        print("Large cell %d".format(i))
-        print(b)
+    xsec_t = xsec + (1/(v* theta* dt))
+    S_t = S + angular_flux_last/(v* theta* dt)
+
+    error = 1
+    itter = 0
+
+    manaz = dx*xsec_scattering/4
+    gamma = xsec_t*dx/2
+
+    while error > tol or max_itter < itter:
+
         print()
-        print(A)
+        print("========================================")
+        print("next cycle")
+        print("========================================")
         print()
 
-        angular_flux_next[:,2*i:2*i+2] = np.linalg.solve(A,b).reshape(-1,2)
-        
-        print(angular_flux_next[:,2*i:2*i+2])
-        print()
+        # TODO: OCI
+        for i in range(N):
+            i_l = int(i*2)
+            i_r = int(i*2)+1
 
-        itter += 1 
+            A = np.zeros([4,4])
+            b = np.zeros([4,1])
 
-    # TODO: Error
-    error = np.linalg.norm(angular_flux_next - angular_flux, ord=2)
+            A = np.array([[-mu1/2 - w1*manaz + gamma, mu1/2,                    -w2*manaz,                 0],
+                        [-mu1/2,                    -mu1/2 - w1*manaz + gamma,  0,                       -w2*manaz],
+                        [-w1*manaz,                 0,                         mu2/2 + gamma - w2*manaz, mu2/2],
+                        [0,                         -w1*manaz,                 -mu2/2,                   mu2/2 + gamma - w2*manaz]])
 
-    angular_flux_last = angular_flux
-    angular_flux = angular_flux_next
-    
+            if i == 0: #left bc
+                b = np.array([[dx/4*S_t[0,i_l]],
+                            [dx/4*S_t[0,i_r] - mu1 * angular_flux[0, i*2+2]],
+                            [dx/4*S_t[1,i_l] + mu2 * BCl],
+                            [dx/4*S_t[1,i_r]]])
+            elif i == N-1: #right bc
+                b = np.array([[dx/4*S_t[0,i_l]],
+                            [dx/4*S_t[0,i_r] - mu1 * BCr],
+                            [dx/4*S_t[1,i_l] + mu2 * angular_flux[1, i*2-1]],
+                            [dx/4*S_t[1,i_r]]])
+            else: #mid communication
+                b = np.array([[dx/4*S_t[0,i_l]],
+                            [dx/4*S_t[0,i_r] - mu1 * angular_flux[0, i*2+2]],
+                            [dx/4*S_t[1,i_l] + mu2 * angular_flux[1, i*2-1]],
+                            [dx/4*S_t[1,i_r]]])
+            
+            print("Large cell %d".format(i))
+            print(b)
+            print()
+            print(A)
+            print()
+
+            angular_flux_next[:,2*i:2*i+2] = np.linalg.solve(A,b).reshape(-1,2)
+            
+            print(angular_flux_next[:,2*i:2*i+2])
+            print()
+
+            itter += 1 
+
+        # TODO: Error
+        error = np.linalg.norm(angular_flux_next - angular_flux, ord=2)
+
+        angular_flux_last = angular_flux
+        angular_flux = angular_flux_next
+
+    final_angular_flux_solution[k,:,:] = angular_flux
+
+final_scalar_flux = np.zeros([N_time, N_mesh])
+for i in range(N_time):
+    for j in range(N_mesh):
+        final_scalar_flux[i,j] = final_angular_flux_midstep_solution[i,0,j] + final_angular_flux_midstep_solution[i,1,j]
+
+
 f=1
 X = np.linspace(0, L, int(N_mesh))
 plt.figure(f)
@@ -100,3 +130,56 @@ plt.show()
 #plt.savefig('Test Angular flux')
 
 #
+
+
+import scipy.special as sc
+def phi_(x,t):
+    v=1
+    if x > v*t:
+        return 0.0
+    else:
+        return 1.0/BCl * (xsec*x*(sc.exp1(xsec*v*t) - sc.exp1(xsec*x)) + \
+                        np.e**(-xsec*x) - x/(v*t)*np.e**(-xsec*v*t))
+
+
+def psi_(x, t):
+    v=2
+    if x> v*t:
+        return 0.0
+    else:
+        return 1/BCl*np.exp(-xsec * x / mu2)
+
+def analitical(x, t):
+    y = np.zeros(x.shape)
+    for i in range(x.size):
+        y[i] = psi_(x[i],t)
+    return y
+
+import matplotlib.animation as animation
+
+fig,ax = plt.subplots() #plt.figure(figsize=(6,4))
+    
+ax.grid()
+ax.set_xlabel(r'$x$')
+ax.set_ylabel(r'$\psi$')
+ax.set_title('Angular Flux (ψ)')
+
+line1, = ax.plot(X, final_scalar_flux[0,:], '-k',label="MB-SCB")
+line2, = ax.plot(X, analitical(X,0), '--*g',label="Ref")
+text   = ax.text(8.0,0.75,'') #, transform=ax.transAxes
+ax.legend()
+plt.ylim(-0.2, 1.2*BCl) #, OCI_soultion[:,0], AZURV1_soultion[:,0]
+
+def animate(k):
+    line1.set_ydata(final_scalar_flux[k,:])
+    line2.set_ydata(analitical(X,k*dt))
+    #ax.set_title(f'Scalar Flux (ϕ) at t=%.1f'.format(dt*k)) #$\bar{\phi}_{k,j}$ with 
+    text.set_text(r'$t \in [%.1f,%.1f]$ s'%(dt*k,dt*(k+1)))
+    #print('Figure production percent done: {0}'.format(int(k/N_time)*100), end = "\r")
+    return line1, line2,
+
+simulation = animation.FuncAnimation(fig, animate, frames=N_time)
+#plt.show()
+
+writervideo = animation.PillowWriter(fps=250)
+simulation.save('transport_into_slab.gif') #saveit!

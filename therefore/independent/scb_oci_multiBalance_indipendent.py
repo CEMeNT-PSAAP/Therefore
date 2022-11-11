@@ -83,7 +83,7 @@ N = int(L/dx)
 N_mesh = int(2*N)
 Q = 0
 
-dt = 0.01
+dt = 0.001
 max_time = 7 #dt*(N_time-1)
 N_time = int(max_time/dt)
 
@@ -100,8 +100,8 @@ angular_flux_last = np.zeros([2, N_mesh])
 
 angular_flux_final = np.zeros([2, int(N_mesh), N_time])
 
-mu1 = -1#-0.57735
-mu2 = 1#0.57735
+mu1 = -0.57735
+mu2 = 0.57735
 
 w1 = 1
 w2 = 1
