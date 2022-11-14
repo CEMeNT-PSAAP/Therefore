@@ -100,8 +100,8 @@ angular_flux_last = np.zeros([2, N_mesh])
 
 angular_flux_final = np.zeros([2, int(N_mesh), N_time])
 
-mu1 = -1#-0.57735
-mu2 = 1#0.57735
+mu1 = -0.57735
+mu2 = 0.57735
 
 w1 = 1
 w2 = 1
@@ -240,7 +240,7 @@ for k in range(1, N_time, 1):
                 print()
 
 
-            itter += 1 
+        
         #print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         #print(itter)
         #print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
@@ -255,6 +255,10 @@ for k in range(1, N_time, 1):
             
         angular_flux_last = angular_flux 
         angular_flux_midstep_last = angular_flux_midstep
+
+        itter += 1 
+
+    #print(itter)
 
 final_scalar_flux = np.zeros([N_time, N_mesh])
 for i in range(N_time):
@@ -330,5 +334,5 @@ def animate(k):
 simulation = animation.FuncAnimation(fig, animate, frames=N_time)
 #plt.show()
 
-writervideo = animation.PillowWriter(fps=250)
+writervideo = animation.PillowWriter(fps=1000)
 simulation.save('transport_into_slab.gif') #saveit!
