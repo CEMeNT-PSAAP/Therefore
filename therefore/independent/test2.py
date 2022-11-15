@@ -70,7 +70,7 @@ def scatter_source(dx, xsec_scattering, N, w):
 
 
 
-xsec = 0.25
+xsec = 0 #0.25
 scattering_ratio = 0
 xsec_scattering = xsec*scattering_ratio
 
@@ -382,7 +382,6 @@ X = np.linspace(0, L, int(N_mesh))
 
 import scipy.special as sc
 def phi_(x,t):
-    v=1
     if x > v*t:
         return 0.0
     else:
@@ -391,8 +390,7 @@ def phi_(x,t):
 
 
 def psi_(x, t):
-    v=2
-    if x> v*t:
+    if x> v*t*mu2:
         return 0.0
     else:
         return 1/BCl*np.exp(-xsec * x / mu2)
