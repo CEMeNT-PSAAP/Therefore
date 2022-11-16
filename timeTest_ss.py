@@ -6,7 +6,7 @@ import therefore
 
 #import mcdc
 import numpy as np
-import h5py
+#import h5py
 
 import scipy.special as sc
 
@@ -143,14 +143,14 @@ for i in range(dt_t.size):
 
     N_time = int(max_time/dt_t[i])
 
-    sim_perams['dt'] = dt_t[i]
+    sim_perams['dt'] = float(dt_t[i])
     sim_perams['N_time'] = N_time
 
     x = np.linspace(0, L, int(N_mesh*2))
     sfRef = analitical(x, max_time)
     sfRef[0] = 1
 
-    [sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI_MB')
+    [sfMB, current, spec_rads] = therefore.euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'SI')
     [sfEuler, current, spec_rads] = therefore.euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 1, 'OCI')
 
     errorMB[i] =    np.linalg.norm((sfMB[:,-1]-sfRef) / sfRef)
