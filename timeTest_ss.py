@@ -33,46 +33,25 @@ def analitical(x, t):
 
 data_type = np.float64
 
-L = 10
-dx = 0.001
-N_mesh = int(L/dx)
-xsec = 0.25
-ratio = 0.75
+L = 10/4
+xsec = 1
+ratio = 0 #0.75
 scattering_xsec = xsec*ratio
 source_mat = 0
 N_angle = 2
-bound_mag = 1
+bound_mag = 0.3
 v=1
 
-dt = 2
-max_time = 12
+dt = 0.5
+max_time = 12/3
 
 N_time = int(max_time/dt)
 
-N_ans = 2*N_mesh
 
-dx_mesh = dx*np.ones(N_mesh, data_type)
-xsec_mesh = xsec*np.ones(N_mesh, data_type)
-xsec_scatter_mesh = scattering_xsec*np.ones(N_mesh, data_type)
-source_mesh = source_mat*np.ones([N_mesh], data_type)
-
-psi_in = source_mat / (xsec*(1-ratio)/2)
-#print(psi_in)
-
-[angles_gq, weights_gq] = np.polynomial.legendre.leggauss(N_angle)
-
-#setup = np.linspace(0, np.pi, 2*N_mesh)
-inital_scalar_flux = np.zeros(2*N_mesh)
-
-inital_angular_flux = np.zeros([N_angle, N_ans], data_type)
-total_weight = sum(weights_gq)
-for i in range(N_angle):
-    inital_angular_flux[i, :] = inital_scalar_flux / total_weight
 
 sim_perams = {'data_type': data_type,
               'N_angles': N_angle,
               'L': L,
-              'N_mesh': N_mesh,
               'boundary_condition_left':  'incident_iso',
               'boundary_condition_right': 'reflecting',
               'left_in_mag': bound_mag,
@@ -121,8 +100,10 @@ mcdc.tally(scores=['flux'], x=np.linspace(0, 1, 201), t=np.linspace(0, max_time,
 mcdc.run()
 '''
 #
-dt_t = np.array([ .1]) #[2, 1.5, 1, .75, .5, .25,
+dt_t = np.array([ 0.1]) #[2, 1.5, 1, .75, .5, .25,
 N_dt = dt_t.size
+
+dx_m = np.array([ 0.01]) #5, 4, 2, 1, 0.5, 0.25, .1, .01
 
 errorMB = np.zeros_like(dt_t)
 errorEuler = np.zeros_like(dt_t)
@@ -135,53 +116,78 @@ def printer(i):
     print('')
 
 
-#fig, axs = plt.subplots(dt_t.size)
+fig, axs = plt.subplots(2,  sharex=True, figsize=(8,10.5), constrained_layout=True)
 
-for i in range(dt_t.size):
+for i in range(dx_m.size):
+
+    dx = dx_m[i]
+    N_mesh = int(L/dx)
+    N_ans = 2*N_mesh
+
+    dx_mesh = dx*np.ones(N_mesh, data_type)
+    xsec_mesh = xsec*np.ones(N_mesh, data_type)
+    xsec_scatter_mesh = scattering_xsec*np.ones(N_mesh, data_type)
+    source_mesh = source_mat*np.ones([N_mesh], data_type)
+
+    psi_in = source_mat / (xsec*(1-ratio)/2)
+    #print(psi_in)
+
+    [angles_gq, weights_gq] = np.polynomial.legendre.leggauss(N_angle)
+
+    #setup = np.linspace(0, np.pi, 2*N_mesh)
+    inital_scalar_flux = np.zeros(2*N_mesh)
+
+    inital_angular_flux = np.zeros([N_angle, N_ans], data_type)
+    total_weight = sum(weights_gq)
+    for j in range(N_angle):
+        inital_angular_flux[j, :] = inital_scalar_flux / total_weight
+
 
     printer(i)
 
-    N_time = int(max_time/dt_t[i])
+    N_time = int(max_time/dt_t[0])
 
-    sim_perams['dt'] = float(dt_t[i])
+    sim_perams['dt'] = dt_t[0]
     sim_perams['N_time'] = N_time
+    sim_perams['N_mesh'] = N_mesh
 
     x = np.linspace(0, L, int(N_mesh*2))
-    sfRef = analitical(x, max_time)
-    sfRef[0] = 1
+    #sfRef = analitical(x, max_time)
+    #sfRef[0] = 1
 
     [sfMB, current, spec_rads] = therefore.euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'SI')
     [sfEuler, current, spec_rads] = therefore.euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 1, 'OCI')
 
-    errorMB[i] =    np.linalg.norm((sfMB[:,-1]-sfRef) / sfRef)
-    errorEuler[i] = np.linalg.norm((sfEuler[:,-1]-sfRef) / sfRef)
+    #errorMB[i] =    np.linalg.norm((sfMB[:,-1]-sfRef) / sfRef)
+    #errorEuler[i] = np.linalg.norm((sfEuler[:,-1]-sfRef) / sfRef)
 
-    #axs[i].plot(x, sfEuler[:,-1], label='euler')
-    #axs[i].plot(x, sfMB[:,-1], label='mb')
+    axs[i].plot(x, sfEuler[:,-1], label='euler')
+    axs[i].plot(x, sfMB[:,-1], label='mb')
+    axs[i].set_ylabel(r'$\phi$')
     #axs[i].plot(x, analitical(x, max_time), label='ref')
-    #axs[i].set_title('dt {0}[s]'.format(dt_t[i]))
+    axs[i].set_title(r'$\Delta$x {0}[s]'.format(dx_m[i]))
 #plt.tight_layout()
-#axs[-1].legend()
-#plt.savefig('timeTest_overdt.pdf', dpi=200)
+axs[-1].legend()
+plt.savefig('timeTest_overdt.png', dpi=200)
 
 print(errorMB)
 print(errorEuler)
 
 
-plt.figure()
-plt.plot(x, sfEuler[:,-1], label='euler')
-plt.plot(x, sfMB[:,-1], label='mb')
+#plt.figure()
+#plt.plot(x, sfEuler[:,-1], label='euler')
+#plt.plot(x, sfMB[:,-1], label='mb')
 #plt.plot(x, analitical(x, max_time), label='ref')
-plt.title('time {0}[s]'.format(max_time))
+#plt.title('time {0}[s]'.format(max_time))
 
-plt.savefig('timeTest.pdf', dpi=200)
+#plt.savefig('timeTest.pdf', dpi=200)
 
 
-plt.figure()
-plt.plot(dt_t, errorMB, label='MB')
-plt.plot(dt_t, errorEuler, label='E')
-plt.legend()
-plt.savefig('order_est.pdf', dpi=200)
+#plt.figure()
+#plt.plot(dt_t, errorMB, label='MB')
+#plt.plot(dt_t, errorEuler, label='E')
+#plt.legend()
+#plt.savefig('order_est.pdf', dpi=200)
 
 
 
