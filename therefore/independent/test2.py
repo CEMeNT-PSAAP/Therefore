@@ -70,8 +70,8 @@ def scatter_source(dx, xsec_scattering, N, w):
 
 
 
-xsec = 0 #0.25
-scattering_ratio = 0
+xsec = 0.25
+scattering_ratio = 0 #0.5
 xsec_scattering = xsec*scattering_ratio
 
 printer = False
