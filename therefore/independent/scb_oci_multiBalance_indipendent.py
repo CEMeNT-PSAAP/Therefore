@@ -77,17 +77,17 @@ xsec_scattering = xsec*scattering_ratio
 printer = False
 printer_TS = False
 
-dx = 0.01
-L = 10
+dx = 0.5
+L = 1
 N = int(L/dx)
 N_mesh = int(2*N)
 Q = 0
 
-dt = 0.01
-max_time = 7 #dt*(N_time-1)
+dt = 0.1
+max_time = 0.5 #dt*(N_time-1)
 N_time = int(max_time/dt)
 
-v = 2
+v = 1
 
 #BCs incident iso
 BCl = 1
@@ -107,7 +107,7 @@ w1 = 1
 w2 = 1
 w = np.array([w1, w2])
 
-N_angle = 2
+N_angle = 16
 
 tol = 1e-9
 error = 1
@@ -123,6 +123,7 @@ final_angular_flux_midstep_solution = np.zeros([N_time, N_angle, N_mesh])
 
 # the zeroth stored solution is the initial condition
 for k in range(1, N_time, 1):
+    print('>>>>>>>>>>>>>TS {0}<<<<<<<<<<<<'.format(k))
 
     if (printer_TS):
         print()
@@ -154,6 +155,8 @@ for k in range(1, N_time, 1):
 
         # TODO: OCI
         for i in range(N):
+            print('>>>>cell {0}<<<<'.format(i))
+
             i_l = int(2*i)
             i_r = int(2*i+1)
 
@@ -218,6 +221,13 @@ for k in range(1, N_time, 1):
                 print(A)
                 print()
 
+            print(A)
+            print()
+            print(c)
+            print()
+            print()
+            print()
+
             angular_flux_raw = np.linalg.solve(A,c)
 
             # resorting into proper locations in solution vectors
@@ -238,6 +248,12 @@ for k in range(1, N_time, 1):
                 print('>>> angular flux mid step reorganized <<<')
                 print(angular_flux_midstep)
                 print()
+
+        print('end of itteration')
+        print(angular_flux)
+        print()
+        print(angular_flux_midstep)
+        print()
 
 
         
@@ -265,6 +281,8 @@ for i in range(N_time):
     for j in range(N_mesh):
         final_scalar_flux[i,j] = final_angular_flux_midstep_solution[i,0,j] + final_angular_flux_midstep_solution[i,1,j]
 
+
+'''
 f=1
 X = np.linspace(0, L, int(N_mesh))
 plt.figure(f)
@@ -335,4 +353,4 @@ simulation = animation.FuncAnimation(fig, animate, frames=N_time)
 #plt.show()
 
 writervideo = animation.PillowWriter(fps=1000)
-simulation.save('transport_into_slab.gif') #saveit!
+simulation.save('transport_into_slab.gif') #saveit!'''

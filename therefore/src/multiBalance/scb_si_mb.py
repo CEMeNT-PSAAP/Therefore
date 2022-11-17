@@ -41,8 +41,8 @@ def OCIMBSITimeStep(sim_perams, angular_flux_previous, source_mesh, xsec_mesh, x
 
     while source_converged == False:
 
-        if printer:
-            print()
+        #if printer:
+            #print()
 
             #print()
             #print(scalar_flux_next)

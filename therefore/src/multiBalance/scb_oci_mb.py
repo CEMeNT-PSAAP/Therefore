@@ -2,10 +2,11 @@ import numpy as np
 from .matrix import A_pos, A_neg, c_neg, c_pos, scatter_source
 import therefore.src.utilities as utl
 import numba as nb
+np.set_printoptions(linewidth=np.inf)
 
 
                 #sim_perams, angular_flux_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights
-def OCIMBTimeStep(sim_perams, angular_flux_previous, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights):
+def OCIMBTimeStep(sim_perams, angular_flux_mid_previous, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights):
 
     velocity = sim_perams['velocity']
     dt = sim_perams['dt']
@@ -34,11 +35,20 @@ def OCIMBTimeStep(sim_perams, angular_flux_previous, source_mesh, xsec_mesh, xse
     scalar_flux_next = np.zeros(N_ans, data_type)
 
     while source_converged == False:
+
+        #print('====================================================================================')
         BCl = utl.BoundaryCondition(sim_perams['boundary_condition_left'],   0, N_mesh, angular_flux=angular_flux, incident_flux_mag=sim_perams['left_in_mag'],  angle=sim_perams['left_in_angle'],  angles=angles)
         BCr = utl.BoundaryCondition(sim_perams['boundary_condition_right'], -1, N_mesh, angular_flux=angular_flux, incident_flux_mag=sim_perams['right_in_mag'], angle=sim_perams['right_in_angle'], angles=angles)
         
-        [angular_flux, angular_flux_mid] = OCIMBRun(angular_flux_previous, angular_flux_last, angular_flux_mid_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, dt, velocity, angles, weights, BCl, BCr)
+        [angular_flux, angular_flux_mid] = OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_mid_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, dt, velocity, angles, weights, BCl, BCr)
 
+        #print('>>>>>EOC<<<<<<')
+        #print('AF')
+        #print(angular_flux)
+        #print('AF mid')
+        #print(angular_flux_mid)
+        #print()
+        #print()
         #neg_flux_fixup(angular_flux)
         #neg_flux_fixup(angular_flux_mid)
 
@@ -67,6 +77,14 @@ def OCIMBTimeStep(sim_perams, angular_flux_previous, source_mesh, xsec_mesh, xse
         angular_flux_last = angular_flux
         angular_flux_mid_last = angular_flux_mid
         
+        #print('AF For next')
+        #print(angular_flux_last)
+        #print('AF mid last')
+        #print(angular_flux_mid_last)
+        #print()
+        #print()
+        #print()
+        
         scalar_flux_last = scalar_flux
         scalar_flux = scalar_flux_next
 
@@ -77,7 +95,7 @@ def OCIMBTimeStep(sim_perams, angular_flux_previous, source_mesh, xsec_mesh, xse
 
 # last refers to iteration
 # prev refers to previous time step {"inplace_binop":False}
-@nb.njit#(nopython=True, parallel=False, cache=True, nogil=True, fastmath=True)
+#@nb.njit#(nopython=True, parallel=False, cache=True, nogil=True, fastmath=True)
 def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_last, source, xsec, xsec_scatter, dx, dt, v, mu, weight, BCl, BCr):
     
     N_mesh = dx.size
@@ -93,21 +111,27 @@ def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_
     c = np.zeros((sizer,1))
 
     for i in range(N_mesh):
+        #print('>>>>>Next Cell {0}<<<<<'.format(i))
+        #print()
+        #print()
         
         i_l: int = int(2*i)
         i_r: int = int(2*i+1)
 
         Q = source[:,i_l:i_r+1]
-
+        #angle space time
         psi_halfLast_L = angular_flux_mid_previous[:, i_l] # known all angles from the last time step in the left cell
         psi_halfLast_R = angular_flux_mid_previous[:, i_r] # known
 
         # getting really sloppy with the indiceis
         for m in range(N_angle):
+            #print()
+            #print('>>next angle {0}<<'.format(m))
+            #print()
             # boundary conditions
             if i == 0:  #left
                 psi_rightBound = angular_flux_last[m, i_r+1] # iterating on (unknown)
-                psi_leftBound =  BCl[m] # known
+                psi_leftBound = BCl[m] # known
 
                 psi_halfNext_rightBound = angular_flux_midstep_last[m, i_r+1] # iterating on (unknown)
                 psi_halfNext_leftBound  = BCl[m] # known
@@ -128,35 +152,58 @@ def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_
 
 
             if mu[m] < 0:
+                #print(mu[m])
                 A_small = A_neg(dx[i], v, dt, mu[m], xsec[i])
                 c_small = c_neg(dx[i], v, dt, mu[m], Q[m,0], Q[m,1], Q[m,0], Q[m,1], psi_halfLast_L[m], psi_halfLast_R[m], psi_rightBound, psi_halfNext_rightBound)
-
+                            #c_neg(dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi_halfLast_R, psi_rightBound, psi_halfNext_rightBound)
+                #print(c_small)
             elif mu[m] > 0:
+                #print(mu[m])
                 A_small = A_pos(dx[i], v, dt, mu[m], xsec[i])
                 c_small = c_pos(dx[i], v, dt, mu[m], Q[m,0], Q[m,1], Q[m,0], Q[m,1], psi_halfLast_L[m], psi_halfLast_R[m], psi_leftBound, psi_halfNext_leftBound)
+                                #dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi_halfLast_R, psi_leftBound, psi_halfNext_leftBound
+                #print(c_small)
 
-            S_small = scatter_source(dx[i], xsec_scatter[i], N_angle, weight)
-
-            A[m*4:(m+1)*4, m*4:(m+1)*4] = A_small - S_small
+            A[m*4:(m+1)*4, m*4:(m+1)*4] = A_small
             c[m*4:(m+1)*4] = c_small
-        '''
-        print()
-        print(A)
-        print()
-        print(c)
-        print()
-        '''
 
-        angular_flux_raw = np.linalg.solve(A, c).reshape(4*N_angle, 1)
+        S = scatter_source(dx[i], xsec_scatter[i], N_angle, weight)
+
+        A = A-S
+
+        #print()
+        #print(A)
+        #print('c mat')
+        #print(c)
+        #print()
+        #print()
+        #print()
+
+        angular_flux_raw = np.linalg.solve(A, c)
+
+        #print('AF Raw')
+        #print(angular_flux_raw)
+        #print()
+        #print()
+
         #print(angular_flux_raw.shape)
         #print()
 
         for m in range(N_angle):
-            angular_flux[m,i_l]         = angular_flux_raw[4*m, 0]
-            angular_flux[m,i_r]         = angular_flux_raw[4*m+1, 0]
+            angular_flux[m,i_l]         = angular_flux_raw[4*m,0]
+            angular_flux[m,i_r]         = angular_flux_raw[4*m+1,0]
             
-            angular_flux_midstep[m,i_l] = angular_flux_raw[4*m+2, 0]
-            angular_flux_midstep[m,i_r] = angular_flux_raw[4*m+3, 0]
+            angular_flux_midstep[m,i_l] = angular_flux_raw[4*m+2,0]
+            angular_flux_midstep[m,i_r] = angular_flux_raw[4*m+3,0]
+
+        #print()
+        #print('AF Full')
+        #print(angular_flux)
+        #print('AF Mid Full')
+        #print(angular_flux_midstep)
+
+        #print()
+        #print()
 
     return(angular_flux, angular_flux_midstep)
 

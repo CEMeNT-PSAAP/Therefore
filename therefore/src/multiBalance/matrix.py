@@ -83,7 +83,7 @@ def b_neg(dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi
 def scatter_source(dx, xsec_scattering, N, w):
     
     beta = dx*xsec_scattering/4
-    S = np.zeros((2*N,2*N))
+    S = np.zeros((4*N,4*N))
 
     for i in range(N):
         for j in range(N):
