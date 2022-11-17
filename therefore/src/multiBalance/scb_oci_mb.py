@@ -36,21 +36,10 @@ def OCIMBTimeStep(sim_perams, angular_flux_mid_previous, source_mesh, xsec_mesh,
 
     while source_converged == False:
 
-        #print('====================================================================================')
         BCl = utl.BoundaryCondition(sim_perams['boundary_condition_left'],   0, N_mesh, angular_flux=angular_flux, incident_flux_mag=sim_perams['left_in_mag'],  angle=sim_perams['left_in_angle'],  angles=angles)
         BCr = utl.BoundaryCondition(sim_perams['boundary_condition_right'], -1, N_mesh, angular_flux=angular_flux, incident_flux_mag=sim_perams['right_in_mag'], angle=sim_perams['right_in_angle'], angles=angles)
         
         [angular_flux, angular_flux_mid] = OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_mid_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, dt, velocity, angles, weights, BCl, BCr)
-
-        #print('>>>>>EOC<<<<<<')
-        #print('AF')
-        #print(angular_flux)
-        #print('AF mid')
-        #print(angular_flux_mid)
-        #print()
-        #print()
-        #neg_flux_fixup(angular_flux)
-        #neg_flux_fixup(angular_flux_mid)
 
         #calculate current
         current = utl.Current(angular_flux, weights, angles)
@@ -63,7 +52,7 @@ def OCIMBTimeStep(sim_perams, angular_flux_mid_previous, source_mesh, xsec_mesh,
             error_eos = np.linalg.norm(angular_flux_mid - angular_flux_mid_last, ord=2)
             error_mos = np.linalg.norm(angular_flux - angular_flux_last, ord=2)
 
-            if error_eos < tol and error_mos < tol:
+            if error_eos < tol:
                 source_converged = True
 
             spec_rad = np.linalg.norm(scalar_flux_next - scalar_flux, ord=2) / np.linalg.norm((scalar_flux - scalar_flux_last), ord=2)
@@ -76,14 +65,6 @@ def OCIMBTimeStep(sim_perams, angular_flux_mid_previous, source_mesh, xsec_mesh,
 
         angular_flux_last = angular_flux
         angular_flux_mid_last = angular_flux_mid
-        
-        #print('AF For next')
-        #print(angular_flux_last)
-        #print('AF mid last')
-        #print(angular_flux_mid_last)
-        #print()
-        #print()
-        #print()
         
         scalar_flux_last = scalar_flux
         scalar_flux = scalar_flux_next
@@ -164,6 +145,9 @@ def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_
                                 #dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi_halfLast_R, psi_leftBound, psi_halfNext_leftBound
                 #print(c_small)
 
+            print(c_small.shape)
+            print(c[m*4:(m+1)*4].shape)
+
             A[m*4:(m+1)*4, m*4:(m+1)*4] = A_small
             c[m*4:(m+1)*4] = c_small
 
@@ -171,23 +155,7 @@ def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_
 
         A = A-S
 
-        #print()
-        #print(A)
-        #print('c mat')
-        #print(c)
-        #print()
-        #print()
-        #print()
-
         angular_flux_raw = np.linalg.solve(A, c)
-
-        #print('AF Raw')
-        #print(angular_flux_raw)
-        #print()
-        #print()
-
-        #print(angular_flux_raw.shape)
-        #print()
 
         for m in range(N_angle):
             angular_flux[m,i_l]         = angular_flux_raw[4*m,0]
@@ -195,15 +163,6 @@ def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_
             
             angular_flux_midstep[m,i_l] = angular_flux_raw[4*m+2,0]
             angular_flux_midstep[m,i_r] = angular_flux_raw[4*m+3,0]
-
-        #print()
-        #print('AF Full')
-        #print(angular_flux)
-        #print('AF Mid Full')
-        #print(angular_flux_midstep)
-
-        #print()
-        #print()
 
     return(angular_flux, angular_flux_midstep)
 

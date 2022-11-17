@@ -107,7 +107,7 @@ w1 = 1
 w2 = 1
 w = np.array([w1, w2])
 
-N_angle = 16
+N_angle = 2
 
 tol = 1e-9
 error = 1
@@ -123,7 +123,6 @@ final_angular_flux_midstep_solution = np.zeros([N_time, N_angle, N_mesh])
 
 # the zeroth stored solution is the initial condition
 for k in range(1, N_time, 1):
-    print('>>>>>>>>>>>>>TS {0}<<<<<<<<<<<<'.format(k))
 
     if (printer_TS):
         print()
@@ -153,7 +152,7 @@ for k in range(1, N_time, 1):
             print("========================================")
             print()
 
-        # TODO: OCI
+        # OCI
         for i in range(N):
             print('>>>>cell {0}<<<<'.format(i))
 

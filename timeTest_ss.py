@@ -39,7 +39,7 @@ xsec = .25
 ratio = 0 #0.75
 scattering_xsec = xsec*ratio
 source_mat = 0
-N_angle = 16
+N_angle = 2
 bound_mag = 1
 BCl = bound_mag
 v=2
@@ -156,7 +156,7 @@ for i in range(dx_m.size):
     x = np.linspace(0, L, int(N_mesh*2))
     #sfRef = analitical(x, max_time)
     #sfRef[0] = 1
-
+    print('Hello')
     [sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI_MB')
     [sfEuler, current, spec_rads] = therefore.euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 1, 'SI')
 

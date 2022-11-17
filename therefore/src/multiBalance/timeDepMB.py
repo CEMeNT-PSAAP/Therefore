@@ -48,8 +48,8 @@ def multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatt
             [angular_flux[:,:,t], angular_flux_mid[:,:,t], current_total[:,t], spec_rad[t], loops, 
             source_converged] = OCIMBTimeStep(sim_perams, angular_flux_mid_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights)
         elif (backend == 'SI_MB'):
-            [angular_flux[:,:,t], angular_flux_mid[:,:,t], current_total[:,t], spec_rad[t], 
-            loops, source_converged] = OCIMBSITimeStep(sim_perams, angular_flux_mid_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights)
+            [angular_flux[:,:,t], angular_flux_mid[:,:,t], current_total[:,t], spec_rad[t], loops, 
+            source_converged] = OCIMBSITimeStep(sim_perams, angular_flux_mid_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights)
         else:
             print('>>>ERROR: NO Backend provided')
             print('     select between OCI and SI!')
