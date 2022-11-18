@@ -15,17 +15,25 @@ def t2p(time):
     return(int((time/max_time)*N_time))
 
 
+import scipy.special as sc
 def phi_(x,t):
     if x > v*t:
         return 0.0
     else:
-        return 1.0/bound_mag * (xsec*x*(sc.exp1(xsec*v*t) - sc.exp1(xsec*x)) + \
+        return 1.0/BCl * (xsec*x*(sc.exp1(xsec*v*t) - sc.exp1(xsec*x)) + \
                         np.e**(-xsec*x) - x/(v*t)*np.e**(-xsec*v*t))
+
+mu2 = 0.57735
+def psi_(x, t):
+    if x > v*t*mu2:
+        return 0.0
+    else:
+        return 1/BCl*np.exp(-xsec * x / mu2)
 
 def analitical(x, t):
     y = np.zeros(x.shape)
     for i in range(x.size):
-        y[i] = phi_(x[i],t)
+        y[i] = psi_(x[i],t)
     return y
 
 # =============================================================================
@@ -39,10 +47,10 @@ xsec = .25
 ratio = 0 #0.75
 scattering_xsec = xsec*ratio
 source_mat = 0
-N_angle = 2
+N_angle = 4
 bound_mag = 1
 BCl = bound_mag
-v=2
+v=1
 
 dt = 0.1
 max_time = 8
@@ -144,9 +152,6 @@ for i in range(dx_m.size):
     for j in range(N_angle):
         inital_angular_flux[j, :] = inital_scalar_flux / total_weight
 
-
-    printer(i)
-
     N_time = int(max_time/dt_t[0])
 
     sim_perams['dt'] = dt
@@ -154,50 +159,20 @@ for i in range(dx_m.size):
     sim_perams['N_mesh'] = N_mesh
 
     x = np.linspace(0, L, int(N_mesh*2))
-    #sfRef = analitical(x, max_time)
-    #sfRef[0] = 1
+
     print('Hello')
     [sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI_MB')
     [sfEuler, current, spec_rads] = therefore.euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 1, 'SI')
 
-    #errorMB[i] =    np.linalg.norm((sfMB[:,-1]-sfRef) / sfRef)
-    #errorEuler[i] = np.linalg.norm((sfEuler[:,-1]-sfRef) / sfRef)
-
-    #axs[i].plot(x, sfEuler[:,-1], label='euler')
-    #axs[i].plot(x, sfMB[:,-1], label='mb')
-    #axs[i].set_ylabel(r'$\phi$')
-    #axs[i].plot(x, analitical(x, max_time), label='ref')
-    #axs[i].set_title(r'$\Delta$x {0}[s]'.format(dx_m[i]))
-#plt.tight_layout()
-#axs[-1].legend()
-#plt.savefig('timeTest_overdt.png', dpi=200)
+    sfRef = analitical(x, max_time)
+    errorMB[i] =    np.linalg.norm((sfMB[:,-1]-sfRef) / sfRef)
+    errorEuler[i] = np.linalg.norm((sfEuler[:,-1]-sfRef) / sfRef)
 
 print(errorMB)
 print(errorEuler)
 
 
-import scipy.special as sc
-def phi_(x,t):
-    v=1
-    if x > v*t:
-        return 0.0
-    else:
-        return 1.0/BCl * (xsec*x*(sc.exp1(xsec*v*t) - sc.exp1(xsec*x)) + \
-                        np.e**(-xsec*x) - x/(v*t)*np.e**(-xsec*v*t))
 
-
-def psi_(x, t):
-    v=2
-    if x> v*t:
-        return 0.0
-    else:
-        return 1/BCl*np.exp(-xsec * x / mu2)
-
-def analitical(x, t):
-    y = np.zeros(x.shape)
-    for i in range(x.size):
-        y[i] = phi_(x[i],t)
-    return y
 
 import matplotlib.animation as animation
 
@@ -210,7 +185,7 @@ ax.set_title('Scalar Flux ()')
 
 line1, = ax.plot(x, sfMB[:,0], '-k',label="MB-SCB")
 line2, = ax.plot(x, sfEuler[:,0], '-r',label="BE-SCB")
-line3, = ax.plot(x, analitical(x,0), 'g*',label="REF")
+line3, = ax.plot(x, analitical(x,0), '--g*',label="REF")
 text   = ax.text(8.0,0.75,'') #, transform=ax.transAxes
 ax.legend()
 plt.ylim(-0.2, 1.2) #, OCI_soultion[:,0], AZURV1_soultion[:,0]
@@ -230,28 +205,6 @@ simulation = animation.FuncAnimation(fig, animate, frames=N_time)
 writervideo = animation.PillowWriter(fps=250)
 simulation.save('both.gif') #saveit!
 
-
-
-#plt.figure()
-#plt.plot(x, sfEuler[:,-1], label='euler')
-#plt.plot(x, sfMB[:,-1], label='mb')
-#plt.plot(x, analitical(x, max_time), label='ref')
-#plt.title('time {0}[s]'.format(max_time))
-
-#plt.savefig('timeTest.pdf', dpi=200)
-
-
-#plt.figure()
-#plt.plot(dt_t, errorMB, label='MB')
-#plt.plot(dt_t, errorEuler, label='E')
-#plt.legend()
-#plt.savefig('order_est.pdf', dpi=200)
-
-
-
-
-
-#[ss_sfMB, current, spec_rads, tf] = therefore.OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh)
 
 
 '''

@@ -60,31 +60,36 @@ def c_pos(dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi
 
 
 def scatter_source(dx, xsec_scattering, N, w):
-    S = np.zeros([2*N,2*N])
+    S = np.zeros([4*N,4*N])
     beta = dx*xsec_scattering/4
+
     for i in range(N):
         for j in range(N):
-            S[2*i,2*j] = beta * w[i]
-            S[2*i+1,2*j+1] = beta * w[i]
+            S[i*4, j*4]     = beta*w[j]
+            S[i*4+1, j*4+1] = beta*w[j]
+            S[i*4+2, j*4+2] = beta*w[j]
+            S[i*4+3, j*4+3] = beta*w[j]
     return(S)
 
 
 
 xsec = 0.25
-scattering_ratio = 0
+scattering_ratio = 0.75
 xsec_scattering = xsec*scattering_ratio
 
 printer = False
-printer_TS = False
+printer_TS = True
 
-dx = 0.5
-L = 1
+dx = .01
+L = 10
 N = int(L/dx)
 N_mesh = int(2*N)
 Q = 0
 
+N_angles = 2
+
 dt = 0.1
-max_time = 0.5 #dt*(N_time-1)
+max_time = 5 #dt*(N_time-1)
 N_time = int(max_time/dt)
 
 v = 1
@@ -100,14 +105,15 @@ angular_flux_last = np.zeros([2, N_mesh])
 
 angular_flux_final = np.zeros([2, int(N_mesh), N_time])
 
-mu1 = -0.57735
-mu2 = 0.57735
 
-w1 = 1
-w2 = 1
-w = np.array([w1, w2])
+N_angle = N_angles
+[angles, weights] = np.polynomial.legendre.leggauss(N_angles)
+#mu1 = -0.57735
+#mu2 = 0.57735
 
-N_angle = 2
+#w1 = 1
+#w2 = 1
+#w = np.array([w1, w2])
 
 tol = 1e-9
 error = 1
@@ -120,7 +126,6 @@ final_angular_flux_solution = np.zeros([N_time, N_angle, N_mesh])
 final_angular_flux_midstep_solution = np.zeros([N_time, N_angle, N_mesh])
 
 
-
 # the zeroth stored solution is the initial condition
 for k in range(1, N_time, 1):
 
@@ -130,12 +135,14 @@ for k in range(1, N_time, 1):
         print("next time step!")
         print("========================================")
         print()
+        print(final_angular_flux_solution[k-1,:,:])
+
 
     # iterating on these till convergence
-    angular_flux      = np.zeros([2, N_mesh]) 
-    angular_flux_last = np.zeros([2, N_mesh])   # last refers to last iteration
-    angular_flux_midstep = np.zeros([2, N_mesh])
-    angular_flux_midstep_last = np.zeros([2, N_mesh])   # last refers to last iteration
+    angular_flux      = np.zeros([N_angles, N_mesh]) 
+    angular_flux_last = np.zeros([N_angles, N_mesh])   # last refers to last iteration
+    angular_flux_midstep = np.zeros([N_angles, N_mesh])
+    angular_flux_midstep_last = np.zeros([N_angles, N_mesh])   # last refers to last iteration
 
     #initial guesses?
     itter = 0
@@ -154,59 +161,48 @@ for k in range(1, N_time, 1):
 
         # OCI
         for i in range(N):
-            print('>>>>cell {0}<<<<'.format(i))
 
             i_l = int(2*i)
             i_r = int(2*i+1)
 
-            A = np.zeros([8,8])
-            c = np.zeros([8,1])
-            
-            A_small = A_neg(dx, v, dt, mu1, xsec)
-            S_small = scatter_source(dx, xsec_scattering, N_angle, w)
-            #print('>>> S_small <<<')
-            #print(S_small)
-            #print()
+            A = np.zeros([N_angles*4,N_angles*4])
+            c = np.zeros([4*N_angles,1])
 
-            assert ((A_small.size == S_small.size))
+            for m in range(N_angles):
+                psi_halfLast_L = final_angular_flux_midstep_solution[k-1, m, i_l] # known
+                psi_halfLast_R = final_angular_flux_midstep_solution[k-1, m, i_r] # known
+                
+                if angles[m] < 0:
+                    if i == N-1:
+                        psi_rightBound          = BCr
+                        psi_halfNext_rightBound = BCr
+                    else:
+                        psi_rightBound          = angular_flux_last[m, i_r+1]
+                        psi_halfNext_rightBound = angular_flux_midstep_last[m, i_r+1] 
 
-            A[:4, :4] = A_small - S_small
+                    A_small = A_neg(dx, v, dt, angles[m], xsec)
+                    c_small = c_neg(dx, v, dt, angles[m], Q, Q, Q, Q, psi_halfLast_L, psi_halfLast_R, psi_rightBound, psi_halfNext_rightBound)
 
-            A_small = A_pos(dx, v, dt, mu2, xsec)
-            S_small = scatter_source(dx, xsec_scattering, N_angle, w)
+                elif angles[m] > 0:
+                    if i == 0:
+                        psi_leftBound           = BCl
+                        psi_halfNext_leftBound  = BCl
+                    else:
+                        psi_leftBound           = angular_flux_last[m, i_l-1]
+                        psi_halfNext_leftBound  = angular_flux_midstep_last[m, i_l-1]
 
-            assert ((A_small.size == S_small.size))
+                    A_small = A_pos(dx, v, dt, angles[m], xsec)
+                    c_small = c_pos(dx, v, dt, angles[m], Q, Q, Q, Q, psi_halfLast_L, psi_halfLast_R, psi_leftBound, psi_halfNext_leftBound)
 
-            A[4:, 4:] = A_small - S_small
+                else:
+                    print('>>>>>Error')
 
-            psi_halfLast_L = final_angular_flux_midstep_solution[k-1, :, i_l] # known
-            psi_halfLast_R = final_angular_flux_midstep_solution[k-1, :, i_r] # known
+                A[m*4:(m+1)*4, m*4:(m+1)*4] = A_small
+                c[m*4:(m+1)*4] = c_small
 
-            # boundary conditions
-            if i == 0:  #left
-                psi_rightBound = angular_flux_last[0, i_r+1] # iterating on (unknown)
-                psi_leftBound =  BCl # known
+                S = scatter_source(dx, xsec_scattering, N_angle, weights)
 
-                psi_halfNext_rightBound = angular_flux_midstep_last[0, i_r+1] # iterating on (unknown)
-                psi_halfNext_leftBound  = BCl # known
-
-            elif i == N-1: #right
-                psi_rightBound = BCr # known
-                psi_leftBound =  angular_flux_last[1, i_l-1] # iterating on (unknown)
-
-                psi_halfNext_rightBound = BCr # known
-                psi_halfNext_leftBound  = angular_flux_midstep_last[1, i_l-1] # iterating on (unknown)
-
-            else: #middles
-                psi_rightBound = angular_flux_last[0, i_r+1] # iterating on (unknown)
-                psi_leftBound =  angular_flux_last[1, i_l-1] # iterating on (unknown)
-
-                psi_halfNext_rightBound = angular_flux_midstep_last[0, i_r+1] # iterating on (unknown)
-                psi_halfNext_leftBound  = angular_flux_midstep_last[1, i_l-1] # iterating on (unknown)
-
-            #       c_neg(dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi_halfLast_R, psi_rightBound, psi_halfNext_rightBound)
-            c[:4] = c_neg(dx, v, dt, mu1, Q, Q, Q, Q, psi_halfLast_L[0], psi_halfLast_R[0], psi_rightBound, psi_halfNext_rightBound)
-            c[4:] = c_pos(dx, v, dt, mu2, Q, Q, Q, Q, psi_halfLast_L[1], psi_halfLast_R[1], psi_leftBound, psi_halfNext_leftBound)
+                A = A - S
 
             if (printer):
                 print("Large cell {0}".format(i))
@@ -219,13 +215,6 @@ for k in range(1, N_time, 1):
                 print('>>> full A mat <<<')
                 print(A)
                 print()
-
-            print(A)
-            print()
-            print(c)
-            print()
-            print()
-            print()
 
             angular_flux_raw = np.linalg.solve(A,c)
 
@@ -248,18 +237,6 @@ for k in range(1, N_time, 1):
                 print(angular_flux_midstep)
                 print()
 
-        print('end of itteration')
-        print(angular_flux)
-        print()
-        print(angular_flux_midstep)
-        print()
-
-
-        
-        #print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        #print(itter)
-        #print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-
         # TODO: Error
         if itter > 2:
             error_eos = np.linalg.norm(angular_flux_midstep - angular_flux_midstep_last, ord=2)
@@ -272,18 +249,22 @@ for k in range(1, N_time, 1):
         angular_flux_midstep_last = angular_flux_midstep
 
         itter += 1 
+    print(itter)
 
     #print(itter)
 
 final_scalar_flux = np.zeros([N_time, N_mesh])
+
 for i in range(N_time):
     for j in range(N_mesh):
-        final_scalar_flux[i,j] = final_angular_flux_midstep_solution[i,0,j] + final_angular_flux_midstep_solution[i,1,j]
+        for m in range(N_angle):
+            final_scalar_flux[i,j] += (weights[m] * final_angular_flux_midstep_solution[i,m,j])
 
+
+X = np.linspace(0, L, int(N_mesh))
 
 '''
 f=1
-X = np.linspace(0, L, int(N_mesh))
 plt.figure(f)
 plt.plot(X, final_angular_flux_solution[1, 1,:],  '--*g', label='0')
 plt.plot(X, final_angular_flux_midstep_solution[1, 1,:],  '-*g',  label='0 + 1/2')
@@ -300,21 +281,19 @@ plt.xlabel('Distance')
 plt.ylabel('Angular Flux')
 plt.legend()
 #plt.show()
-plt.savefig('Test Angular flux')
+plt.savefig('Test Angular flux')'''
 
 import scipy.special as sc
 def phi_(x,t):
-    v=1
     if x > v*t:
         return 0.0
     else:
         return 1.0/BCl * (xsec*x*(sc.exp1(xsec*v*t) - sc.exp1(xsec*x)) + \
                         np.e**(-xsec*x) - x/(v*t)*np.e**(-xsec*v*t))
 
-
+mu2 = 0.57
 def psi_(x, t):
-    v=2
-    if x> v*t:
+    if x> v*t*mu2:
         return 0.0
     else:
         return 1/BCl*np.exp(-xsec * x / mu2)
