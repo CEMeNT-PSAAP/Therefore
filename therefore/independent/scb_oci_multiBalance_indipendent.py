@@ -86,7 +86,7 @@ N = int(L/dx)
 N_mesh = int(2*N)
 Q = 0
 
-N_angles = 2
+N_angles = 8
 
 dt = 0.1
 max_time = 5 #dt*(N_time-1)
@@ -132,7 +132,7 @@ for k in range(1, N_time, 1):
     if (printer_TS):
         print()
         print("========================================")
-        print("next time step!")
+        print("next time step: {0}".format(k))
         print("========================================")
         print()
         print(final_angular_flux_solution[k-1,:,:])

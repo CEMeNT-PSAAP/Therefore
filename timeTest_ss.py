@@ -33,7 +33,7 @@ def psi_(x, t):
 def analitical(x, t):
     y = np.zeros(x.shape)
     for i in range(x.size):
-        y[i] = psi_(x[i],t)
+        y[i] = phi_(x[i],t)
     return y
 
 # =============================================================================
@@ -44,16 +44,16 @@ data_type = np.float64
 
 L = 10
 xsec = .25
-ratio = 0 #0.75
+ratio = 0.75
 scattering_xsec = xsec*ratio
 source_mat = 0
-N_angle = 4
+N_angle = 16
 bound_mag = 1
 BCl = bound_mag
 v=1
 
 dt = 0.1
-max_time = 8
+max_time = 5
 
 N_time = int(max_time/dt)
 
@@ -161,9 +161,9 @@ for i in range(dx_m.size):
     x = np.linspace(0, L, int(N_mesh*2))
 
     print('Hello')
-    [sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI_MB')
+    [sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'SI_MB')
     [sfEuler, current, spec_rads] = therefore.euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 1, 'SI')
-
+    #sfMB = np.zeros_like(sfEuler)
     sfRef = analitical(x, max_time)
     errorMB[i] =    np.linalg.norm((sfMB[:,-1]-sfRef) / sfRef)
     errorEuler[i] = np.linalg.norm((sfEuler[:,-1]-sfRef) / sfRef)
@@ -172,7 +172,7 @@ print(errorMB)
 print(errorEuler)
 
 
-
+np.savez('output', sfEuler = sfEuler, sfMB = sfMB, x = x, dt = dt)
 
 import matplotlib.animation as animation
 
@@ -181,23 +181,23 @@ fig,ax = plt.subplots() #plt.figure(figsize=(6,4))
 ax.grid()
 ax.set_xlabel(r'$x$')
 ax.set_ylabel(r'$\phi$')
-ax.set_title('Scalar Flux ()')
+ax.set_title('Scalar Flux (ϕ)')
 
 line1, = ax.plot(x, sfMB[:,0], '-k',label="MB-SCB")
 line2, = ax.plot(x, sfEuler[:,0], '-r',label="BE-SCB")
-line3, = ax.plot(x, analitical(x,0), '--g*',label="REF")
+#line3, = ax.plot(x, analitical(x,0), '--g*',label="REF")
 text   = ax.text(8.0,0.75,'') #, transform=ax.transAxes
 ax.legend()
-plt.ylim(-0.2, 1.2) #, OCI_soultion[:,0], AZURV1_soultion[:,0]
+plt.ylim(-0.2, 1.5) #, OCI_soultion[:,0], AZURV1_soultion[:,0]
 
 def animate(k):
     line1.set_ydata(sfMB[:,k])
     line2.set_ydata(sfEuler[:,k])
-    line3.set_ydata(analitical(x, dt*k))
+    #line3.set_ydata(analitical(x, dt*k))
     #ax.set_title(f'Scalar Flux (ϕ) at t=%.1f'.format(dt*k)) #$\bar{\phi}_{k,j}$ with 
     text.set_text(r'$t \in [%.1f,%.1f]$ s'%(dt*k,dt*(k+1)))
     #print('Figure production percent done: {0}'.format(int(k/N_time)*100), end = "\r")
-    return line1, line2, line3,
+    return line1, line2, 
 
 simulation = animation.FuncAnimation(fig, animate, frames=N_time)
 #plt.show()
