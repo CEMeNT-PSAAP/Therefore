@@ -16,7 +16,7 @@ def A_neg(dx, v, dt, mu, xsec_total):
     
     return(A_n)
 
-#@nb.jit(nopython=True)
+@nb.jit(nopython=True)
 def A_pos(dx, v, dt, mu, xsec_total):
     assert(mu > 0)
     gamma = (dx*xsec_total)/2
@@ -32,30 +32,20 @@ def A_pos(dx, v, dt, mu, xsec_total):
     return(A_p)
 
 
-#@nb.jit(nopython=True)
+@nb.jit(nopython=True)
 def c_neg(dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi_halfLast_R, psi_rightBound, psi_halfNext_rightBound):
     timer2 = dx/(2*v*dt)
-
-    print(timer2.dtype)
-    print(dx.dtype)
-    print(Ql.dtype)
-    print(psi_halfLast_L.dtype)
-    print(psi_halfLast_R.dtype)
-    print(psi_rightBound.dtype)
-    print(psi_halfNext_rightBound.dtype)
-    print(mu.dtype)
-    print(Qr.dtype)
     
 
     c_n = np.array([[dx/1*Ql + timer2*psi_halfLast_L],
                     [dx/1*Qr + timer2*psi_halfLast_R - mu* psi_rightBound],
                     [dx/1*Q_halfNext_L],
-                    [dx/1*Q_halfNext_R - mu*psi_halfNext_rightBound]], dtype=np.float64)
+                    [dx/1*Q_halfNext_R - mu*psi_halfNext_rightBound]])
 
     return(c_n)
 
 
-#@nb.jit(nopython=True)
+@nb.jit(nopython=True)
 def c_pos(dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi_halfLast_R, psi_leftBound, psi_halfNext_leftBound):
     timer2 = dx/(2*v*dt)
 
@@ -68,7 +58,7 @@ def c_pos(dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi
 
 
 
-#@nb.jit(nopython=True)
+@nb.jit(nopython=True)
 def b_pos(dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi_halfLast_R, psi_leftBound, psi_halfNext_leftBound, xsec_scatter, phi_L, phi_R, phi_halfNext_L, phi_halfNext_R):
     timer2 = dx/(2*v*dt)
 
@@ -79,7 +69,7 @@ def b_pos(dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi
 
     return(b_p)
 
-#@nb.jit(nopython=True)
+@nb.jit(nopython=True)
 def b_neg(dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi_halfLast_R, psi_rightBound, psi_halfNext_rightBound, xsec_scatter, phi_L, phi_R, phi_halfNext_L, phi_halfNext_R):
     timer2 = dx/(2*v*dt)
 
@@ -90,20 +80,16 @@ def b_neg(dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi
 
     return(b_n)
 
-#@nb.jit(nopython=True)
+@nb.jit(nopython=True)
 def scatter_source(dx, xsec_scattering, N, w):
-    
+    S = np.zeros([4*N,4*N])
     beta = dx*xsec_scattering/4
-    S = np.zeros((4*N,4*N))
 
-    for i in range(2*N):
-        for j in range(2*N):
-            S[2*i,2*j] = beta * w[i]
-            S[2*i+1,2*j+1] = beta * w[i]
-
-            S[2*i+1,2*j+1] = beta * w[i]
-            S[2*i+1,2*j+1] = beta * w[i]
-
-
+    for i in range(N):
+        for j in range(N):
+            S[i*4, j*4]     = beta*w[j]
+            S[i*4+1, j*4+1] = beta*w[j]
+            S[i*4+2, j*4+2] = beta*w[j]
+            S[i*4+3, j*4+3] = beta*w[j]
     return(S)
 
