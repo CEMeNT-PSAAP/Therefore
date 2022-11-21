@@ -93,3 +93,7 @@ def scatter_source(dx, xsec_scattering, N, w):
             S[i*4+3, j*4+3] = beta*w[j]
     return(S)
 
+
+if __name__ == '__main__':
+    S = scatter_source(1, 4, 4, np.array([2,2,2,2]))
+    print(S)
