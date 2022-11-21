@@ -29,7 +29,7 @@ s2 = mcdc.surface('plane-x', x=10,  bc="vacuum")
 # Set cells
 mcdc.cell([+s1, -s2], m)
 
-mcdc.source(point=[1E-9,0.0,0.0], time=np.array([0,max_time]), isotropic=True)
+mcdc.source(point=[1E-9,0.0,0.0], time=np.array([0,max_time]), white_direction=[1.0, 0.0, 0.0])
 
 # Tally
 N_time = int(max_time/dt[0])
