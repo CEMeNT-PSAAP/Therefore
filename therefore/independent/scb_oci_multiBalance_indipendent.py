@@ -70,21 +70,21 @@ def scatter_source(dx, xsec_scattering, N, w):
 
 
 
-xsec = 0.25
+xsec = 10
 scattering_ratio = 0
 xsec_scattering = xsec*scattering_ratio
 
 printer = False
 printer_TS = False
 
-dx = 0.5
+dx = 0.01
 L = 1
 N = int(L/dx)
 N_mesh = int(2*N)
 Q = 0
 
 dt = 0.1
-max_time = 0.5 #dt*(N_time-1)
+max_time = 8 #dt*(N_time-1)
 N_time = int(max_time/dt)
 
 v = 1
@@ -154,7 +154,7 @@ for k in range(1, N_time, 1):
 
         # OCI
         for i in range(N):
-            print('>>>>cell {0}<<<<'.format(i))
+            #print('>>>>cell {0}<<<<'.format(i))
 
             i_l = int(2*i)
             i_r = int(2*i+1)
@@ -220,13 +220,6 @@ for k in range(1, N_time, 1):
                 print(A)
                 print()
 
-            print(A)
-            print()
-            print(c)
-            print()
-            print()
-            print()
-
             angular_flux_raw = np.linalg.solve(A,c)
 
             # resorting into proper locations in solution vectors
@@ -247,12 +240,6 @@ for k in range(1, N_time, 1):
                 print('>>> angular flux mid step reorganized <<<')
                 print(angular_flux_midstep)
                 print()
-
-        print('end of itteration')
-        print(angular_flux)
-        print()
-        print(angular_flux_midstep)
-        print()
 
 
         
@@ -280,10 +267,11 @@ for i in range(N_time):
     for j in range(N_mesh):
         final_scalar_flux[i,j] = final_angular_flux_midstep_solution[i,0,j] + final_angular_flux_midstep_solution[i,1,j]
 
+X = np.linspace(0, L, int(N_mesh))
 
 '''
 f=1
-X = np.linspace(0, L, int(N_mesh))
+
 plt.figure(f)
 plt.plot(X, final_angular_flux_solution[1, 1,:],  '--*g', label='0')
 plt.plot(X, final_angular_flux_midstep_solution[1, 1,:],  '-*g',  label='0 + 1/2')
@@ -300,7 +288,7 @@ plt.xlabel('Distance')
 plt.ylabel('Angular Flux')
 plt.legend()
 #plt.show()
-plt.savefig('Test Angular flux')
+plt.savefig('Test Angular flux')'''
 
 import scipy.special as sc
 def phi_(x,t):
@@ -314,7 +302,7 @@ def phi_(x,t):
 
 def psi_(x, t):
     v=2
-    if x> v*t:
+    if x> v*t*mu2:
         return 0.0
     else:
         return 1/BCl*np.exp(-xsec * x / mu2)
@@ -352,4 +340,4 @@ simulation = animation.FuncAnimation(fig, animate, frames=N_time)
 #plt.show()
 
 writervideo = animation.PillowWriter(fps=1000)
-simulation.save('transport_into_slab.gif') #saveit!'''
+simulation.save('transport_into_slab.gif') #saveit!
