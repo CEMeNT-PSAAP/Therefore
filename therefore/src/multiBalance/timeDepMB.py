@@ -30,23 +30,25 @@ def multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatt
         for j in range(N_angles):
             source_mesh[j,2*i] = source[i]
             source_mesh[j,2*i+1] = source[i]
-    
 
 
     angular_flux_mid_last = inital_angular_flux
-    angular_flux = np.zeros([N_angles, int(2*N_mesh), N_time])
+    angular_flux_last = inital_angular_flux
 
+    angular_flux = np.zeros([N_angles, int(2*N_mesh), N_time])
     angular_flux_mid = np.zeros([N_angles, int(2*N_mesh), N_time])
 
     source_converged: bool = True
     
+
+
     for t in range(N_time):
         
         start = timer()
 
         if (backend == 'OCI_MB'):
             [angular_flux[:,:,t], angular_flux_mid[:,:,t], current_total[:,t], spec_rad[t], loops, 
-            source_converged] = OCIMBTimeStep(sim_perams, angular_flux_mid_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights)
+            source_converged] = OCIMBTimeStep(sim_perams, angular_flux_last, angular_flux_mid_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights)
         elif (backend == 'SI_MB'):
             [angular_flux[:,:,t], angular_flux_mid[:,:,t], current_total[:,t], spec_rad[t], loops, 
             source_converged] = OCIMBSITimeStep(sim_perams, angular_flux_mid_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights)
@@ -78,6 +80,7 @@ def multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatt
         
         
         angular_flux_mid_last = angular_flux_mid[:,:,t]
+        angular_flux_last = angular_flux[:,:,t]
         scalar_flux[:,t+1] = utl.ScalarFlux(angular_flux_mid_last, weights)
     
     return(scalar_flux, current_total, spec_rad)

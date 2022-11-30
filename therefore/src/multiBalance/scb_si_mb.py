@@ -41,18 +41,9 @@ def OCIMBSITimeStep(sim_perams, angular_flux_previous, source_mesh, xsec_mesh, x
 
     while source_converged == False:
 
-        #if printer:
-            #print()
-
-            #print()
-            #print(scalar_flux_next)
-            #print()
-            #print(scalar_flux_mid_next)
-
         BCl = utl.BoundaryCondition(sim_perams['boundary_condition_left'],   0, N_mesh, angular_flux=angular_flux, incident_flux_mag=sim_perams['left_in_mag'],  angle=sim_perams['left_in_angle'],  angles=angles)
         BCr = utl.BoundaryCondition(sim_perams['boundary_condition_right'], -1, N_mesh, angular_flux=angular_flux, incident_flux_mag=sim_perams['right_in_mag'], angle=sim_perams['right_in_angle'], angles=angles)
 
-        x = 0
         [angular_flux, angular_flux_mid] = Itteration(angular_flux_previous, angular_flux_last, angular_flux_mid_last, scalar_flux, scalar_flux_mid_next, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, dt, velocity, angles, BCl, BCr)
 
         #calculate current
@@ -62,20 +53,10 @@ def OCIMBSITimeStep(sim_perams, angular_flux_previous, source_mesh, xsec_mesh, x
         scalar_flux_next = utl.ScalarFlux(angular_flux, weights)
         scalar_flux_mid_next = utl.ScalarFlux(angular_flux_mid, weights)
 
-        #print()
-        #print(scalar_flux_next)
-        #print()
-        #print(scalar_flux_mid_next)
-
         if source_counter > 2:
             #check for convergence
             error_eos = np.linalg.norm(scalar_flux_mid_next - scalar_flux_mid, ord=2)
             error_mos = np.linalg.norm(scalar_flux_next - scalar_flux, ord=2)
-
-            #print(error_eos)
-            #print(error_mos)
-            #print()
-            #print()
 
             if error_eos < tol and error_mos < tol:
                 source_converged = True
@@ -100,7 +81,7 @@ def OCIMBSITimeStep(sim_perams, angular_flux_previous, source_mesh, xsec_mesh, x
 
     return(angular_flux, angular_flux_mid, current, spec_rad, source_counter, source_converged)
 
-
+@nb.njit
 def Itteration(angular_flux_previous, angular_flux_last, angular_flux_midstep_last, scalar_flux, scalar_flux_halfNext, Q, xsec, xsec_scatter, dx, dt, v, mu, BCl, BCr):
     N_angle = mu.size
     N_mesh = dx.size
@@ -158,10 +139,10 @@ def Itteration(angular_flux_previous, angular_flux_last, angular_flux_midstep_la
             
             psi_raw = np.linalg.solve(A, b)
 
-            angular_flux_next[angle, i_l] = psi_raw[0]
-            angular_flux_next[angle, i_r] = psi_raw[1]
-            angular_flux_mid_next[angle, i_l] = psi_raw[2]
-            angular_flux_mid_next[angle, i_r] = psi_raw[3]
+            angular_flux_next[angle, i_l] = psi_raw[0,0]
+            angular_flux_next[angle, i_r] = psi_raw[1,0]
+            angular_flux_mid_next[angle, i_l] = psi_raw[2,0]
+            angular_flux_mid_next[angle, i_r] = psi_raw[3,0]
 
     return(angular_flux_next, angular_flux_mid_next)
 
