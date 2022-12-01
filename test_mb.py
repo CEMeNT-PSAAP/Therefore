@@ -22,12 +22,14 @@ L = 10
 dx = 0.1
 N_mesh = int(L/dx)
 xsec = 0.25
-ratio = 0.25
+ratio = 0.75
 scattering_xsec = xsec*ratio
 source_mat = 0
-N_angle = 2
+N_angle = 16
 
 v = 1
+
+BCl = 0.5
 
 dt = 0.1
 max_time = 5
@@ -60,11 +62,11 @@ sim_perams = {'data_type': data_type,
               'N_mesh': N_mesh,
               'boundary_condition_left':  'incident_iso',
               'boundary_condition_right': 'vacuum',
-              'left_in_mag': 0.5,
+              'left_in_mag': BCl,
               'right_in_mag': 10,
               'left_in_angle': .3,
               'right_in_angle': 0,
-              'max loops': 1000,
+              'max loops': 10000,
               'velocity': v,
               'dt': dt,
               'max time': max_time,
@@ -83,6 +85,7 @@ print('Two')
 print('Three')
 [sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI_MB')
 
+
 x = np.linspace(0, L, int(N_mesh*2))
 
 fig,ax = plt.subplots()
@@ -93,7 +96,6 @@ ax.set_ylabel(r'$\phi$')
 ax.set_title('Scalar Flux (ϕ)')
 
 import matplotlib.animation as animation
-
 
 line1, = ax.plot(x, sfMB[:,0], '-k',label="MB-SCB-OCI")
 line2, = ax.plot(x, sfEuler[:,0], '-r',label="BE-SCB")
