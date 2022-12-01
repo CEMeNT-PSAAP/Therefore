@@ -73,20 +73,20 @@ def scatter_source(dx, xsec_scattering, N, w):
 
 
 
-xsec = 0.25
-scattering_ratio = 0.75
+xsec = .25
+scattering_ratio = 0.25
 xsec_scattering = xsec*scattering_ratio
 
 printer = False
-printer_TS = True
+printer_TS = False
 
-dx = .01
+dx = 0.1
 L = 10
 N = int(L/dx)
 N_mesh = int(2*N)
 Q = 0
 
-N_angles = 8
+N_angles = 4
 
 dt = 0.1
 max_time = 5 #dt*(N_time-1)
@@ -95,7 +95,7 @@ N_time = int(max_time/dt)
 v = 1
 
 #BCs incident iso
-BCl = 1
+BCl = 0.5
 BCr = 0
 
 angular_flux      = np.zeros([2, N_mesh])
@@ -161,6 +161,7 @@ for k in range(1, N_time, 1):
 
         # OCI
         for i in range(N):
+            #print('>>>>cell {0}<<<<'.format(i))
 
             i_l = int(2*i)
             i_r = int(2*i+1)
@@ -260,6 +261,7 @@ for i in range(N_time):
         for m in range(N_angle):
             final_scalar_flux[i,j] += (weights[m] * final_angular_flux_midstep_solution[i,m,j])
 
+X = np.linspace(0, L, int(N_mesh))
 
 X = np.linspace(0, L, int(N_mesh))
 
@@ -317,7 +319,7 @@ line1, = ax.plot(X, final_scalar_flux[0,:], '-k',label="MB-SCB")
 line2, = ax.plot(X, analitical(X,0), '--*g',label="Ref")
 text   = ax.text(8.0,0.75,'') #, transform=ax.transAxes
 ax.legend()
-plt.ylim(-0.2, 1.2*BCl) #, OCI_soultion[:,0], AZURV1_soultion[:,0]
+plt.ylim(-0.2, 1.5) #, OCI_soultion[:,0], AZURV1_soultion[:,0]
 
 def animate(k):
     line1.set_ydata(final_scalar_flux[k,:])
@@ -331,4 +333,4 @@ simulation = animation.FuncAnimation(fig, animate, frames=N_time)
 #plt.show()
 
 writervideo = animation.PillowWriter(fps=1000)
-simulation.save('transport_into_slab.gif') #saveit!'''
+simulation.save('transport_into_slab.gif') #saveit!

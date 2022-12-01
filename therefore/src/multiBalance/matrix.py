@@ -87,7 +87,7 @@ def scatter_source(dx, xsec_scattering, N, w):
 
     for i in range(N):
         for j in range(N):
-            S[i*4, j*4]     = beta*w[j]
+            S[i*4,   j*4]   = beta*w[j]
             S[i*4+1, j*4+1] = beta*w[j]
             S[i*4+2, j*4+2] = beta*w[j]
             S[i*4+3, j*4+3] = beta*w[j]
@@ -95,5 +95,5 @@ def scatter_source(dx, xsec_scattering, N, w):
 
 
 if __name__ == '__main__':
-    S = scatter_source(1, 4, 4, np.array([2,2,2,2]))
+    S = scatter_source(1, 4, 4, np.array([-2,-1,1,2]))
     print(S)

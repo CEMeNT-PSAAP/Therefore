@@ -6,7 +6,7 @@ import therefore
 
 #import mcdc
 import numpy as np
-import h5py
+#import h5py
 
 def t2p(time):
     return(int((time/max_time)*N_time))
@@ -19,16 +19,20 @@ def t2p(time):
 data_type = np.float64
 
 L = 10
-dx = 0.05
+dx = 0.1
 N_mesh = int(L/dx)
 xsec = 0.25
-ratio = 0
+ratio = 0.75
 scattering_xsec = xsec*ratio
 source_mat = 0
-N_angle = 2
+N_angle = 16
+
+v = 1
+
+BCl = 0.5
 
 dt = 0.1
-max_time = 12
+max_time = 5
 
 N_time = int(max_time/dt)
 
@@ -58,12 +62,12 @@ sim_perams = {'data_type': data_type,
               'N_mesh': N_mesh,
               'boundary_condition_left':  'incident_iso',
               'boundary_condition_right': 'vacuum',
-              'left_in_mag': 0.5,
+              'left_in_mag': BCl,
               'right_in_mag': 10,
               'left_in_angle': .3,
               'right_in_angle': 0,
-              'max loops': 1000,
-              'velocity': 1,
+              'max loops': 10000,
+              'velocity': v,
               'dt': dt,
               'max time': max_time,
               'N_time': N_time,
@@ -73,63 +77,41 @@ sim_perams = {'data_type': data_type,
               'print': False}
 
 
+print('One')
 #[sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI_MB')
 [sfMBSi, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'SI_MB')
+print('Two')
+[sfEuler, current, spec_rads, loops] = therefore.euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'SI')
+print('Three')
 [sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI_MB')
 
 
-'''
-ss_xRef = np.array([0, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 3.75, 4, 4.25, 4.5, 4.75, 5, 5.25, 5.5, 5.75, 6, 6.25, 6.5, 6.75, 7, 7.25, 7.5, 7.75, 8, 8.25, 8.5, 8.75, 9, 9.25, 9.5, 9.75, 10])
-ss_sfRef = np.array([0.299999998, 0.268779374, 0.241460362, 0.217481669, 0.196369686, 0.177724223, 0.161206604, 0.146529743, 0.133449844, 0.121759478, 0.111281796, 0.101865694, 0.093381763, 0.085718903, 0.078781493, 0.072487008, 0.066764032, 0.061550582, 0.056792705, 0.052443293, 0.048461094, 0.044809867, 0.041457677, 0.038376299, 0.035540704, 0.032928639, 0.030520253, 0.028297791, 0.02624533, 0.024348547, 0.022594531, 0.020971611, 0.019469216, 0.018077747, 0.016788474, 0.015593439, 0.014485377, 0.013457643, 0.01250415, 0.011619316, 0.010798014])
-'''
-
-v=1
-# analitic soultion
-'''
-def psi(x,t):
-    s = x + v*t
-    return(0.5*np.exp((-xsec*s)/(1+angles_gq[1])))
-
 x = np.linspace(0, L, int(N_mesh*2))
-fig, axs = plt.subplots(N_time-1)
-for i in range(1,N_time):
-    axs[i-1].plot(x, sfEuler[:,i], label='euler')
-    axs[i-1].plot(x, sfMB[:,i], label='mb')
-    axs[i-1].plot(x, sfRef[:,i], label='ref')
-    axs[i-1].set_title('time {0}'.format(i*dt))
-plt.tight_layout()
 
-for ax in axs.flat:
-    ax.label_outer()
+fig,ax = plt.subplots()
+    
+ax.grid()
+ax.set_xlabel(r'$x$')
+ax.set_ylabel(r'$\phi$')
+ax.set_title('Scalar Flux (ϕ)')
 
-'''
-x = np.linspace(0, L, int(N_mesh*2))
-plt.figure(1)
-plt.plot(x, sfMBSi[:,-1], label='SI, t=12')
-plt.plot(x, sfMB[:,-1], label='OCI, t=12')
-#plt.plot(x, sfRef[:,-1], label='MCDC, t=20')
-#plt.plot(ss_xRef_ex, ss_sfRef_ex, label='SS excel')
-#plt.plot(x, ss_sfMB, label='SS OCI')
-plt.title('Steady State (t=20[s]) v=1, sig=0.25, N=100, c=0')
-plt.legend()
+import matplotlib.animation as animation
 
-plt.savefig('test_mb.png')
+line1, = ax.plot(x, sfMB[:,0], '-k',label="MB-SCB-OCI")
+line2, = ax.plot(x, sfEuler[:,0], '-r',label="BE-SCB")
+line3, = ax.plot(x, sfMBSi[:,0], '-g',label="MB-SCB-SI")
+text   = ax.text(8.0,0.75,'') 
+ax.legend()
+plt.ylim(-0.2, 1.5)
 
-'''
-x = np.linspace(0, L, int(N_mesh*2))
-zippy = np.zeros(N_mesh*2)
-plt.figure(4)
-#plt.plot(x, ang_flux[:,0], label='MB 0')
-#plt.plot(x, ang_flux[:,1], label='MB 1')
-#plt.plot(x, ang_flux[:,2], label='MB 2')
-#plt.plot(x, ang_flux[:,3], label='MB 3')
-plt.plot(x, scalar_flux[:,0], label='Euler 0')
-plt.plot(x, scalar_flux[:,1], label='Euler 1')
-plt.plot(x, scalar_flux[:,2], label='Euler 2')
-plt.plot(x, scalar_flux[:,3], label='Euler 3')
-#plt.plot(x, zippy, '-r')
-plt.xlabel('Distance [cm]')
-plt.ylabel('Scalar Flux [units of scalar flux]')
-plt.title('Scalar Flux through time')
-plt.legend()
-plt.show()'''
+def animate(k):
+    line1.set_ydata(sfMB[:,k])
+    line2.set_ydata(sfEuler[:,k])
+    line3.set_ydata(sfMBSi[:,k])
+    text.set_text(r'$t \in [%.1f,%.1f]$ s'%(dt*k,dt*(k+1)))
+    return line1, line2
+
+simulation = animation.FuncAnimation(fig, animate, frames=N_time)
+
+writervideo = animation.PillowWriter(fps=250)
+simulation.save('test_mb.gif') #saveit!
