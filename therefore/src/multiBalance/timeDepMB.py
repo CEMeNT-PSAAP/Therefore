@@ -3,6 +3,7 @@ import numpy as np
 from timeit import default_timer as timer
 from .scb_oci_mb import OCIMBTimeStep
 from .scb_si_mb import OCIMBSITimeStep
+from .scb_oci_mb_gpu import OCIMBTimeStepGPU
 import therefore.src.utilities as utl
 
 
@@ -47,6 +48,10 @@ def multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatt
         if (backend == 'OCI_MB'):
             [angular_flux[:,:,t], angular_flux_mid[:,:,t], current_total[:,t], spec_rad[t], loops, 
             source_converged] = OCIMBTimeStep(sim_perams, angular_flux_last, angular_flux_mid_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights)
+            print(loops)
+        elif (backend == 'OCI_MB_GPU'):
+            [angular_flux[:,:,t], angular_flux_mid[:,:,t], current_total[:,t], spec_rad[t], loops, 
+            source_converged] = OCIMBTimeStepGPU(sim_perams, angular_flux_last, angular_flux_mid_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights)
             print(loops)
         elif (backend == 'SI_MB'):
             [angular_flux[:,:,t], angular_flux_mid[:,:,t], current_total[:,t], spec_rad[t], loops, 

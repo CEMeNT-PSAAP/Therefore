@@ -2,7 +2,7 @@ import numpy as np
 import numba as nb
 import scipy.linalg as sci
 
-@nb.jit(nopython=True, parallel=True, cache=True, nogil=True, fastmath=True)
+@nb.jit(nopython=True, parallel=True, cache=False, nogil=True, fastmath=False)
 def OCIRun(angular_flux, source, xsec, xsec_scatter, dx, mu, weight, BCl, BCr):
     
     n_mesh = int(dx.size)

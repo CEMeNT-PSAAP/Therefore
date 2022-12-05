@@ -1,11 +1,12 @@
 import numpy as np
-from .matrix import A_pos, A_neg, c_neg, c_pos, scatter_source
+from .matrix_gpu import A_pos, A_neg, c_neg, c_pos, scatter_source
 import therefore.src.utilities as utl
 import numba as nb
+import cupy as cu
 np.set_printoptions(linewidth=np.inf)
 
 
-def OCIMBTimeStep(sim_perams, angular_flux_previous, angular_flux_mid_previous, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights):
+def OCIMBTimeStepGPU(sim_perams, angular_flux_previous, angular_flux_mid_previous, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights):
 
     velocity = sim_perams['velocity']
     dt = sim_perams['dt']
@@ -73,7 +74,7 @@ def OCIMBTimeStep(sim_perams, angular_flux_previous, angular_flux_mid_previous, 
 
 # last refers to iteration
 # prev refers to previous time step
-@nb.jit(nopython=True, parallel=False, cache=True, nogil=True, fastmath=True)
+#@nb.njit#(nopython=True, parallel=False, cache=True, nogil=True, fastmath=True)
 def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_last, source, xsec, xsec_scatter, dx, dt, v, mu, weight, BCl, BCr):
     
     N_mesh = dx.size
@@ -93,8 +94,8 @@ def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_
         Q = source[:,i_l:i_r+1]
         #angle space time
         
-        A = np.zeros((sizer,sizer))
-        c = np.zeros((sizer,1))
+        A = cu.zeros((sizer,sizer))
+        c = cu.zeros((sizer,1))
 
         # getting really sloppy with the indiceis
         for m in range(N_angle):
@@ -130,7 +131,9 @@ def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_
 
         A = A - S
 
-        angular_flux_raw = np.linalg.solve(A, c)
+        angular_flux_raw_gpu = cu.linalg.solve(A_gpu, c_gpu)
+
+        angular_flux_raw = cu.asnumpy(angular_flux_raw_gpu)
 
 
         for m in range(N_angle):
