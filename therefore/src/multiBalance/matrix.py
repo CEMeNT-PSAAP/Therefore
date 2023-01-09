@@ -94,6 +94,7 @@ def scatter_source(dx, xsec_scattering, N, w):
     return(S)
 
 
+
 if __name__ == '__main__':
     S = scatter_source(1, 4, 4, np.array([-2,-1,1,2]))
     print(S)

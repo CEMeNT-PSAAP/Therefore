@@ -131,7 +131,7 @@ def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_
 
         A = A - S
 
-        angular_flux_raw_gpu = cu.linalg.solve(A_gpu, c_gpu)
+        angular_flux_raw_gpu = cu.linalg.solve(A, c)
 
         angular_flux_raw = cu.asnumpy(angular_flux_raw_gpu)
 
