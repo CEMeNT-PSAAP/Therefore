@@ -4,6 +4,7 @@ from timeit import default_timer as timer
 from .scb_oci_mb import OCIMBTimeStep
 from .scb_si_mb import OCIMBSITimeStep
 from .scb_oci_mb_gpu import OCIMBTimeStepGPU
+from .scb_oci_mb_bigGurl import OCIMBTimeStepBig
 import therefore.src.utilities as utl
 
 
@@ -57,6 +58,9 @@ def multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatt
             [angular_flux[:,:,t], angular_flux_mid[:,:,t], current_total[:,t], spec_rad[t], loops, 
             source_converged] = OCIMBSITimeStep(sim_perams, angular_flux_mid_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights)
             print(loops)
+        elif (backend == 'BigGirl'):
+            [angular_flux[:,:,t], angular_flux_mid[:,:,t], current_total[:,t], spec_rad[t], loops, 
+            source_converged] = OCIMBTimeStepBig(sim_perams, angular_flux_last, angular_flux_mid_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights)
         else:
             print('>>>ERROR: NO Backend provided')
             print('     select between OCI and SI!')

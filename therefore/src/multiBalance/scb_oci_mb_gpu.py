@@ -1,5 +1,5 @@
 import numpy as np
-from .matrix_gpu import A_pos, A_neg, c_neg, c_pos, scatter_source
+from .matrix import A_pos, A_neg, c_neg, c_pos, scatter_source
 import therefore.src.utilities as utl
 import numba as nb
 import cupy as cu
@@ -94,8 +94,8 @@ def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_
         Q = source[:,i_l:i_r+1]
         #angle space time
         
-        A = cu.zeros((sizer,sizer))
-        c = cu.zeros((sizer,1))
+        A = np.zeros((sizer,sizer))
+        c = np.zeros((sizer,1))
 
         # getting really sloppy with the indiceis
         for m in range(N_angle):
@@ -131,7 +131,11 @@ def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_
 
         A = A - S
 
-        angular_flux_raw_gpu = cu.linalg.solve(A, c)
+        A_gpu = cu.asarray(A)
+        c_gpu = cu.asarray(c)
+
+        angular_flux_raw_gpu = cu.linalg.solve(A_gpu, c_gpu)
+
 
         angular_flux_raw = cu.asnumpy(angular_flux_raw_gpu)
 

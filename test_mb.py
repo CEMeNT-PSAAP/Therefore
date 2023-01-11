@@ -3,6 +3,7 @@ import numpy as np
 #np.set_printoptions(threshold=np.inf)
 import matplotlib.pyplot as plt
 import therefore
+from timeit import default_timer as timer
 
 #import mcdc
 import numpy as np
@@ -25,7 +26,7 @@ xsec = 0.25
 ratio = 0.75
 scattering_xsec = xsec*ratio
 source_mat = 0
-N_angle = 16
+N_angle = 10
 
 v = 1
 
@@ -76,16 +77,32 @@ sim_perams = {'data_type': data_type,
               'tolerance': 1e-9,
               'print': False}
 
+start = timer()
+print('OCI MB SCB Single big')
+[sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'BigGirl') #OCI_MB_GPU
+end = timer()
+print(end - start)
+'''
 
-print('Zero')
-[sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI_MB_GPU')
-print('One')
-#[sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI_MB')
+start = timer()
+print('SI MB SCB')
 [sfMBSi, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'SI_MB')
-print('Two')
+end = timer()
+print(end - start)
+
+start = timer()
+print('SI BE SCB')
 [sfEuler, current, spec_rads, loops] = therefore.euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'SI')
-print('Three')
+end = timer()
+print(end - start)
+
+start = timer()
+print('OCI MB SCB')
 [sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI_MB')
+end = timer()
+print(end - start)
+
+'''
 
 
 x = np.linspace(0, L, int(N_mesh*2))
