@@ -78,11 +78,22 @@ sim_perams = {'data_type': data_type,
               'print': False}
 
 start = timer()
-print('OCI MB SCB Single big')
+print('OCI MB SCB Single big gpu')
 [sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'BigGirl') #OCI_MB_GPU
 end = timer()
 print(end - start)
-'''
+
+start = timer()
+print('OCI MB SCB Small GPU')
+[sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI_MB_GPU')
+end = timer()
+print(end - start)
+
+start = timer()
+print('OCI MB SCB')
+[sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI_MB')
+end = timer()
+print(end - start)
 
 start = timer()
 print('SI MB SCB')
@@ -96,13 +107,6 @@ print('SI BE SCB')
 end = timer()
 print(end - start)
 
-start = timer()
-print('OCI MB SCB')
-[sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI_MB')
-end = timer()
-print(end - start)
-
-'''
 
 
 x = np.linspace(0, L, int(N_mesh*2))

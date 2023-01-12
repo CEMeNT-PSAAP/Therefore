@@ -3,6 +3,7 @@ from .matrix import A_pos, A_neg, c_neg, c_pos, scatter_source
 import therefore.src.utilities as utl
 import numba as nb
 import cupyx.scipy.sparse.linalg as gpuLinalg
+import cupyx.scipy.sparse as spMat
 import cupy as cu
 np.set_printoptions(linewidth=np.inf)
 
@@ -36,7 +37,9 @@ def OCIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_mid_previou
     scalar_flux_next = np.zeros(N_ans, data_type)
 
     A = BuildHer(xsec_mesh, xsec_scatter_mesh, dx_mesh, dt, velocity, angles, weights)
-    A_gpu = cu.asarray(A) 
+    from scipy.sparse import csr_matrix
+    A = csr_matrix(A)
+    A_gpu = spMat.csr_matrix(A) 
 
     while source_converged == False:
         BCl = utl.BoundaryCondition(sim_perams['boundary_condition_left'],   0, N_mesh, angular_flux=angular_flux, incident_flux_mag=sim_perams['left_in_mag'],  angle=sim_perams['left_in_angle'],  angles=angles)
@@ -79,7 +82,7 @@ def OCIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_mid_previou
 
     return(angular_flux, angular_flux_mid, current, spec_rad, source_counter, source_converged)
 
-#@nb.njit
+@nb.jit(nopython=True, parallel=False, cache=True, nogil=True, fastmath=True)
 def BuildHer(xsec, xsec_scatter, dx, dt, v, mu, weight):
     #from scipy.sparse import coo_matrix, block_diag
 
@@ -112,7 +115,7 @@ def BuildHer(xsec, xsec_scatter, dx, dt, v, mu, weight):
 
     return(A_uge)
 
-#@nb.njit
+@nb.jit(nopython=True, parallel=False, cache=True, nogil=True, fastmath=True)
 def BuildC(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_last, source, dx, dt, v, mu, BCl, BCr):
     N_mesh = dx.size
     sizer = mu.size*4
@@ -128,7 +131,6 @@ def BuildC(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_la
         Q = source[:,i_l:i_r+1]
         #angle space time
         
-        A = np.zeros((sizer,sizer))
         c = np.zeros((sizer,1))
 
         # getting really sloppy with the indiceis
@@ -169,22 +171,24 @@ def BuildC(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_la
 #@nb.njit
 def runBig(A, c, angular_flux, angular_flux_midstep):
 
-    angular_flux_raw_gpu = gpuLinalg.spsolve(A, c)
-    angular_flux_raw = cu.asnumpy(angular_flux_raw_gpu)
+    [angular_flux_raw_gpu, info] = gpuLinalg.gmres(A, c)
+    angular_flux_raw = cu.asnumpy(angular_flux_raw_gpu.get())
 
     #humpty dumpty back togther again
     reset(angular_flux_raw, angular_flux, angular_flux_midstep)
 
-#@nb.njit
+
+
+@nb.jit(nopython=True, parallel=False, cache=True, nogil=True, fastmath=True)
 def reset(angular_flux_raw, angular_flux, angular_flux_midstep):
     N_angle = angular_flux.shape[0]
     N_mesh = int(angular_flux.shape[1]/2)
 
     for p in range(N_mesh):
         for m in range(N_angle):
-            angular_flux[m,2*p]           = angular_flux_raw[4*m*p,0]
-            angular_flux[m,2*p+1]         = angular_flux_raw[4*m*p+1,0]
+            angular_flux[m,2*p]           = angular_flux_raw[4*m*p]
+            angular_flux[m,2*p+1]         = angular_flux_raw[4*m*p+1]
             
-            angular_flux_midstep[m,2*p]   = angular_flux_raw[4*m*p+2,0]
-            angular_flux_midstep[m,2*p+1] = angular_flux_raw[4*m*p+3,0]
+            angular_flux_midstep[m,2*p]   = angular_flux_raw[4*m*p+2]
+            angular_flux_midstep[m,2*p+1] = angular_flux_raw[4*m*p+3]
 
