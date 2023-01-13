@@ -90,7 +90,7 @@ def BuildHer(xsec, xsec_scatter, dx, dt, v, mu, weight):
     sizer = mu.size*4
     N_angle = mu.size
 
-    A_uge = np.empty((4*N_angle*N_mesh, 4*N_angle*N_mesh)) #lil_matrix((4*N_angle*N_mesh, 4*N_angle*N_mesh))
+    A_uge = lil_matrix((4*N_angle*N_mesh, 4*N_angle*N_mesh))
 
     for i in range(N_mesh):
         
@@ -240,9 +240,12 @@ def reset(angular_flux_raw, angular_flux, angular_flux_midstep):
 
     for p in range(N_mesh):
         for m in range(N_angle):
-            angular_flux[m,2*p]           = angular_flux_raw[4*m*p]
-            angular_flux[m,2*p+1]         = angular_flux_raw[4*m*p+1]
+            # number of elements preceeding desired anwser set
+            raw_index = int(4*m + 4*p*N_angle)
+
+            angular_flux[m,2*p]           = angular_flux_raw[raw_index]
+            angular_flux[m,2*p+1]         = angular_flux_raw[raw_index+1]
             
-            angular_flux_midstep[m,2*p]   = angular_flux_raw[4*m*p+2]
-            angular_flux_midstep[m,2*p+1] = angular_flux_raw[4*m*p+3]
+            angular_flux_midstep[m,2*p]   = angular_flux_raw[raw_index+2]
+            angular_flux_midstep[m,2*p+1] = angular_flux_raw[raw_index+3]
 
