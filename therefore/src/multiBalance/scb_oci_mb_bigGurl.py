@@ -3,6 +3,7 @@ from .matrix import A_pos, A_neg, c_neg, c_pos, scatter_source
 import therefore.src.utilities as utl
 import numba as nb
 import cupyx.scipy.sparse.linalg as gpuLinalg
+import scipy.sparse.linalg as cpuLinalg
 import cupy as cu
 np.set_printoptions(linewidth=np.inf)
 
@@ -36,16 +37,16 @@ def OCIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_mid_previou
     scalar_flux_next = np.zeros(N_ans, data_type)
 
     A = BuildHer(xsec_mesh, xsec_scatter_mesh, dx_mesh, dt, velocity, angles, weights)
-    A_gpu = cu.asarray(A) 
+    #A_gpu = cu.asarray(A) 
 
     while source_converged == False:
         BCl = utl.BoundaryCondition(sim_perams['boundary_condition_left'],   0, N_mesh, angular_flux=angular_flux, incident_flux_mag=sim_perams['left_in_mag'],  angle=sim_perams['left_in_angle'],  angles=angles)
         BCr = utl.BoundaryCondition(sim_perams['boundary_condition_right'], -1, N_mesh, angular_flux=angular_flux, incident_flux_mag=sim_perams['right_in_mag'], angle=sim_perams['right_in_angle'], angles=angles)
         
         c = BuildC(angular_flux_mid_previous, angular_flux_last, angular_flux_mid_last, source_mesh, dx_mesh, dt, velocity, angles, BCl, BCr)
-        c_gpu = cu.asarray(c) 
+        #c_gpu = cu.asarray(c) 
 
-        runBig(A_gpu, c_gpu, angular_flux, angular_flux_mid)
+        runBig(A, c, angular_flux, angular_flux_mid)
 
         #calculate current
         current = utl.Current(angular_flux, weights, angles)
@@ -169,8 +170,8 @@ def BuildC(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_la
 #@nb.njit
 def runBig(A, c, angular_flux, angular_flux_midstep):
 
-    angular_flux_raw_gpu = gpuLinalg.spsolve(A, c)
-    angular_flux_raw = cu.asnumpy(angular_flux_raw_gpu)
+    angular_flux_raw = cpuLinalg.spsolve(A, c)
+    #angular_flux_raw = cu.asnumpy(angular_flux_raw_gpu)
 
     #humpty dumpty back togther again
     reset(angular_flux_raw, angular_flux, angular_flux_midstep)
@@ -182,9 +183,11 @@ def reset(angular_flux_raw, angular_flux, angular_flux_midstep):
 
     for p in range(N_mesh):
         for m in range(N_angle):
-            angular_flux[m,2*p]           = angular_flux_raw[4*m*p,0]
-            angular_flux[m,2*p+1]         = angular_flux_raw[4*m*p+1,0]
+            raw_index = int(4*m + 4*p*N_angle)
+
+            angular_flux[m,2*p]           = angular_flux_raw[raw_index]
+            angular_flux[m,2*p+1]         = angular_flux_raw[raw_index+1]
             
-            angular_flux_midstep[m,2*p]   = angular_flux_raw[4*m*p+2,0]
-            angular_flux_midstep[m,2*p+1] = angular_flux_raw[4*m*p+3,0]
+            angular_flux_midstep[m,2*p]   = angular_flux_raw[raw_index+2]
+            angular_flux_midstep[m,2*p+1] = angular_flux_raw[raw_index+3]
 
