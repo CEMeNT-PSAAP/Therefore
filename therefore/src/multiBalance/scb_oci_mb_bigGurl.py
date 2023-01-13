@@ -1,12 +1,13 @@
 import numpy as np
-from .matrix import A_pos, A_neg, c_neg, c_pos, scatter_source
+from .matrix import A_pos, A_neg, c_neg, c_pos, scatter_source, A_neg_nomat, A_pos_nomat
 import therefore.src.utilities as utl
 import numba as nb
 import cupyx.scipy.sparse.linalg as gpuLinalg
+import scipy.sparse.linalg as cpuLinalg
 import cupyx.scipy.sparse as spMat
 import cupy as cu
 np.set_printoptions(linewidth=np.inf)
-
+from scipy.sparse import csr_matrix, lil_matrix
 
 def OCIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_mid_previous, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights):
 
@@ -37,18 +38,17 @@ def OCIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_mid_previou
     scalar_flux_next = np.zeros(N_ans, data_type)
 
     A = BuildHer(xsec_mesh, xsec_scatter_mesh, dx_mesh, dt, velocity, angles, weights)
-    from scipy.sparse import csr_matrix
     A = csr_matrix(A)
-    A_gpu = spMat.csr_matrix(A) 
+    #A_gpu = spMat.csr_matrix(A) 
 
     while source_converged == False:
         BCl = utl.BoundaryCondition(sim_perams['boundary_condition_left'],   0, N_mesh, angular_flux=angular_flux, incident_flux_mag=sim_perams['left_in_mag'],  angle=sim_perams['left_in_angle'],  angles=angles)
         BCr = utl.BoundaryCondition(sim_perams['boundary_condition_right'], -1, N_mesh, angular_flux=angular_flux, incident_flux_mag=sim_perams['right_in_mag'], angle=sim_perams['right_in_angle'], angles=angles)
         
         c = BuildC(angular_flux_mid_previous, angular_flux_last, angular_flux_mid_last, source_mesh, dx_mesh, dt, velocity, angles, BCl, BCr)
-        c_gpu = cu.asarray(c) 
+        #c_gpu = cu.asarray(c) 
 
-        runBig(A_gpu, c_gpu, angular_flux, angular_flux_mid)
+        runBig(A, c, angular_flux, angular_flux_mid)
 
         #calculate current
         current = utl.Current(angular_flux, weights, angles)
@@ -82,7 +82,7 @@ def OCIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_mid_previou
 
     return(angular_flux, angular_flux_mid, current, spec_rad, source_counter, source_converged)
 
-@nb.jit(nopython=True, parallel=False, cache=True, nogil=True, fastmath=True)
+
 def BuildHer(xsec, xsec_scatter, dx, dt, v, mu, weight):
     #from scipy.sparse import coo_matrix, block_diag
 
@@ -90,7 +90,7 @@ def BuildHer(xsec, xsec_scatter, dx, dt, v, mu, weight):
     sizer = mu.size*4
     N_angle = mu.size
 
-    A_uge = np.zeros((4*N_angle*N_mesh, 4*N_angle*N_mesh))
+    A_uge = np.empty((4*N_angle*N_mesh, 4*N_angle*N_mesh)) #lil_matrix((4*N_angle*N_mesh, 4*N_angle*N_mesh))
 
     for i in range(N_mesh):
         
@@ -114,6 +114,60 @@ def BuildHer(xsec, xsec_scatter, dx, dt, v, mu, weight):
         A_uge[Ba:Bb, Ba:Bb] = A
 
     return(A_uge)
+
+
+'''
+@nb.jit(nopython=True, parallel=False, cache=True, nogil=True, fastmath=True)
+def BuildHer(xsec, xsec_scatter, dx, dt, v, mu, weight):
+    #from scipy.sparse import coo_matrix, block_diag
+
+    N_mesh = dx.size
+    sizer = mu.size*4
+    sub_cell_size = sizer**2
+    N_angle = mu.size
+
+    #A_uge = np.zeros((4*N_angle*N_mesh, 4*N_angle*N_mesh))
+    row = np.zeros((sizer*sizer))
+    col = np.zeros((sizer*sizer)) 
+    dat = np.zeros((sizer*sizer))
+
+    for i in range(N_mesh):
+
+        A = np.zeros((sizer,sizer))
+
+        for m in range(N_angle):
+            if mu[m] < 0:
+                A_small = A_neg(dx[i], v, dt, mu[m], xsec[i])
+                            
+            elif mu[m] > 0:
+                A_small = A_pos(dx[i], v, dt, mu[m], xsec[i])
+
+            A[m*4:(m+1)*4, m*4:(m+1)*4] = A_small
+
+        S = scatter_source(dx[i], xsec_scatter[i], N_angle, weight)
+        A = A - S
+
+        row_cell = np.zeros((sub_cell_size))
+        col_cell = np.zeros((sub_cell_size)) 
+        dat_cell = np.zeros((sub_cell_size))
+
+        for k in range in A.shape[0]:
+            for j in range in A.shape[1]:
+                lin_ind = int(k*(j+A.shape[1]))
+                row_cell[lin_ind] = k
+                col_cell[lin_ind] = j
+                dat_cell[lin_ind] = A[k,j]
+
+        Bl = sub_cell_size * i
+        Br = sub_cell_size * (i+1)
+
+        row[Bl:Br] = row_cell
+        col[Bl:Br] = col_cell
+        dat[Bl:Br] = dat_cell
+
+    return(row, col, dat)
+'''
+
 
 @nb.jit(nopython=True, parallel=False, cache=True, nogil=True, fastmath=True)
 def BuildC(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_last, source, dx, dt, v, mu, BCl, BCr):
@@ -171,8 +225,8 @@ def BuildC(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_la
 #@nb.njit
 def runBig(A, c, angular_flux, angular_flux_midstep):
 
-    [angular_flux_raw_gpu, info] = gpuLinalg.gmres(A, c)
-    angular_flux_raw = cu.asnumpy(angular_flux_raw_gpu.get())
+    [angular_flux_raw, info] = cpuLinalg.gmres(A, c)
+    #angular_flux_raw = cu.asnumpy(angular_flux_raw_gpu.get())
 
     #humpty dumpty back togther again
     reset(angular_flux_raw, angular_flux, angular_flux_midstep)
