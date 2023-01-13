@@ -20,19 +20,23 @@ def t2p(time):
 data_type = np.float64
 
 L = 10
-dx = 0.1
+dx = 0.01
 N_mesh = int(L/dx)
 xsec = 0.25
 ratio = 0.75
 scattering_xsec = xsec*ratio
 source_mat = 0
+<<<<<<< HEAD
 N_angle = 2
+=======
+N_angle = 32
+>>>>>>> spMats
 
 v = 1
 
 BCl = 0.5
 
-dt = 0.1
+dt = 0.05
 max_time = 5
 
 N_time = int(max_time/dt)
@@ -78,23 +82,18 @@ sim_perams = {'data_type': data_type,
               'print': False}
 
 start = timer()
-print('OCI MB SCB Single big')
+print('OCI MB SCB Single big gpu')
 [sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'BigGirl') #OCI_MB_GPU
 end = timer()
 print(end - start)
+
 '''
-
 start = timer()
-print('SI MB SCB')
-[sfMBSi, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'SI_MB')
+print('OCI MB SCB Small GPU')
+[sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI_MB_GPU')
 end = timer()
 print(end - start)
 
-start = timer()
-print('SI BE SCB')
-[sfEuler, current, spec_rads, loops] = therefore.euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'SI')
-end = timer()
-print(end - start)
 
 start = timer()
 print('OCI MB SCB')
@@ -102,7 +101,19 @@ print('OCI MB SCB')
 end = timer()
 print(end - start)
 
+
+start = timer()
+print('SI MB SCB')
+[sfMBSi, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'SI_MB')
+end = timer()
+print(end - start)
 '''
+
+start = timer()
+print('SI BE SCB')
+[sfEuler, current, spec_rads, loops] = therefore.euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'SI')
+end = timer()
+print(end - start)
 
 
 x = np.linspace(0, L, int(N_mesh*2))
@@ -117,7 +128,11 @@ ax.set_title('Scalar Flux (ϕ)')
 import matplotlib.animation as animation
 
 line1, = ax.plot(x, sfMB[:,0], '-k',label="MB-SCB-OCI")
+<<<<<<< HEAD
 #line2, = ax.plot(x, sfEuler[:,0], '-r',label="BE-SCB")
+=======
+line2, = ax.plot(x, sfEuler[:,0], '-r',label="BE-SCB")
+>>>>>>> spMats
 #line3, = ax.plot(x, sfMBSi[:,0], '-g',label="MB-SCB-SI")
 text   = ax.text(8.0,0.75,'') 
 ax.legend()
@@ -125,7 +140,11 @@ plt.ylim(-0.2, 1.5)
 
 def animate(k):
     line1.set_ydata(sfMB[:,k])
+<<<<<<< HEAD
     #line2.set_ydata(sfEuler[:,k])
+=======
+    line2.set_ydata(sfEuler[:,k])
+>>>>>>> spMats
     #line3.set_ydata(sfMBSi[:,k])
     text.set_text(r'$t \in [%.1f,%.1f]$ s'%(dt*k,dt*(k+1)))
     return line1#, line2
