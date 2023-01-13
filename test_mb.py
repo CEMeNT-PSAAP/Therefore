@@ -26,11 +26,7 @@ xsec = 0.25
 ratio = 0.75
 scattering_xsec = xsec*ratio
 source_mat = 0
-<<<<<<< HEAD
-N_angle = 2
-=======
 N_angle = 32
->>>>>>> spMats
 
 v = 1
 
@@ -128,11 +124,7 @@ ax.set_title('Scalar Flux (ϕ)')
 import matplotlib.animation as animation
 
 line1, = ax.plot(x, sfMB[:,0], '-k',label="MB-SCB-OCI")
-<<<<<<< HEAD
-#line2, = ax.plot(x, sfEuler[:,0], '-r',label="BE-SCB")
-=======
 line2, = ax.plot(x, sfEuler[:,0], '-r',label="BE-SCB")
->>>>>>> spMats
 #line3, = ax.plot(x, sfMBSi[:,0], '-g',label="MB-SCB-SI")
 text   = ax.text(8.0,0.75,'') 
 ax.legend()
@@ -140,11 +132,7 @@ plt.ylim(-0.2, 1.5)
 
 def animate(k):
     line1.set_ydata(sfMB[:,k])
-<<<<<<< HEAD
-    #line2.set_ydata(sfEuler[:,k])
-=======
     line2.set_ydata(sfEuler[:,k])
->>>>>>> spMats
     #line3.set_ydata(sfMBSi[:,k])
     text.set_text(r'$t \in [%.1f,%.1f]$ s'%(dt*k,dt*(k+1)))
     return line1#, line2
