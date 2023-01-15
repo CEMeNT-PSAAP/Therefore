@@ -32,7 +32,7 @@ v = 1
 
 BCl = 0.5
 
-dt = 0.05
+dt = 0.1
 max_time = 5
 
 N_time = int(max_time/dt)
@@ -90,19 +90,21 @@ print('OCI MB SCB Small GPU')
 end = timer()
 print(end - start)
 
+'''
 
 start = timer()
-print('OCI MB SCB')
-[sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI_MB')
+print('OCI MB SCB CPU')
+[sfMB_trad, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI_MB')
 end = timer()
 print(end - start)
 
-
+'''
 start = timer()
 print('SI MB SCB')
 [sfMBSi, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'SI_MB')
 end = timer()
 print(end - start)
+
 '''
 
 start = timer()
@@ -123,9 +125,9 @@ ax.set_title('Scalar Flux (ϕ)')
 
 import matplotlib.animation as animation
 
-line1, = ax.plot(x, sfMB[:,0], '-k',label="MB-SCB-OCI")
-line2, = ax.plot(x, sfEuler[:,0], '-r',label="BE-SCB")
-#line3, = ax.plot(x, sfMBSi[:,0], '-g',label="MB-SCB-SI")
+line1, = ax.plot(x, sfMB[:,0], '-k',label="MB-SCB-OCI-GPU")
+line2, = ax.plot(x, sfEuler[:,0], '-r',label="BE-SCB-SI")
+line3, = ax.plot(x, sfMB_trad[:,0], '-g',label="MB-SCB-OCI-CPU")
 text   = ax.text(8.0,0.75,'') 
 ax.legend()
 plt.ylim(-0.2, 1.5)
@@ -133,6 +135,8 @@ plt.ylim(-0.2, 1.5)
 def animate(k):
     line1.set_ydata(sfMB[:,k])
     line2.set_ydata(sfEuler[:,k])
+    line3.set_ydata(sfMB_trad[:,k])
+
     #line3.set_ydata(sfMBSi[:,k])
     text.set_text(r'$t \in [%.1f,%.1f]$ s'%(dt*k,dt*(k+1)))
     return line1#, line2

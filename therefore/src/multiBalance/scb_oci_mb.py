@@ -73,7 +73,7 @@ def OCIMBTimeStep(sim_perams, angular_flux_previous, angular_flux_mid_previous, 
 
 # last refers to iteration
 # prev refers to previous time step
-@nb.jit(nopython=True, parallel=False, cache=True, nogil=True, fastmath=True)
+@nb.jit(nopython=True, parallel=True, cache=True, nogil=True, fastmath=True)
 def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_last, source, xsec, xsec_scatter, dx, dt, v, mu, weight, BCl, BCr):
     
     N_mesh = dx.size
@@ -85,7 +85,7 @@ def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_
     angular_flux = np.zeros_like(angular_flux_last)
     angular_flux_midstep = np.zeros_like(angular_flux_midstep_last) #(N_angle, N_ans), dtype=np.float64)
 
-    for i in range(N_mesh):
+    for i in nb.prange(N_mesh):
         
         i_l: int = int(2*i)
         i_r: int = int(2*i+1)

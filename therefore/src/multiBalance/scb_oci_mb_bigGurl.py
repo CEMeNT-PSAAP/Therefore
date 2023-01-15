@@ -9,6 +9,13 @@ import cupy as cu
 np.set_printoptions(linewidth=np.inf)
 from scipy.sparse import csr_matrix, lil_matrix
 
+# I know that the problem is with this stucture specfically as I did testing to prove it
+# for some reason I love typeing right now cus I I remmember my mom typing liek this and
+#figured itwas a feminin skill so I yeeted it what the is wrong with me. Like go damn I just
+# want to be Joanna Like for fuck sake, I just want Todd and Kyle and Travis to say "Joanna...
+# tou need to do better." Like fuck fuck fuck fuck fuck fuck fuck shes so much better then
+#
+
 def OCIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_mid_previous, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights):
 
     velocity = sim_perams['velocity']
@@ -39,16 +46,16 @@ def OCIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_mid_previou
 
     A = BuildHer(xsec_mesh, xsec_scatter_mesh, dx_mesh, dt, velocity, angles, weights)
     A = csr_matrix(A)
-    #A_gpu = spMat.csr_matrix(A) 
+    A_gpu = spMat.csr_matrix(A) 
 
     while source_converged == False:
         BCl = utl.BoundaryCondition(sim_perams['boundary_condition_left'],   0, N_mesh, angular_flux=angular_flux, incident_flux_mag=sim_perams['left_in_mag'],  angle=sim_perams['left_in_angle'],  angles=angles)
         BCr = utl.BoundaryCondition(sim_perams['boundary_condition_right'], -1, N_mesh, angular_flux=angular_flux, incident_flux_mag=sim_perams['right_in_mag'], angle=sim_perams['right_in_angle'], angles=angles)
         
         c = BuildC(angular_flux_mid_previous, angular_flux_last, angular_flux_mid_last, source_mesh, dx_mesh, dt, velocity, angles, BCl, BCr)
-        #c_gpu = cu.asarray(c) 
+        c_gpu = cu.asarray(c) 
 
-        runBig(A, c, angular_flux, angular_flux_mid)
+        runBig(A_gpu, c_gpu, angular_flux, angular_flux_mid)
 
         #calculate current
         current = utl.Current(angular_flux, weights, angles)
@@ -225,8 +232,8 @@ def BuildC(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_la
 #@nb.njit
 def runBig(A, c, angular_flux, angular_flux_midstep):
 
-    [angular_flux_raw, info] = cpuLinalg.gmres(A, c)
-    #angular_flux_raw = cu.asnumpy(angular_flux_raw_gpu.get())
+    [angular_flux_raw_gpu, info] = gpuLinalg.gmres(A, c)
+    angular_flux_raw = cu.asnumpy(angular_flux_raw_gpu.get())
 
     #humpty dumpty back togther again
     reset(angular_flux_raw, angular_flux, angular_flux_midstep)
