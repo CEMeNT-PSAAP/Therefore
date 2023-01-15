@@ -2,7 +2,7 @@ import numpy as np
 import numba as nb
 
 #Simple Corner balence sweep
-@nb.jit(nopython=True, parallel=True, cache=True, nogil=True, fastmath=True)
+@nb.jit(nopython=True, parallel=True, cache=False, nogil=False, fastmath=False)
 def SCBRun(Q, xsec, dx, mu, BCl, BCr, N_mesh):
     '''Return angular flux
     
@@ -38,7 +38,7 @@ def SCBRun(Q, xsec, dx, mu, BCl, BCr, N_mesh):
     return(angular_flux)
 
 # negative mu!
-@nb.jit(nopython=True, cache=True, fastmath=True)
+@nb.jit(nopython=True, cache=False, fastmath=False)
 def SCBKernel_negative(Q_l, Q_r, psi_ph, xsec, dx, mu):
     '''SCB going from right to the left (mu<0)'''
     
@@ -55,7 +55,7 @@ def SCBKernel_negative(Q_l, Q_r, psi_ph, xsec, dx, mu):
     return(psi_l[0], psi_r[0])
 
 # positive mu
-@nb.jit(nopython=True, cache=True, fastmath=True)
+@nb.jit(nopython=True, cache=False, fastmath=False)
 def SCBKernel_positive(Q_l, Q_r, psi_mh, xsec, dx, mu):
     '''SCB going from the left to the right (mu>0)'''
     

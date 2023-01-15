@@ -3,6 +3,8 @@ import numpy as np
 from timeit import default_timer as timer
 from .scb_oci_mb import OCIMBTimeStep
 from .scb_si_mb import OCIMBSITimeStep
+from .scb_oci_mb_gpu import OCIMBTimeStepGPU
+from .scb_oci_mb_bigGurl import OCIMBTimeStepBig
 import therefore.src.utilities as utl
 
 
@@ -30,24 +32,32 @@ def multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatt
         for j in range(N_angles):
             source_mesh[j,2*i] = source[i]
             source_mesh[j,2*i+1] = source[i]
-    
 
 
+    angular_flux_mid_last = inital_angular_flux
     angular_flux_last = inital_angular_flux
-    angular_flux = np.zeros([N_angles, int(2*N_mesh), N_time])
 
+    angular_flux = np.zeros([N_angles, int(2*N_mesh), N_time])
     angular_flux_mid = np.zeros([N_angles, int(2*N_mesh), N_time])
 
     source_converged: bool = True
-    
+
     for t in range(N_time):
         
         start = timer()
 
         if (backend == 'OCI_MB'):
-            [angular_flux[:,:,t], angular_flux_mid[:,:,t], current_total[:,t], spec_rad[t], loops, source_converged] = OCIMBTimeStep(sim_perams, angular_flux_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights)
+            [angular_flux[:,:,t], angular_flux_mid[:,:,t], current_total[:,t], spec_rad[t], loops, 
+            source_converged] = OCIMBTimeStep(sim_perams, angular_flux_last, angular_flux_mid_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights)
+        elif (backend == 'OCI_MB_GPU'):
+            [angular_flux[:,:,t], angular_flux_mid[:,:,t], current_total[:,t], spec_rad[t], loops, 
+            source_converged] = OCIMBTimeStepGPU(sim_perams, angular_flux_last, angular_flux_mid_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights)
         elif (backend == 'SI_MB'):
-            [angular_flux[:,:,t], angular_flux_mid[:,:,t], current_total[:,t], spec_rad[t], loops, source_converged] = OCIMBSITimeStep(sim_perams, angular_flux_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights)
+            [angular_flux[:,:,t], angular_flux_mid[:,:,t], current_total[:,t], spec_rad[t], loops, 
+            source_converged] = OCIMBSITimeStep(sim_perams, angular_flux_mid_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights)
+        elif (backend == 'BigGirl'):
+            [angular_flux[:,:,t], angular_flux_mid[:,:,t], current_total[:,t], spec_rad[t], loops, 
+            source_converged] = OCIMBTimeStepBig(sim_perams, angular_flux_last, angular_flux_mid_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights)
         else:
             print('>>>ERROR: NO Backend provided')
             print('     select between OCI and SI!')
@@ -62,9 +72,6 @@ def multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatt
             print('   Method of iteration did not converge!')
             print('')
             
-        #angular_flux_total[:,:,t] = TimeDiscretization(angular_flux_last, angular_flux_half)
-        
-        #psi_check = source_mesh_tilde[0,5] / (xsec_mesh_t[5]*(1)/2)
         
         if (printer):
             print('Time step: {0}'.format(t))
@@ -72,19 +79,11 @@ def multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatt
             print('     -wall time:  {0} [s]'.format(end-start))
             print('     -loops:      {0}'.format(loops))
             print()
-        #print('     -Ψ check:    {0}    '.format(psi_check))
         
         
+        angular_flux_mid_last = angular_flux_mid[:,:,t]
         angular_flux_last = angular_flux[:,:,t]
-        scalar_flux[:,t+1] = utl.ScalarFlux(angular_flux_last, weights)
+        scalar_flux[:,t+1] = utl.ScalarFlux(angular_flux_mid[:,:,t], weights)
     
     return(scalar_flux, current_total, spec_rad)
     
-    
-#def TimeDiscretization(angular_flux_last, angular_flux_half, theta):
-#    '''Using diamond discretization in time
-#    '''
-    
-#    angular_flux_next = (angular_flux_half - theta*angular_flux_last) / (1-theta)
-    
-#    return(angular_flux_next)

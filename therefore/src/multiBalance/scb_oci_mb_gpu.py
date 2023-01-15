@@ -2,10 +2,11 @@ import numpy as np
 from .matrix import A_pos, A_neg, c_neg, c_pos, scatter_source
 import therefore.src.utilities as utl
 import numba as nb
+import cupy as cu
 np.set_printoptions(linewidth=np.inf)
 
 
-def OCIMBTimeStep(sim_perams, angular_flux_previous, angular_flux_mid_previous, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights):
+def OCIMBTimeStepGPU(sim_perams, angular_flux_previous, angular_flux_mid_previous, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights):
 
     velocity = sim_perams['velocity']
     dt = sim_perams['dt']
@@ -73,7 +74,7 @@ def OCIMBTimeStep(sim_perams, angular_flux_previous, angular_flux_mid_previous, 
 
 # last refers to iteration
 # prev refers to previous time step
-@nb.jit(nopython=True, parallel=True, cache=True, nogil=True, fastmath=True)
+#@nb.njit#(nopython=True, parallel=False, cache=True, nogil=True, fastmath=True)
 def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_last, source, xsec, xsec_scatter, dx, dt, v, mu, weight, BCl, BCr):
     
     N_mesh = dx.size
@@ -85,7 +86,7 @@ def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_
     angular_flux = np.zeros_like(angular_flux_last)
     angular_flux_midstep = np.zeros_like(angular_flux_midstep_last) #(N_angle, N_ans), dtype=np.float64)
 
-    for i in nb.prange(N_mesh):
+    for i in range(N_mesh):
         
         i_l: int = int(2*i)
         i_r: int = int(2*i+1)
@@ -130,7 +131,13 @@ def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_
 
         A = A - S
 
-        angular_flux_raw = np.linalg.solve(A, c)
+        A_gpu = cu.asarray(A)
+        c_gpu = cu.asarray(c)
+
+        angular_flux_raw_gpu = cu.linalg.solve(A_gpu, c_gpu)
+
+
+        angular_flux_raw = cu.asnumpy(angular_flux_raw_gpu)
 
 
         for m in range(N_angle):
@@ -141,7 +148,6 @@ def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_
             angular_flux_midstep[m,i_r] = angular_flux_raw[4*m+3,0]
 
     return(angular_flux, angular_flux_midstep)
-
 
 def neg_flux_fixup(next_angflux):
     for i in range(next_angflux.shape[0]):

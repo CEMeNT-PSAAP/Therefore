@@ -5,9 +5,9 @@ import therefore.src.itterationSchemes as ss
 
 from timeit import default_timer as timer
 
-def euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source, theta=1, backend='OCI'):
+def euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source, backend, theta=1.0):
     velocity = sim_perams['velocity']
-    dt = sim_perams['dt']
+    dt = float(sim_perams['dt'])
     N_time = sim_perams['N_time']
     N_angles = sim_perams['N_angles']
     N_mesh = sim_perams['N_mesh']
@@ -35,16 +35,17 @@ def euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh
     angular_flux_last = inital_angular_flux
     
     for t in range(N_time):
-        xsec_mesh_t = xsec_mesh + (1/(velocity* theta* dt))
-        source_mesh_tilde = source_mesh + angular_flux_last/(velocity* theta* dt)
+
+        xsec_mesh_t = xsec_mesh + (1/(velocity* dt))
+        source_mesh_tilde = source_mesh + angular_flux_last/(velocity* dt)
         
         
         start = timer()
         
         if (backend == 'OCI'):
-            [angular_flux_total[:,:,t], current_total[:,t], spec_rad[t], source_converged] = ss.OCI(sim_perams, dx_mesh, xsec_mesh_t, xsec_scatter_mesh, source_mesh_tilde, True)
+            [angular_flux_total[:,:,t], current_total[:,t], spec_rad[t], source_converged, loops] = ss.OCI(sim_perams, dx_mesh, xsec_mesh_t, xsec_scatter_mesh, source_mesh_tilde, True)
         elif (backend == 'SI'):
-            [angular_flux_total[:,:,t], current_total[:,t], spec_rad[t], source_converged] = ss.SourceItteration(sim_perams, dx_mesh, xsec_mesh_t, xsec_scatter_mesh, source_mesh_tilde, True)
+            [angular_flux_total[:,:,t], current_total[:,t], spec_rad[t], source_converged, loops] = ss.SourceItteration(sim_perams, dx_mesh, xsec_mesh_t, xsec_scatter_mesh, source_mesh_tilde, True)
         else:
             print('>>>ERROR: NO Backend provided')
             print('     select between OCI and SI!')
@@ -67,6 +68,7 @@ def euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh
             print('Time step: {0}'.format(t))
             print('     -ρ:          {0}    '.format(spec_rad[t]))
             print('     -wall time:  {0} [s]'.format(end-start))
+            print('     -loops:      {0}'.format(loops))
             print()
         #print('     -Ψ check:    {0}    '.format(psi_check))
         
@@ -75,7 +77,7 @@ def euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh
         scalar_flux[:,t+1] = utl.ScalarFlux(angular_flux_last, weights)
         
     
-    return(scalar_flux, current_total, spec_rad)
+    return(scalar_flux, current_total, spec_rad, loops)
     
     
     

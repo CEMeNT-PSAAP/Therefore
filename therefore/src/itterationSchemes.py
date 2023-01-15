@@ -37,6 +37,7 @@ def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_m
     L = sim_perams['L']
     N_mesh = int(sim_perams['N_mesh'])
     N = int(2*N_mesh)
+    tol = sim_perams['tolerance']
     
     # snag some GL angles
     [angles_gq, weights_gq] = np.polynomial.legendre.leggauss(N_angles)
@@ -81,9 +82,9 @@ def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_m
         #calculate scalar flux for next itteration
         scalar_flux_next = utl.ScalarFlux(angular_flux, weights_gq)
         
-        if source_counter > 2:
+        if source_counter > 3:
             #check for convergence
-            source_converged = utl.HasItConverged(scalar_flux_next, scalar_flux)
+            source_converged = utl.HasItConverged(scalar_flux_next, scalar_flux, tol=tol)
             spec_rad = np.linalg.norm(scalar_flux_next - scalar_flux, ord=2) / np.linalg.norm((scalar_flux - scalar_flux_last), ord=2)
             
         #print()
@@ -105,13 +106,11 @@ def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_m
         scalar_flux_last = scalar_flux
         scalar_flux = scalar_flux_next
         source_counter += 1
-        
-    print()
     
     if time_dependent_mode:
         scalar_flux = angular_flux
     
-    return(angular_flux, current, spec_rad, source_converged)
+    return(angular_flux, current, spec_rad, source_converged, source_counter)
 
 
 
@@ -142,6 +141,7 @@ def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, time_dep
     L = sim_perams['L']
     N_mesh = sim_perams['N_mesh']
     max_itter = sim_perams['max loops']
+    tol = sim_perams['tolerance']
     
     #snag some GL angles
     [angles_gq, weights_gq] = np.polynomial.legendre.leggauss(order_gauss_quad)
@@ -186,9 +186,9 @@ def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, time_dep
         # calculate scalar flux for next itteration
         scalar_flux_next = utl.ScalarFlux(angular_flux_next, weights_gq)
         
-        if source_counter > 2:
+        if source_counter > 3:
             #check for convergence
-            source_converged = utl.HasItConverged(scalar_flux_next, scalar_flux)
+            source_converged = utl.HasItConverged(scalar_flux_next, scalar_flux, tol=tol)
             spec_rad = np.linalg.norm(angular_flux_next - angular_flux, ord=2) / np.linalg.norm((angular_flux - angular_flux_last), ord=2)
         
         # if stuck, display error then cut n run
@@ -207,7 +207,7 @@ def OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, time_dep
     if time_dependent_mode: #for time dependence
         scalar_flux = angular_flux_next
     
-    return(scalar_flux, current, spec_rad, source_converged) #scalar_flux, current, 
+    return(scalar_flux, current, spec_rad, source_converged, source_counter) #scalar_flux, current, 
     
 
 def SourceMeshTransform(source_mesh_o, N_angles):
