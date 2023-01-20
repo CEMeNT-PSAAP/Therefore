@@ -33,7 +33,9 @@ def OCIMBTimeStep(sim_perams, angular_flux_previous, angular_flux_mid_previous, 
     scalar_flux_last = np.zeros(N_ans, data_type)
     scalar_flux_next = np.zeros(N_ans, data_type)
 
+    #print('Next TS')
     while source_converged == False:
+        
         BCl = utl.BoundaryCondition(sim_perams['boundary_condition_left'],   0, N_mesh, angular_flux=angular_flux, incident_flux_mag=sim_perams['left_in_mag'],  angle=sim_perams['left_in_angle'],  angles=angles)
         BCr = utl.BoundaryCondition(sim_perams['boundary_condition_right'], -1, N_mesh, angular_flux=angular_flux, incident_flux_mag=sim_perams['right_in_mag'], angle=sim_perams['right_in_angle'], angles=angles)
         
@@ -73,7 +75,7 @@ def OCIMBTimeStep(sim_perams, angular_flux_previous, angular_flux_mid_previous, 
 
 # last refers to iteration
 # prev refers to previous time step
-@nb.jit(nopython=True, parallel=True, cache=True, nogil=True, fastmath=True)
+@nb.jit(nopython=True, parallel=False, cache=True, nogil=True, fastmath=True)
 def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_last, source, xsec, xsec_scatter, dx, dt, v, mu, weight, BCl, BCr):
     
     N_mesh = dx.size
@@ -90,7 +92,7 @@ def OCIMBRun(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_
         i_l: int = int(2*i)
         i_r: int = int(2*i+1)
 
-        Q = source[:,i_l:i_r+1]
+        Q = source[:,i_l:i_r+1]/2
         #angle space time
         
         A = np.zeros((sizer,sizer))

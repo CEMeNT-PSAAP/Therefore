@@ -1,4 +1,5 @@
 import numpy as np
+#from .matrix import A_pos, A_neg, c_neg, c_pos, scatter_source, A_neg_nomat, A_pos_nomat
 from .matrix import A_pos, A_neg, c_neg, c_pos, scatter_source, A_neg_nomat, A_pos_nomat
 import therefore.src.utilities as utl
 import numba as nb
@@ -16,7 +17,7 @@ from scipy.sparse import csr_matrix, lil_matrix
 # tou need to do better." Like fuck fuck fuck fuck fuck fuck fuck shes so much better then
 # hek 
 
-def OCIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_mid_previous, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights):
+def OCIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_midstep_previous, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights):
 
     velocity = sim_perams['velocity']
     dt = sim_perams['dt']
@@ -35,7 +36,7 @@ def OCIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_mid_previou
     N_ans = int(2*N_mesh)
 
     angular_flux = np.zeros([N_angles, N_ans], data_type)
-    angular_flux_mid = np.zeros([N_angles, N_ans], data_type)
+    angular_flux_midstep = np.zeros([N_angles, N_ans], data_type)
 
     angular_flux_last = np.zeros([N_angles, N_ans], data_type) #angular_flux_previous
     angular_flux_mid_last = np.zeros([N_angles, N_ans], data_type) #angular_flux_mid_previous
@@ -48,14 +49,24 @@ def OCIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_mid_previou
     A = csr_matrix(A)
     A_gpu = spMat.csr_matrix(A) 
 
+    np.set_printoptions(linewidth=np.inf)
+
+    # LAST -- refers to last itteration
+    # PREVIOUS -- refers to previous time step
     while source_converged == False:
+
         BCl = utl.BoundaryCondition(sim_perams['boundary_condition_left'],   0, N_mesh, angular_flux=angular_flux, incident_flux_mag=sim_perams['left_in_mag'],  angle=sim_perams['left_in_angle'],  angles=angles)
         BCr = utl.BoundaryCondition(sim_perams['boundary_condition_right'], -1, N_mesh, angular_flux=angular_flux, incident_flux_mag=sim_perams['right_in_mag'], angle=sim_perams['right_in_angle'], angles=angles)
         
-        c = BuildC(angular_flux_mid_previous, angular_flux_last, angular_flux_mid_last, source_mesh, dx_mesh, dt, velocity, angles, BCl, BCr)
-        c_gpu = cu.asarray(c) 
+        c = BuildC(angular_flux_midstep_previous, angular_flux_last, angular_flux_mid_last, source_mesh, dx_mesh, dt, velocity, angles, BCl, BCr)
+        c_gpu = cu.asarray(c)
 
-        runBig(A_gpu, c_gpu, angular_flux, angular_flux_mid)
+        #angular_flux_raw = runBig(A, c)
+        #[angular_flux_raw, info] = cpuLinalg.gmres(A, c)
+        [angular_flux_raw_gpu, info] = gpuLinalg.gmres(A_gpu, c_gpu)
+        angular_flux_raw = cu.asnumpy(angular_flux_raw_gpu.get())
+
+        [angular_flux, angular_flux_midstep] = reset(angular_flux_raw, [N_angles, N_mesh])
 
         #calculate current
         current = utl.Current(angular_flux, weights, angles)
@@ -65,7 +76,7 @@ def OCIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_mid_previou
         
         if source_counter > 2:
             #check for convergence
-            error_eos = np.linalg.norm(angular_flux_mid - angular_flux_mid_last, ord=2)
+            error_eos = np.linalg.norm(angular_flux_midstep - angular_flux_mid_last, ord=2)
             error_mos = np.linalg.norm(angular_flux - angular_flux_last, ord=2)
 
             if error_mos < tol and error_eos < tol:
@@ -80,18 +91,17 @@ def OCIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_mid_previou
             no_convergence = True
 
         angular_flux_last = angular_flux
-        angular_flux_mid_last = angular_flux_mid
+        angular_flux_mid_last = angular_flux_midstep
         
         scalar_flux_last = scalar_flux
         scalar_flux = scalar_flux_next
         
         source_counter  += 1
 
-    return(angular_flux, angular_flux_mid, current, spec_rad, source_counter, source_converged)
+    return(angular_flux, angular_flux_midstep, current, spec_rad, source_counter, source_converged)
 
 
 def BuildHer(xsec, xsec_scatter, dx, dt, v, mu, weight):
-    #from scipy.sparse import coo_matrix, block_diag
 
     N_mesh = dx.size
     sizer = mu.size*4
@@ -189,7 +199,7 @@ def BuildC(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_la
         i_l: int = int(2*i)
         i_r: int = int(2*i+1)
 
-        Q = source[:,i_l:i_r+1]
+        Q = source[:,i_l:i_r+1]/2
         #angle space time
         
         c = np.zeros((sizer,1))
@@ -230,20 +240,22 @@ def BuildC(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_la
     return(c_uge)
 
 #@nb.njit
-def runBig(A, c, angular_flux, angular_flux_midstep):
+def runBig(A, c):
 
-    [angular_flux_raw_gpu, info] = gpuLinalg.gmres(A, c)
-    angular_flux_raw = cu.asnumpy(angular_flux_raw_gpu.get())
+    angular_flux_raw = cpuLinalg.spsolve(A, c)
+    #angular_flux_raw = cu.asnumpy(angular_flux_raw_gpu.get())
 
-    #humpty dumpty back togther again
-    reset(angular_flux_raw, angular_flux, angular_flux_midstep)
+    return(angular_flux_raw)
 
 
 
 @nb.jit(nopython=True, parallel=False, cache=True, nogil=True, fastmath=True)
-def reset(angular_flux_raw, angular_flux, angular_flux_midstep):
-    N_angle = angular_flux.shape[0]
-    N_mesh = int(angular_flux.shape[1]/2)
+def reset(angular_flux_raw, size):
+    N_angle = size[0]
+    N_mesh = size[1]
+
+    angular_flux = np.zeros((N_angle, N_mesh*2), np.float64)
+    angular_flux_midstep = np.zeros((N_angle, N_mesh*2), np.float64)
 
     for p in range(N_mesh):
         for m in range(N_angle):
@@ -255,4 +267,76 @@ def reset(angular_flux_raw, angular_flux, angular_flux_midstep):
             
             angular_flux_midstep[m,2*p]   = angular_flux_raw[raw_index+2]
             angular_flux_midstep[m,2*p+1] = angular_flux_raw[raw_index+3]
+
+    return(angular_flux, angular_flux_midstep)
+
+
+
+
+
+def BuildHer_Check(xsec, xsec_scatter, dx, dt, v, mu, weight):
+
+    N_mesh = dx.size
+    sizer = mu.size*4
+    N_angle = mu.size
+
+    A_uge = np.zeros((4*N_angle*N_mesh, 4*N_angle*N_mesh))
+
+    for i in range(N_mesh):
+        
+        A = np.zeros((sizer,sizer))
+        for m in range(N_angle):
+            if mu[m] < 0:
+                A_small = A_neg(dx[i], v, dt, mu[m], xsec[i])
+                            
+            elif mu[m] > 0:
+                A_small = A_pos(dx[i], v, dt, mu[m], xsec[i])
+
+            A[m*4:(m+1)*4, m*4:(m+1)*4] = A_small
+
+        S = scatter_source(dx[i], xsec_scatter[i], N_angle, weight)
+        A = A - S
+
+        #helper index values
+        Ba = 4*N_angle*i
+        Bb = 4*N_angle*(i+1)
+
+        A_uge[Ba:Bb, Ba:Bb] = A
+
+    return(A_uge)
+
+
+
+
+if __name__ == '__main__':
+    
+
+    N_mesh = 5#int(1e4)
+
+    xsec = .5*np.ones(N_mesh)
+    xsec_scatter = 2*np.ones(N_mesh)
+    dx = .75*np.ones(N_mesh)
+    dt = .5
+    v = 1
+    weight = np.array([1,1])
+    mu = np.array([1,1])
+
+    A1 = BuildHer(xsec, xsec_scatter, dx, dt, v, mu, weight)
+    A1 = A1.toarray()
+    A2 = BuildHer_Check(xsec, xsec_scatter, dx, dt, v, mu, weight)
+
+    rool = np.array_equal(A1, A2)
+
+    print(rool)
+
+    if rool == False:
+        print(' F')
+    np.set_printoptions(linewidth=np.inf)
+    print(A1)
+    print()
+    print()
+    print()
+    print()
+    print(A2)
+
 

@@ -20,13 +20,13 @@ def t2p(time):
 data_type = np.float64
 
 L = 10
-dx = 0.01
+dx = .1
 N_mesh = int(L/dx)
 xsec = 0.25
 ratio = 0.75
 scattering_xsec = xsec*ratio
-source_mat = 0
-N_angle = 32
+source_mat = .1
+N_angle = 20
 
 v = 1
 
@@ -75,22 +75,22 @@ sim_perams = {'data_type': data_type,
               'offset': 0,
               'ratio': ratio,
               'tolerance': 1e-9,
-              'print': False}
+              'print': True}
 
 start = timer()
 print('OCI MB SCB Single big gpu')
-[sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'BigGirl') #OCI_MB_GPU
+[sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'Big') #OCI_MB_GPU
 end = timer()
 print(end - start)
 
 '''
 start = timer()
 print('OCI MB SCB Small GPU')
-[sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI_MB_GPU')
+[sfMB_badGpu, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI_MB_GPU')
 end = timer()
 print(end - start)
-thas
 '''
+
 
 start = timer()
 print('OCI MB SCB CPU')
@@ -98,13 +98,13 @@ print('OCI MB SCB CPU')
 end = timer()
 print(end - start)
 
+
 '''
 start = timer()
 print('SI MB SCB')
 [sfMBSi, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'SI_MB')
 end = timer()
 print(end - start)
-
 '''
 
 start = timer()
@@ -112,6 +112,23 @@ print('SI BE SCB')
 [sfEuler, current, spec_rads, loops] = therefore.euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'SI')
 end = timer()
 print(end - start)
+
+'''
+for i in range(sfMB.shape[0]):
+    for j in range(sfMB.shape[1]):
+        #print(i)
+        #print(j)
+        #print()
+        k = sfMB[i,j] == sfMB_trad[i,j]
+
+        if k == False:
+            print('fuck at {0}, {1}'.format(i,j))
+'''
+
+#print(np.allclose(sfMB, sfMB_trad, atol=1e-9))
+#np.set_printoptions(linewidth=np.inf)
+#print(sfMB)
+#print(sfMB_trad)
 
 
 x = np.linspace(0, L, int(N_mesh*2))
@@ -125,21 +142,21 @@ ax.set_title('Scalar Flux (ϕ)')
 
 import matplotlib.animation as animation
 
-line1, = ax.plot(x, sfMB[:,0], '-k',label="MB-SCB-OCI-GPU")
-line2, = ax.plot(x, sfEuler[:,0], '-r',label="BE-SCB-SI")
-line3, = ax.plot(x, sfMB_trad[:,0], '-g',label="MB-SCB-OCI-CPU")
+line1, = ax.plot(x, sfMB[:,0], '-k',label="MB-OCI-Big")
+line2, = ax.plot(x, sfMB_trad[:,0], '-r',label="MB-OCI-Small")
+line3, = ax.plot(x, sfEuler[:,0], '-g',label="BE-SI")
 text   = ax.text(8.0,0.75,'') 
 ax.legend()
 plt.ylim(-0.2, 1.5)
 
 def animate(k):
     line1.set_ydata(sfMB[:,k])
-    line2.set_ydata(sfEuler[:,k])
-    line3.set_ydata(sfMB_trad[:,k])
+    line2.set_ydata(sfMB_trad[:,k])
+    line3.set_ydata(sfEuler[:,k])
 
     #line3.set_ydata(sfMBSi[:,k])
     text.set_text(r'$t \in [%.1f,%.1f]$ s'%(dt*k,dt*(k+1)))
-    return line1#, line2
+ #   return line1, line2, line3
 
 simulation = animation.FuncAnimation(fig, animate, frames=N_time)
 

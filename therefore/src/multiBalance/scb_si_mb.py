@@ -6,7 +6,7 @@ import numba as nb
 np.set_printoptions(threshold=9999999)
 
 
-def OCIMBSITimeStep(sim_perams, angular_flux_previous, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights):
+def SIMBTimeStep(sim_perams, angular_flux_previous, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights):
 
     velocity = sim_perams['velocity']
     dt = sim_perams['dt']
