@@ -62,8 +62,8 @@ def OCIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_midstep_pre
         c_gpu = cu.asarray(c)
 
         #angular_flux_raw = runBig(A, c)
-        #[angular_flux_raw, info] = cpuLinalg.gmres(A, c)
         [angular_flux_raw_gpu, info] = gpuLinalg.gmres(A_gpu, c_gpu)
+        #[angular_flux_raw, info] = cpuLinalg.gmres(A, c)
         angular_flux_raw = cu.asnumpy(angular_flux_raw_gpu.get())
 
         [angular_flux, angular_flux_midstep] = reset(angular_flux_raw, [N_angles, N_mesh])

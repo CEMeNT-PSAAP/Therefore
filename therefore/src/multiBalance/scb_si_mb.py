@@ -25,6 +25,8 @@ def SIMBTimeStep(sim_perams, angular_flux_previous, source_mesh, xsec_mesh, xsec
     
     N_ans = int(2*N_mesh)
 
+    #source_mesh /= 2
+
     angular_flux = np.zeros([N_angles, N_ans], data_type)
     angular_flux_mid = np.zeros([N_angles, N_ans], data_type)
 
@@ -81,7 +83,7 @@ def SIMBTimeStep(sim_perams, angular_flux_previous, source_mesh, xsec_mesh, xsec
 
     return(angular_flux, angular_flux_mid, current, spec_rad, source_counter, source_converged)
 
-@nb.njit
+#@nb.jit(nopython=True, parallel=False, cache=True, nogil=True, fastmath=True)
 def Itteration(angular_flux_previous, angular_flux_last, angular_flux_midstep_last, scalar_flux, scalar_flux_halfNext, Q, xsec, xsec_scatter, dx, dt, v, mu, BCl, BCr):
     N_angle = mu.size
     N_mesh = dx.size
@@ -93,7 +95,7 @@ def Itteration(angular_flux_previous, angular_flux_last, angular_flux_midstep_la
     angular_flux_next = np.zeros_like(angular_flux_previous)
     angular_flux_mid_next = np.zeros_like(angular_flux_previous)
 
-    for angle in range(N_angle):
+    for angle in nb.prange(N_angle):
         for i in range(N_mesh):
             i_l: int = int(2*i)
             i_r: int = int(2*i+1)

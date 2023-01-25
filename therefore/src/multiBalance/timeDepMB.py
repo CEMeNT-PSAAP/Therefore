@@ -53,8 +53,9 @@ def multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatt
             [angular_flux[:,:,t], angular_flux_mid[:,:,t], current_total[:,t], spec_rad[t], loops, 
             source_converged] = OCIMBTimeStepGPU(sim_perams, angular_flux_last, angular_flux_mid_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights)
         elif (backend == 'SI_MB'):
+            source_mesh_send = 2*source_mesh
             [angular_flux[:,:,t], angular_flux_mid[:,:,t], current_total[:,t], spec_rad[t], loops, 
-            source_converged] = SIMBTimeStep(sim_perams, angular_flux_mid_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights)
+            source_converged] = SIMBTimeStep(sim_perams, angular_flux_mid_last, source_mesh_send, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights)
         elif (backend == 'Big'):
             [angular_flux[:,:,t], angular_flux_mid[:,:,t], current_total[:,t], spec_rad[t], loops, 
             source_converged] = OCIMBTimeStepBig(sim_perams, angular_flux_last, angular_flux_mid_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights)
