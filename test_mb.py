@@ -73,17 +73,17 @@ sim_perams = {'data_type': data_type,
               'max time': max_time,
               'N_time': N_time,
               'offset': 0,
-              'ratio': ratio,
+              #'ratio': ratio,
               'tolerance': 1e-9,
               'print': True}
 
-'''
+
 start = timer()
 print('OCI MB SCB Single big gpu')
 [sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'Big') #OCI_MB_GPU
 end = timer()
 print(end - start)
-'''
+
 
 '''
 start = timer()
