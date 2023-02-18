@@ -26,8 +26,11 @@ def OCIMBTimeStep(sim_perams, angular_flux_previous, angular_flux_mid_previous, 
     angular_flux = np.zeros([N_angles, N_ans], data_type)
     angular_flux_mid = np.zeros([N_angles, N_ans], data_type)
 
-    angular_flux_last = np.zeros([N_angles, N_ans], data_type) #angular_flux_previous
-    angular_flux_mid_last = np.zeros([N_angles, N_ans], data_type) #angular_flux_mid_previous
+    #angular_flux_last = np.zeros([N_angles, N_ans], data_type)
+    #angular_flux_mid_last = np.zeros([N_angles, N_ans], data_type)
+
+    angular_flux_last = angular_flux_previous #np.zeros([N_angles, N_ans], data_type)
+    angular_flux_mid_last = angular_flux_mid_previous #np.zeros([N_angles, N_ans], data_type)
 
     scalar_flux = np.zeros(N_ans, data_type)
     scalar_flux_last = np.zeros(N_ans, data_type)

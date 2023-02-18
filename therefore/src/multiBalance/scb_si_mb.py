@@ -6,7 +6,7 @@ import numba as nb
 np.set_printoptions(threshold=9999999)
 
 
-def SIMBTimeStep(sim_perams, angular_flux_previous, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights):
+def SIMBTimeStep(sim_perams, angular_flux_previous, angular_flux_mid_previous, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights):
 
     velocity = sim_perams['velocity']
     dt = sim_perams['dt']
@@ -32,6 +32,9 @@ def SIMBTimeStep(sim_perams, angular_flux_previous, source_mesh, xsec_mesh, xsec
 
     angular_flux_last = np.zeros([N_angles, N_ans], data_type)
     angular_flux_mid_last = np.zeros([N_angles, N_ans], data_type)
+
+    #angular_flux_last = angular_flux_previous ##
+    #angular_flux_mid_last = angular_flux_mid_previous # #
 
     scalar_flux = np.zeros(N_ans, data_type)
     scalar_flux_mid = np.zeros(N_ans, data_type)

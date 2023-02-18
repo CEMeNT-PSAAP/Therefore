@@ -9,6 +9,7 @@ import cupyx.scipy.sparse as spMat
 import cupy as cu
 np.set_printoptions(linewidth=np.inf)
 from scipy.sparse import csr_matrix, lil_matrix
+import betterspy
 
 # I know that the problem is with this stucture specfically as I did testing to prove it
 # for some reason I love typeing right now cus I I remmember my mom typing liek this and
@@ -38,8 +39,11 @@ def OCIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_midstep_pre
     angular_flux = np.zeros([N_angles, N_ans], data_type)
     angular_flux_midstep = np.zeros([N_angles, N_ans], data_type)
 
-    angular_flux_last = np.zeros([N_angles, N_ans], data_type) #angular_flux_previous
-    angular_flux_mid_last = np.zeros([N_angles, N_ans], data_type) #angular_flux_mid_previous
+    angular_flux_last = np.zeros([N_angles, N_ans], data_type) 
+    angular_flux_mid_last = np.zeros([N_angles, N_ans], data_type)
+
+    #angular_flux_last = angular_flux_previous ##
+    #angular_flux_mid_last = angular_flux_midstep_previous # #
 
     scalar_flux = np.zeros(N_ans, data_type)
     scalar_flux_last = np.zeros(N_ans, data_type)
@@ -101,6 +105,7 @@ def OCIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_midstep_pre
     return(angular_flux, angular_flux_midstep, current, spec_rad, source_counter, source_converged)
 
 
+#@nb.njit
 def BuildHer(xsec, xsec_scatter, dx, dt, v, mu, weight):
 
     N_mesh = dx.size
@@ -186,7 +191,7 @@ def BuildHer(xsec, xsec_scatter, dx, dt, v, mu, weight):
 '''
 
 
-@nb.jit(nopython=True, parallel=False, cache=True, nogil=True, fastmath=True)
+@nb.njit#(nopython=True, parallel=False, cache=True, nogil=True, fastmath=True)
 def BuildC(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_last, source, dx, dt, v, mu, BCl, BCr):
     N_mesh = dx.size
     sizer = mu.size*4
@@ -249,7 +254,7 @@ def runBig(A, c):
 
 
 
-@nb.jit(nopython=True, parallel=False, cache=True, nogil=True, fastmath=True)
+@nb.njit#(nopython=True, parallel=False, cache=True, nogil=True, fastmath=True)
 def reset(angular_flux_raw, size):
     N_angle = size[0]
     N_mesh = size[1]
@@ -321,22 +326,9 @@ if __name__ == '__main__':
     weight = np.array([1,1])
     mu = np.array([1,1])
 
-    A1 = BuildHer(xsec, xsec_scatter, dx, dt, v, mu, weight)
-    A1 = A1.toarray()
-    A2 = BuildHer_Check(xsec, xsec_scatter, dx, dt, v, mu, weight)
+    A = BuildHer(xsec, xsec_scatter, dx, dt, v, mu, weight)
 
-    rool = np.array_equal(A1, A2)
-
-    print(rool)
-
-    if rool == False:
-        print(' F')
-    np.set_printoptions(linewidth=np.inf)
-    print(A1)
-    print()
-    print()
-    print()
-    print()
-    print(A2)
+    betterspy.show(A)
+    betterspy.write_png("out.png", A)
 
 

@@ -15,12 +15,12 @@ from timeit import default_timer as timer
 
 #from tabulate import tabulate
 dt = 0.1
-max_time = 10
+max_time = 1
 N_time = int(max_time/dt)
 
 v = 4
 
-N_angle = 2
+N_angle = 64
 
 
 def flatLinePlot(x, y, pl):
@@ -128,6 +128,7 @@ end = timer()
 print(end - start)
 
 
+'''
 start = timer()
 print('OCI MB SCB CPU')
 [sfMB_trad, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI_MB')
@@ -140,7 +141,7 @@ print('SI BE SCB')
 [sfEuler, current, spec_rads, loops] = therefore.euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'SI')
 end = timer()
 print(end - start)
-
+'''
 
 
 # >>>> problem output
@@ -169,10 +170,7 @@ def animate(k):
     line3.set_ydata(sfEuler[:,k])
     line4.set_ydata(sfMBSi[:,k])
     line5.set_ydata(sfSS)
-
-
     text.set_text(r'$t \in [%.1f,%.1f]$ s'%(dt*k,dt*(k+1)))
- #   return line1, line2, line3
 
 simulation = animation.FuncAnimation(fig, animate, frames=N_time)
 
