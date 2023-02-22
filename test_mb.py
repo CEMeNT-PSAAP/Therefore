@@ -20,13 +20,13 @@ def t2p(time):
 data_type = np.float64
 
 L = 10
-dx = .01
+dx = 5
 N_mesh = int(L/dx)
 xsec = 0.25
-ratio = 0.75
+ratio = 0 #0.75
 scattering_xsec = xsec*ratio
-source_mat = .1
-N_angle = 128
+source_mat = 0
+N_angle = 2
 
 v = 1
 
@@ -84,6 +84,12 @@ print('OCI MB SCB Single big gpu')
 end = timer()
 print(end - start)
 
+
+start = timer()
+print('SI MB SCB Single big gpu')
+[sfMBSi_gpu, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'SI_MB_GPU') #OCI_MB_GPU
+end = timer()
+print(end - start)
 
 '''
 start = timer()
@@ -150,8 +156,10 @@ import matplotlib.animation as animation
 
 line1, = ax.plot(x, sfMB[:,0], '-k',label="MB-OCI-Big")
 #line2, = ax.plot(x, sfMB_trad[:,0], '-r',label="MB-OCI-Small")
-line3, = ax.plot(x, sfEuler[:,0], '-g',label="BE-SI")
-line4, = ax.plot(x, sfMBSi[:,0], '-b',label="MB-SI")
+#line3, = ax.plot(x, sfEuler[:,0], '-g',label="BE-SI")
+#line4, = ax.plot(x, sfMBSi[:,0], '-b',label="MB-SI")
+line5, = ax.plot(x, sfMBSi_gpu[:,0], '-b',label="MB-SI-Big")
+
 text   = ax.text(8.0,0.75,'') 
 ax.legend()
 plt.ylim(-0.2, 1.5)
@@ -159,10 +167,10 @@ plt.ylim(-0.2, 1.5)
 def animate(k):
     line1.set_ydata(sfMB[:,k])
     #line2.set_ydata(sfMB_trad[:,k])
-    line3.set_ydata(sfEuler[:,k])
-    line4.set_ydata(sfMBSi[:,k])
+    #line3.set_ydata(sfEuler[:,k])
+    #line4.set_ydata(sfMBSi[:,k])
+    line5.set_ydata(sfMBSi_gpu[:,k])
 
-    #line3.set_ydata(sfMBSi[:,k])
     text.set_text(r'$t \in [%.1f,%.1f]$ s'%(dt*k,dt*(k+1)))
  #   return line1, line2, line3
 
