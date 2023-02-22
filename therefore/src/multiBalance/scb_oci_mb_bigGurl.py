@@ -11,12 +11,6 @@ np.set_printoptions(linewidth=np.inf)
 from scipy.sparse import csr_matrix, lil_matrix
 import betterspy
 
-# I know that the problem is with this stucture specfically as I did testing to prove it
-# for some reason I love typeing right now cus I I remmember my mom typing liek this and
-#figured itwas a feminin skill so I yeeted it what the is wrong with me. Like go damn I just
-# want to be Joanna Like for fuck sake, I just want Todd and Kyle and Travis to say "Joanna...
-# tou need to do better." Like fuck fuck fuck fuck fuck fuck fuck shes so much better then
-# hek 
 
 def OCIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_midstep_previous, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights):
 
@@ -216,6 +210,8 @@ def BuildC(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_la
 
             if mu[m] < 0:
                 if i == N_mesh-1:
+                    print('Right bound')
+                    print(BCr)
                     psi_rightBound          = BCr[m]
                     psi_halfNext_rightBound = BCr[m]
                 else:
