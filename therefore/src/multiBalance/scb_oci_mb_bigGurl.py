@@ -210,8 +210,8 @@ def BuildC(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_la
 
             if mu[m] < 0:
                 if i == N_mesh-1:
-                    print('Right bound')
-                    print(BCr)
+                    #print('Right bound')
+                    #print(BCr)
                     psi_rightBound          = BCr[m]
                     psi_halfNext_rightBound = BCr[m]
                 else:

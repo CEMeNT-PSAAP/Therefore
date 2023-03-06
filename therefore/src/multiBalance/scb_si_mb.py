@@ -4,6 +4,7 @@ from .matrix import A_pos, A_neg, b_neg, b_pos, scatter_source
 import therefore.src.utilities as utl
 import numba as nb
 np.set_printoptions(threshold=9999999)
+np.set_printoptions(threshold=9999999)
 
 
 def SIMBTimeStep(sim_perams, angular_flux_previous, angular_flux_mid_previous, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights):
@@ -142,12 +143,24 @@ def Itteration(angular_flux_previous, angular_flux_last, angular_flux_midstep_la
                 A = A_pos(dx[i], v, dt, mu[angle], xsec[i])
                 b = b_pos(dx[i], v, dt, mu[angle], Ql, Qr, Ql, Qr, psi_halfLast_L, psi_halfLast_R, psi_leftBound, psi_halfNext_leftBound, xsec_scatter[i], scalar_flux[i_l], scalar_flux[i_r], scalar_flux_halfNext[i_l], scalar_flux_halfNext[i_r])
             
+            #print('A')
+            #print(A)
+            #print('b')
+            #print(b)
+
             psi_raw = np.linalg.solve(A, b)
+
+            #print('Raw')
+            #print(psi_raw)
 
             angular_flux_next[angle, i_l] = psi_raw[0,0]
             angular_flux_next[angle, i_r] = psi_raw[1,0]
             angular_flux_mid_next[angle, i_l] = psi_raw[2,0]
             angular_flux_mid_next[angle, i_r] = psi_raw[3,0]
+
+            #print('Resorted')
+            #print(angular_flux_next)
+            #print(angular_flux_mid_next)
 
     return(angular_flux_next, angular_flux_mid_next)
 

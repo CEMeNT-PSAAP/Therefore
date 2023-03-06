@@ -20,20 +20,20 @@ def t2p(time):
 data_type = np.float64
 
 L = 10
-dx = 5
+dx = 1
 N_mesh = int(L/dx)
 xsec = 0.25
-ratio = 0 #0.75
+ratio = 0.75
 scattering_xsec = xsec*ratio
 source_mat = 0
-N_angle = 2
+N_angle = 4
 
 v = 1
 
 BCl = 0.5
 
 dt = 0.1
-max_time = 0.3
+max_time = 1
 
 N_time = int(max_time/dt)
 
@@ -61,10 +61,10 @@ sim_perams = {'data_type': data_type,
               'N_angles': N_angle,
               'L': L,
               'N_mesh': N_mesh,
-              'boundary_condition_left':  'incident_iso',
-              'boundary_condition_right': 'vacuum',
+              'boundary_condition_left':  'vacuum',
+              'boundary_condition_right': 'incident_iso',
               'left_in_mag': BCl,
-              'right_in_mag': 10,
+              'right_in_mag': .3,
               'left_in_angle': .3,
               'right_in_angle': 0,
               'max loops': 10000,
@@ -77,13 +77,13 @@ sim_perams = {'data_type': data_type,
               'tolerance': 1e-9,
               'print': True}
 
-
+'''
 start = timer()
 print('OCI MB SCB Single big gpu')
 [sfMB, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'Big') #OCI_MB_GPU
 end = timer()
 print(end - start)
-
+'''
 
 start = timer()
 print('SI MB SCB Single big gpu')
@@ -154,21 +154,21 @@ ax.set_title('Scalar Flux (ϕ)')
 
 import matplotlib.animation as animation
 
-line1, = ax.plot(x, sfMB[:,0], '-k',label="MB-OCI-Big")
+#line1, = ax.plot(x, sfMB[:,0], '-k',label="MB-OCI-Big")
 #line2, = ax.plot(x, sfMB_trad[:,0], '-r',label="MB-OCI-Small")
 #line3, = ax.plot(x, sfEuler[:,0], '-g',label="BE-SI")
-#line4, = ax.plot(x, sfMBSi[:,0], '-b',label="MB-SI")
-line5, = ax.plot(x, sfMBSi_gpu[:,0], '-b',label="MB-SI-Big")
+line4, = ax.plot(x, sfMBSi[:,0], '-b',label="MB-SI")
+line5, = ax.plot(x, sfMBSi_gpu[:,0], '-y',label="MB-SI-Big")
 
 text   = ax.text(8.0,0.75,'') 
 ax.legend()
 plt.ylim(-0.2, 1.5)
 
 def animate(k):
-    line1.set_ydata(sfMB[:,k])
+    #line1.set_ydata(sfMB[:,k])
     #line2.set_ydata(sfMB_trad[:,k])
     #line3.set_ydata(sfEuler[:,k])
-    #line4.set_ydata(sfMBSi[:,k])
+    line4.set_ydata(sfMBSi[:,k])
     line5.set_ydata(sfMBSi_gpu[:,k])
 
     text.set_text(r'$t \in [%.1f,%.1f]$ s'%(dt*k,dt*(k+1)))

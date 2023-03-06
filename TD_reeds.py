@@ -20,7 +20,7 @@ N_time = int(max_time/dt)
 
 v = 4
 
-N_angle = 64
+N_angle = 8
 
 
 def flatLinePlot(x, y, pl):
@@ -127,6 +127,12 @@ print('SI MB SCB')
 end = timer()
 print(end - start)
 
+start = timer()
+print('SI MB SCB Single big gpu')
+[sfMBSiBig, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'SI_MB_GPU') 
+end = timer()
+print(end - start)
+
 
 '''
 start = timer()
@@ -156,23 +162,26 @@ ax.set_title('Scalar Flux (ϕ)')
 import matplotlib.animation as animation
 
 line1, = ax.plot(x, sfMBSparse[:,0], '-k',label="MB-OCI-Big")
-line2, = ax.plot(x, sfMB_trad[:,0], '-r',label="MB-OCI-Small")
-line3, = ax.plot(x, sfEuler[:,0], '-g',label="BE-SI")
-line4, = ax.plot(x, sfMBSi[:,0], '-b',label="MB-SI")
-line5, = ax.plot(x, sfSS, '-p',label="SS")
+#line2, = ax.plot(x, sfMB_trad[:,0], '-r',label="MB-OCI-Small")
+#line3, = ax.plot(x, sfEuler[:,0], '-g',label="BE-SI")
+#line4, = ax.plot(x, sfMBSi[:,0], '-b',label="MB-SI")
+line5, = ax.plot(x, sfMBSiBig[:,0], '-y',label="MB-SI-GPU")
+line6, = ax.plot(x, sfSS, '-p',label="SS")
 text   = ax.text(8.0,0.75,'') 
 ax.legend()
 plt.ylim(-0.2, 8.2)
 
 def animate(k):
     line1.set_ydata(sfMBSparse[:,k])
-    line2.set_ydata(sfMB_trad[:,k])
-    line3.set_ydata(sfEuler[:,k])
-    line4.set_ydata(sfMBSi[:,k])
-    line5.set_ydata(sfSS)
+    #line2.set_ydata(sfMB_trad[:,k])
+    #line3.set_ydata(sfEuler[:,k])
+    #line4.set_ydata(sfMBSi[:,k])
+    line5.set_ydata(sfMBSiBig[:,k])
+    line6.set_ydata(sfSS)
     text.set_text(r'$t \in [%.1f,%.1f]$ s'%(dt*k,dt*(k+1)))
 
 simulation = animation.FuncAnimation(fig, animate, frames=N_time)
 
 writervideo = animation.PillowWriter(fps=250)
 simulation.save('td_reeds.gif') #saveit!
+
