@@ -25,17 +25,11 @@ def SIMBTimeStep(sim_perams, angular_flux_previous, angular_flux_mid_previous, s
     spec_rad = 0
     
     N_ans = int(2*N_mesh)
-
-    #source_mesh /= 2
-
     angular_flux = np.zeros([N_angles, N_ans], data_type)
     angular_flux_mid = np.zeros([N_angles, N_ans], data_type)
 
-    angular_flux_last = np.zeros([N_angles, N_ans], data_type)
-    angular_flux_mid_last = np.zeros([N_angles, N_ans], data_type)
-
-    #angular_flux_last = angular_flux_previous ##
-    #angular_flux_mid_last = angular_flux_mid_previous # #
+    #angular_flux_last = np.zeros([N_angles, N_ans], data_type)
+    #angular_flux_mid_last = np.zeros([N_angles, N_ans], data_type)
 
     scalar_flux = np.zeros(N_ans, data_type)
     scalar_flux_mid = np.zeros(N_ans, data_type)
@@ -50,7 +44,7 @@ def SIMBTimeStep(sim_perams, angular_flux_previous, angular_flux_mid_previous, s
         BCl = utl.BoundaryCondition(sim_perams['boundary_condition_left'],   0, N_mesh, angular_flux=angular_flux, incident_flux_mag=sim_perams['left_in_mag'],  angle=sim_perams['left_in_angle'],  angles=angles)
         BCr = utl.BoundaryCondition(sim_perams['boundary_condition_right'], -1, N_mesh, angular_flux=angular_flux, incident_flux_mag=sim_perams['right_in_mag'], angle=sim_perams['right_in_angle'], angles=angles)
 
-        [angular_flux, angular_flux_mid] = Itteration(angular_flux_previous, angular_flux_last, angular_flux_mid_last, scalar_flux, scalar_flux_mid_next, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, dt, velocity, angles, BCl, BCr)
+        [angular_flux, angular_flux_mid] = Itteration(angular_flux_mid_previous, scalar_flux, scalar_flux_mid_next, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, dt, velocity, angles, BCl, BCr)
 
         #calculate current
         current = utl.Current(angular_flux, weights, angles)
@@ -74,9 +68,6 @@ def SIMBTimeStep(sim_perams, angular_flux_previous, angular_flux_mid_previous, s
             print()
             source_converged = True
             no_convergence = True
-
-        angular_flux_last = angular_flux
-        angular_flux_mid_last = angular_flux_mid
         
         scalar_flux_last = scalar_flux
         scalar_flux = scalar_flux_next
@@ -87,8 +78,8 @@ def SIMBTimeStep(sim_perams, angular_flux_previous, angular_flux_mid_previous, s
 
     return(angular_flux, angular_flux_mid, current, spec_rad, source_counter, source_converged)
 
-@nb.jit(nopython=True, parallel=False, cache=True, nogil=True, fastmath=True)
-def Itteration(angular_flux_previous, angular_flux_last, angular_flux_midstep_last, scalar_flux, scalar_flux_halfNext, Q, xsec, xsec_scatter, dx, dt, v, mu, BCl, BCr):
+#@nb.njit
+def Itteration(angular_flux_previous, scalar_flux, scalar_flux_halfNext, Q, xsec, xsec_scatter, dx, dt, v, mu, BCl, BCr):
     N_angle = mu.size
     N_mesh = dx.size
 
@@ -99,65 +90,77 @@ def Itteration(angular_flux_previous, angular_flux_last, angular_flux_midstep_la
     angular_flux_next = np.zeros_like(angular_flux_previous)
     angular_flux_mid_next = np.zeros_like(angular_flux_previous)
 
-    for angle in nb.prange(N_angle):
-        for i in range(N_mesh):
-            i_l: int = int(2*i)
-            i_r: int = int(2*i+1)
+    for angle in range(N_angle):
+        if mu[angle] < 0:
+            for i in range(N_mesh-1, -1, -1):
+                i_l: int = int(2*i)
+                i_r: int = int(2*i+1)
 
-            psi_halfLast_L = angular_flux_previous[angle, i_l]
-            psi_halfLast_R = angular_flux_previous[angle, i_r]
+                psi_halfLast_L = angular_flux_previous[angle, i_l]
+                psi_halfLast_R = angular_flux_previous[angle, i_r]
 
-            Ql = Q[angle, i_l]
-            Qr = Q[angle, i_r]
+                Ql = Q[angle, i_l]
+                Qr = Q[angle, i_r]
 
-            if i == 0:  #left
-                psi_rightBound = angular_flux_last[angle, i_r+1] # iterating on (unknown)
-                psi_leftBound =  BCl[angle] # known
+                A = np.zeros((sizer,sizer))
+                b = np.zeros((sizer,1))
 
-                psi_halfNext_rightBound = angular_flux_midstep_last[angle, i_r+1] # iterating on (unknown)
-                psi_halfNext_leftBound  = BCl[angle] # known
+                if i == N_mesh-1:
+                    psi_rightBound          = BCr[angle]
+                    psi_halfNext_rightBound = BCr[angle]
+                else:
+                    psi_rightBound          = angular_flux_next[angle, i_r+1]
+                    psi_halfNext_rightBound = angular_flux_mid_next[angle, i_r+1]
 
-            elif i == N_mesh-1: #right
-                psi_rightBound = BCr[angle] # known
-                psi_leftBound =  angular_flux_last[angle, i_l-1] # iterating on (unknown)
-
-                psi_halfNext_rightBound = BCr[angle] # known
-                psi_halfNext_leftBound  = angular_flux_midstep_last[angle, i_l-1] # iterating on (unknown)
-
-            else: #middles
-                psi_rightBound = angular_flux_last[angle, i_r+1] # iterating on (unknown)
-                psi_leftBound =  angular_flux_last[angle, i_l-1] # iterating on (unknown)
-
-                psi_halfNext_rightBound = angular_flux_midstep_last[angle, i_r+1] # iterating on (unknown)
-                psi_halfNext_leftBound  = angular_flux_midstep_last[angle, i_l-1] # iterating on (unknown)
-
-            A = np.zeros((sizer,sizer))
-            b = np.zeros((sizer,1))
-
-            if mu[angle] < 0:
                 A = A_neg(dx[i], v, dt, mu[angle], xsec[i])
                 b = b_neg(dx[i], v, dt, mu[angle], Ql, Qr, Ql, Qr, psi_halfLast_L, psi_halfLast_R, psi_rightBound, psi_halfNext_rightBound, xsec_scatter[i], scalar_flux[i_l], scalar_flux[i_r], scalar_flux_halfNext[i_l], scalar_flux_halfNext[i_r])
-                #b_neg(dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi_halfLast_R, psi_rightBound, psi_halfNext_rightBound, xsec_scatter, phi_L, phi_R, phi_halfNext_L, phi_halfNext_R):
+                
+                psi_raw = np.linalg.solve(A, b)
+                
+                angular_flux_next[angle, i_l] = psi_raw[0,0]
+                angular_flux_next[angle, i_r] = psi_raw[1,0]
+                angular_flux_mid_next[angle, i_l] = psi_raw[2,0]
+                angular_flux_mid_next[angle, i_r] = psi_raw[3,0]
 
-            elif mu[angle] > 0:
+        elif mu[angle] > 0:
+            for i in range(N_mesh):
+
+                i_l: int = int(2*i)
+                i_r: int = int(2*i+1)
+
+                psi_halfLast_L = angular_flux_previous[angle, i_l]
+                psi_halfLast_R = angular_flux_previous[angle, i_r]
+
+                Ql = Q[angle, i_l]
+                Qr = Q[angle, i_r]
+
+                A = np.zeros((sizer,sizer))
+                b = np.zeros((sizer,1))
+
+                #print('POSITIVE')
+                if i == 0:
+                    psi_leftBound           = BCl[angle]
+                    psi_halfNext_leftBound  = BCl[angle]
+                else:
+                    psi_leftBound           = angular_flux_next[angle, i_l-1]
+                    psi_halfNext_leftBound  = angular_flux_mid_next[angle, i_l-1]
+
                 A = A_pos(dx[i], v, dt, mu[angle], xsec[i])
                 b = b_pos(dx[i], v, dt, mu[angle], Ql, Qr, Ql, Qr, psi_halfLast_L, psi_halfLast_R, psi_leftBound, psi_halfNext_leftBound, xsec_scatter[i], scalar_flux[i_l], scalar_flux[i_r], scalar_flux_halfNext[i_l], scalar_flux_halfNext[i_r])
             
+                psi_raw = np.linalg.solve(A, b)
+                
+                angular_flux_next[angle, i_l] = psi_raw[0,0]
+                angular_flux_next[angle, i_r] = psi_raw[1,0]
+                angular_flux_mid_next[angle, i_l] = psi_raw[2,0]
+                angular_flux_mid_next[angle, i_r] = psi_raw[3,0]
+
             #print('A')
             #print(A)
             #print('b')
             #print(b)
-
-            psi_raw = np.linalg.solve(A, b)
-
             #print('Raw')
             #print(psi_raw)
-
-            angular_flux_next[angle, i_l] = psi_raw[0,0]
-            angular_flux_next[angle, i_r] = psi_raw[1,0]
-            angular_flux_mid_next[angle, i_l] = psi_raw[2,0]
-            angular_flux_mid_next[angle, i_r] = psi_raw[3,0]
-
             #print('Resorted')
             #print(angular_flux_next)
             #print(angular_flux_mid_next)

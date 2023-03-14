@@ -1,6 +1,6 @@
 import numpy as np
 #from .matrix import A_pos, A_neg, c_neg, c_pos, scatter_source, A_neg_nomat, A_pos_nomat
-from .matrix import A_pos, A_neg, c_neg, c_pos, scatter_source, A_neg_nomat, A_pos_nomat
+from .matrix import A_pos, A_neg, c_neg, c_pos, scatter_source
 import therefore.src.utilities as utl
 import numba as nb
 import cupyx.scipy.sparse.linalg as gpuLinalg
@@ -33,11 +33,11 @@ def OCIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_midstep_pre
     angular_flux = np.zeros([N_angles, N_ans], data_type)
     angular_flux_midstep = np.zeros([N_angles, N_ans], data_type)
 
-    angular_flux_last = np.zeros([N_angles, N_ans], data_type) 
-    angular_flux_mid_last = np.zeros([N_angles, N_ans], data_type)
+    #angular_flux_last = np.zeros([N_angles, N_ans], data_type) 
+    #angular_flux_mid_last = np.zeros([N_angles, N_ans], data_type)
 
-    #angular_flux_last = angular_flux_previous ##
-    #angular_flux_mid_last = angular_flux_midstep_previous # #
+    angular_flux_last = angular_flux_previous ##
+    angular_flux_mid_last = angular_flux_midstep_previous # #
 
     scalar_flux = np.zeros(N_ans, data_type)
     scalar_flux_last = np.zeros(N_ans, data_type)
@@ -130,60 +130,6 @@ def BuildHer(xsec, xsec_scatter, dx, dt, v, mu, weight):
         A_uge[Ba:Bb, Ba:Bb] = A
 
     return(A_uge)
-
-
-'''
-@nb.jit(nopython=True, parallel=False, cache=True, nogil=True, fastmath=True)
-def BuildHer(xsec, xsec_scatter, dx, dt, v, mu, weight):
-    #from scipy.sparse import coo_matrix, block_diag
-
-    N_mesh = dx.size
-    sizer = mu.size*4
-    sub_cell_size = sizer**2
-    N_angle = mu.size
-
-    #A_uge = np.zeros((4*N_angle*N_mesh, 4*N_angle*N_mesh))
-    row = np.zeros((sizer*sizer))
-    col = np.zeros((sizer*sizer)) 
-    dat = np.zeros((sizer*sizer))
-
-    for i in range(N_mesh):
-
-        A = np.zeros((sizer,sizer))
-
-        for m in range(N_angle):
-            if mu[m] < 0:
-                A_small = A_neg(dx[i], v, dt, mu[m], xsec[i])
-                            
-            elif mu[m] > 0:
-                A_small = A_pos(dx[i], v, dt, mu[m], xsec[i])
-
-            A[m*4:(m+1)*4, m*4:(m+1)*4] = A_small
-
-        S = scatter_source(dx[i], xsec_scatter[i], N_angle, weight)
-        A = A - S
-
-        row_cell = np.zeros((sub_cell_size))
-        col_cell = np.zeros((sub_cell_size)) 
-        dat_cell = np.zeros((sub_cell_size))
-
-        for k in range in A.shape[0]:
-            for j in range in A.shape[1]:
-                lin_ind = int(k*(j+A.shape[1]))
-                row_cell[lin_ind] = k
-                col_cell[lin_ind] = j
-                dat_cell[lin_ind] = A[k,j]
-
-        Bl = sub_cell_size * i
-        Br = sub_cell_size * (i+1)
-
-        row[Bl:Br] = row_cell
-        col[Bl:Br] = col_cell
-        dat[Bl:Br] = dat_cell
-
-    return(row, col, dat)
-'''
-
 
 @nb.njit#(nopython=True, parallel=False, cache=True, nogil=True, fastmath=True)
 def BuildC(angular_flux_mid_previous, angular_flux_last, angular_flux_midstep_last, source, dx, dt, v, mu, BCl, BCr):

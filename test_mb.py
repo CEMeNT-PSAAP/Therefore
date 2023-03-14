@@ -19,26 +19,22 @@ def t2p(time):
 
 data_type = np.float64
 
-L = 10
-dx = 1
+L = 2
+dx = 0.002
 N_mesh = int(L/dx)
-xsec = 0.25
-ratio = 0.75
+xsec = 1
+ratio = 0.99
 scattering_xsec = xsec*ratio
-source_mat = 0
-N_angle = 4
+source_mat = 50
+N_angle = 2
 
-v = 1
-
-BCl = 0.5
+v = 4
 
 dt = 0.1
 max_time = 1
 
 N_time = int(max_time/dt)
-
 N_ans = 2*N_mesh
-
 dx_mesh = dx*np.ones(N_mesh, data_type)
 xsec_mesh = xsec*np.ones(N_mesh, data_type)
 xsec_scatter_mesh = scattering_xsec*np.ones(N_mesh, data_type)
@@ -49,8 +45,9 @@ psi_in = source_mat / (xsec*(1-ratio)/2)
 
 [angles_gq, weights_gq] = np.polynomial.legendre.leggauss(N_angle)
 
-#setup = np.linspace(0, np.pi, 2*N_mesh)
-inital_scalar_flux = np.zeros(2*N_mesh)
+IC = 2
+
+inital_scalar_flux = IC*np.ones(2*N_mesh)
 
 inital_angular_flux = np.zeros([N_angle, N_ans], data_type)
 total_weight = sum(weights_gq)
@@ -62,10 +59,10 @@ sim_perams = {'data_type': data_type,
               'L': L,
               'N_mesh': N_mesh,
               'boundary_condition_left':  'vacuum',
-              'boundary_condition_right': 'incident_iso',
-              'left_in_mag': BCl,
-              'right_in_mag': .3,
-              'left_in_angle': .3,
+              'boundary_condition_right': 'reflecting',
+              'left_in_mag': 0.3,
+              'right_in_mag': 0.3,
+              'left_in_angle': 0,
               'right_in_angle': 0,
               'max loops': 10000,
               'velocity': v,
@@ -99,13 +96,13 @@ end = timer()
 print(end - start)
 '''
 
-'''
+
 start = timer()
 print('OCI MB SCB CPU')
 [sfMB_trad, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI_MB')
 end = timer()
 print(end - start)
-'''
+
 
 
 
@@ -124,6 +121,9 @@ end = timer()
 print(end - start)
 '''
 
+
+[sfSS, current2, spec_rad2, source_converged, loops] = therefore.OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh)
+[sfSS2, current2, spec_rad2, source_converged, loops] = therefore.SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh)
 
 '''
 for i in range(sfMB.shape[0]):
@@ -150,26 +150,31 @@ fig,ax = plt.subplots()
 ax.grid()
 ax.set_xlabel(r'$x$')
 ax.set_ylabel(r'$\phi$')
-ax.set_title('Scalar Flux (ϕ)')
+ax.set_title('Inf med (ϕ)')
 
 import matplotlib.animation as animation
 
 #line1, = ax.plot(x, sfMB[:,0], '-k',label="MB-OCI-Big")
-#line2, = ax.plot(x, sfMB_trad[:,0], '-r',label="MB-OCI-Small")
+line2, = ax.plot(x, sfMB_trad[:,0], '-b',label="MB-OCI-Small")
 #line3, = ax.plot(x, sfEuler[:,0], '-g',label="BE-SI")
-line4, = ax.plot(x, sfMBSi[:,0], '-b',label="MB-SI")
+line4, = ax.plot(x, sfMBSi[:,0], '-r',label="MB-SI")
 line5, = ax.plot(x, sfMBSi_gpu[:,0], '-y',label="MB-SI-Big")
+line6, = ax.plot(x, sfSS, '--k^',label="SS - OCI")
+line7, = ax.plot(x, sfSS2, '--g*',label="SS - SI")
 
-text   = ax.text(8.0,0.75,'') 
+text   = ax.text(.75 ,0.75,'') 
 ax.legend()
-plt.ylim(-0.2, 1.5)
+lim = np.max((sfMB_trad, sfMBSi, sfMBSi_gpu))*1.25
+plt.ylim(-0.02, lim)
 
 def animate(k):
     #line1.set_ydata(sfMB[:,k])
-    #line2.set_ydata(sfMB_trad[:,k])
+    line2.set_ydata(sfMB_trad[:,k])
     #line3.set_ydata(sfEuler[:,k])
     line4.set_ydata(sfMBSi[:,k])
     line5.set_ydata(sfMBSi_gpu[:,k])
+    line6.set_ydata(sfSS)
+    line6.set_ydata(sfSS2)
 
     text.set_text(r'$t \in [%.1f,%.1f]$ s'%(dt*k,dt*(k+1)))
  #   return line1, line2, line3
