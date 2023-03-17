@@ -90,5 +90,5 @@ def multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatt
         angular_flux_last = angular_flux[:,:,t]
         scalar_flux[:,t+1] = utl.ScalarFlux(angular_flux_mid[:,:,t], weights)
     
-    return(scalar_flux, current_total, spec_rad)
+    return(scalar_flux, current_total, spec_rad, end-start)
     

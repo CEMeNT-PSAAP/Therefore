@@ -78,7 +78,7 @@ def SIMBTimeStep(sim_perams, angular_flux_previous, angular_flux_mid_previous, s
 
     return(angular_flux, angular_flux_mid, current, spec_rad, source_counter, source_converged)
 
-#@nb.njit
+@nb.njit
 def Itteration(angular_flux_previous, scalar_flux, scalar_flux_halfNext, Q, xsec, xsec_scatter, dx, dt, v, mu, BCl, BCr):
     N_angle = mu.size
     N_mesh = dx.size

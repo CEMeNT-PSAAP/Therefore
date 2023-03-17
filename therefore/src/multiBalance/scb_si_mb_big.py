@@ -57,7 +57,7 @@ def SIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_mid_previous
  
     A = buildHer(xsec_mesh, dx_mesh, dt, velocity, angles)
     A = csr_matrix(A)
-    #A_gpu = spMat.csr_matrix(A) 
+    A_gpu = spMat.csr_matrix(A) 
     #A = A.todense()
 
     while source_converged == False:
@@ -66,15 +66,24 @@ def SIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_mid_previous
         BCr = utl.BoundaryCondition(sim_perams['boundary_condition_right'], -1, N_mesh, angular_flux=angular_flux, incident_flux_mag=sim_perams['right_in_mag'], angle=sim_perams['right_in_angle'], angles=angles)
 
         b = buildHim(angular_flux_mid_previous, scalar_flux, scalar_flux_mid_next, source_mesh, xsec_scatter_mesh, dx_mesh, dt, velocity, angles, BCl, BCr)
-        #b_gpu = cu.asarray(b)
+        b_gpu = cu.asarray(b)
         
         #angular_flux_raw = np.linalg.solve(A, b)
-        angular_flux_raw = cpuLinalg.spsolve(A,b)
-        #[angular_flux_raw, info] = cpuLinalg.gmres(A, b)
-        #angular_flux_raw = cu.asnumpy(angular_flux_raw_gpu.get())
+        #angular_flux_raw = cpuLinalg.spsolve(A,b)
+        [angular_flux_raw_gpu, info] = gpuLinalg.gmres(A_gpu, b_gpu)
+        angular_flux_raw = cu.asnumpy(angular_flux_raw_gpu.get())
         
 
         [angular_flux, angular_flux_mid] = resort(angular_flux_raw, angles, N_mesh)
+
+        #print(A.todense())
+        #print(b)
+        #print()
+        #print(angular_flux_raw)
+        #print()
+        #print(angular_flux)
+        #print(angular_flux_mid)
+
 
         #calculate current
         current = utl.Current(angular_flux, weights, angles)
@@ -135,31 +144,61 @@ def buildHer(xsec, dx, dt, v, mu):
             stop = N_mesh
             step = 1
             streaming = np.zeros((4,4))
-
+            
             if   mu[j] < 0: # negaitive
                 A = A_neg(dx[i], v, dt, mu[j], xsec[i])
-                streaming[1,0] += mu[j]
-                streaming[3,2] += mu[j]
+                
 
+                # dense lil ladies on the diagonal
+                row_left:  int = 4*(N_mesh - i) - 4
+                row_right: int = 4*(N_mesh - i+1) - 4
+                col_top:   int = 4*(N_mesh - i) - 4
+                col_bot:   int = 4*(N_mesh - i+1) - 4
+
+                A_quadrature[row_left:row_right, col_top:col_bot] = A
+
+                #print(row_left)
+                #print(row_right)
+                #print(col_top)
+                #print(col_bot)
+                
+                if i > 0:
+                    streaming[1,0] += mu[j]
+                    streaming[3,2] += mu[j]
+
+                    row_left:  int = 4*(N_mesh - i)
+                    row_right: int = 4*(N_mesh - i+1)
+                    col_top:   int = 4*(N_mesh - i -1)
+                    col_bot:   int = 4*(N_mesh - i)
+
+                    #print('Streaking')
+                    #print(row_left)
+                    #print(row_right)
+                    #print(col_top)
+                    #print(col_bot)
+
+                    A_quadrature[row_left:row_right, col_top:col_bot] = streaming
 
             elif mu[j] > 0: # positive
                 A = A_pos(dx[i], v, dt, mu[j], xsec[i])
                 streaming[0,1] -= mu[j]
                 streaming[2,3] -= mu[j]
             
-            # dense lil ladies on the diagonal
-            row_left:  int = 4*i
-            row_right: int = 4*(i+1)
-            col_top:   int = 4*i
-            col_bot:   int = 4*(i+1)
-            A_quadrature[row_left:row_right, col_top:col_bot] = A
-
-            if i < N_mesh - 1:
-                row_left:  int = 4*(i+1)
-                row_right: int = 4*(i+2)
-                col_top:   int = 4*(i)
+                # dense lil ladies on the diagonal
+                row_left:  int = 4*i
+                row_right: int = 4*(i+1)
+                col_top:   int = 4*i
                 col_bot:   int = 4*(i+1)
-                A_quadrature[row_left:row_right, col_top:col_bot] = streaming
+
+                A_quadrature[row_left:row_right, col_top:col_bot] = A
+
+                if i < N_mesh - 1:
+                    row_left:  int = 4*(i+1)
+                    row_right: int = 4*(i+2)
+                    col_top:   int = 4*(i)
+                    col_bot:   int = 4*(i+1)
+                    A_quadrature[row_left:row_right, col_top:col_bot] = streaming
+
             
 
         Ba = 4*N_mesh*j
@@ -169,7 +208,7 @@ def buildHer(xsec, dx, dt, v, mu):
 
     return(A_uge)
 
-#@nb.njit
+@nb.njit
 def buildHim(angular_flux_previous, scalar_flux, scalar_flux_halfNext, Q, xsec_scatter, dx, dt, v, mu, BCl, BCr):
     N_angle = mu.size
     N_mesh = dx.size
