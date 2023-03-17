@@ -4,13 +4,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import therefore
 from timeit import default_timer as timer
-import ternary
+#import ternary
 
 #import mcdc
 import numpy as np
 import h5py
 
-N_angle = 128
+N_angles = np.array([2, 4, 8, 16, 32, 64, 128])
 
 scale = 15
 
@@ -29,6 +29,7 @@ dts = np.linspace(0.05, 1.0, scale+1)
 N_mesh = 5
 max_time = 5
 dt = 5
+N_angle = 2
 sim_perams = {'data_type': data_type,
               'N_angles': N_angle,
               'L': L,
@@ -49,60 +50,92 @@ sim_perams = {'data_type': data_type,
               'print': False}
 
 
-runtimes_oci = np.zeros((136, 4))
-runtimes_si = np.zeros((136, 4))
-runtime_ratio = np.zeros((136, 4))
+print()
+print('THEREFORE RUNTIME TEST OF GPU BACKEND')
+print(ratios)
+print(mfps)
+print(dts)
+print()
 
-itter = 0
-for (i, j, k) in ternary.helpers.simplex_iterator(scale):
+for p in range(N_angles.size):
     
-    print('{} out of {}'.format(itter, 135))
+    print()
+    print()
+    print('><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><')
+    print('>>>Angle: {}<<<'.format(N_angles[p]))
+    print('><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><')
+    print()
+    print()
 
-    ratio = ratios[i]
-    mfp = mfps[j]
-    dt = dts[k]
+    N_angle = N_angles[p]
 
-    dx = mfp/xsec
-    N_mesh = int(L/dx)
+    runtimes_oci = np.zeros((136, 4))
+    runtimes_si = np.zeros((136, 4))
+    runtime_ratio = np.zeros((136, 4))
 
-    N_ans = int(2*N_mesh)
-    inital_angular_flux = np.zeros([N_angle, N_ans], data_type)
+    itter = 0
+    for (i, j, k) in ternary.helpers.simplex_iterator(scale):
+        
+        print('{} out of {}'.format(itter, 135))
 
+        ratio = ratios[i]
+        mfp = mfps[j]
+        dt = dts[k]
 
-    scattering_xsec = ratio * xsec
-    xsec_scatter_mesh = scattering_xsec*np.ones(N_mesh, data_type)
+        dx = mfp/xsec
+        N_mesh = int(L/dx)
 
-    dx_mesh = dx*np.ones(N_mesh, data_type)
-
-    sim_perams['dt'] = dt
-    sim_perams['max_time'] = dt * N_time
-    sim_perams['N_mesh'] = N_mesh
-
-    xsec_mesh = xsec*np.ones(N_mesh, data_type)
-    source_mesh = source_mat*np.ones([N_mesh], data_type)
-
-    [sfMB, current, spec_rads, run_oci] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'Big') #OCI_MB_GPU
-    runtimes_oci[itter, 0] = i
-    runtimes_oci[itter, 1] = j
-    runtimes_oci[itter, 2] = k
-    runtimes_oci[itter, 3] = run_oci
+        N_ans = int(2*N_mesh)
+        inital_angular_flux = np.zeros([N_angle, N_ans], data_type)
 
 
-    [sfMBSi_gpu, current, spec_rads, run_si] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'SI_MB_GPU') #OCI_MB_GPU
-    runtimes_oci[itter, 0] = i
-    runtimes_oci[itter, 1] = j
-    runtimes_oci[itter, 2] = k
-    runtimes_oci[itter, 3] = run_si
+        scattering_xsec = ratio * xsec
+        xsec_scatter_mesh = scattering_xsec*np.ones(N_mesh, data_type)
 
-    runtime_ratio[itter, 0] = i
-    runtime_ratio[itter, 1] = j
-    runtime_ratio[itter, 2] = k
-    runtime_ratio[itter, 3] = run_oci / run_si
+        dx_mesh = dx*np.ones(N_mesh, data_type)
 
-    itter += 1
+        sim_perams['dt'] = dt
+        sim_perams['max_time'] = dt * N_time
+        sim_perams['N_mesh'] = N_mesh
+        sim_perams['N_angle'] = N_angle
+
+        xsec_mesh = xsec*np.ones(N_mesh, data_type)
+        source_mesh = source_mat*np.ones([N_mesh], data_type)
+
+        [sfMB, current, spec_rads, run_oci] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'Big') #OCI_MB_GPU
+        runtimes_oci[itter, 0] = i
+        runtimes_oci[itter, 1] = j
+        runtimes_oci[itter, 2] = k
+        runtimes_oci[itter, 3] = run_oci
 
 
-np.savez('runtimes.npz', runtimes_oci=runtimes_oci, runtimes_si=runtimes_si, runtime_ratio=runtime_ratio, scale=scale)
+        [sfMBSi_gpu, current, spec_rads, run_si] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'SI_MB_GPU') #OCI_MB_GPU
+        runtimes_oci[itter, 0] = i
+        runtimes_oci[itter, 1] = j
+        runtimes_oci[itter, 2] = k
+        runtimes_oci[itter, 3] = run_si
+
+        runtime_ratio[itter, 0] = i
+        runtime_ratio[itter, 1] = j
+        runtime_ratio[itter, 2] = k
+        runtime_ratio[itter, 3] = run_si / run_oci
+
+        print()
+        print('>>>Cycle {} out of {}<<<'.format(itter, 135))
+        print('=======================================================')
+        print('c            {}'.format(ratio))
+        print('mfp          {}'.format(mfp))
+        print('dt           {}'.format(dt))
+        print('OCI Run      {}'.format(run_oci))
+        print('SI Run       {}'.format(run_si))
+        print('SI/OCI       {}'.format(run_si / run_oci))
+        print()
+        print()
+
+        itter += 1
+
+    
+    np.savez('/local_runs/runtimes_{}.npz'.format(N_angle), runtimes_oci=runtimes_oci, runtimes_si=runtimes_si, runtime_ratio=runtime_ratio, scale=scale, raios=ratios, mfps=mfps, dts=dts)
 
 
 '''
