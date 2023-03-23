@@ -110,7 +110,7 @@ def SourceItteration(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_m
     if time_dependent_mode:
         scalar_flux = angular_flux
     
-    return(angular_flux, current, spec_rad, source_converged, source_counter)
+    return(scalar_flux, current, spec_rad, source_converged, source_counter)
 
 
 

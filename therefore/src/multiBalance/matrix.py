@@ -33,64 +33,6 @@ def A_pos(dx, v, dt, mu, xsec_total):
 
 
 
-
-@nb.jit(nopython=True)
-def A_neg_nomat(dx, v, dt, mu, xsec_total):
-    assert(mu < 0)
-    gamma = (dx*xsec_total)/2
-    timer = dx/(v*dt)
-    timer2 = dx/(2*v*dt)
-    a = mu/2
-
-    col = np.array([0, 1, 2, 3,
-                    0, 1, 2, 3,
-                    0, 1, 2, 3,
-                    0, 1, 2, 3])
-
-    row = np.array([0, 0, 0, 0,
-                    1, 1, 1, 1,
-                    2, 2, 2, 2,
-                    3, 3, 3, 3])
-
-
-    dat = np.array([-a + gamma, a,          timer2, 0,
-                    -a,         -a + gamma, 0,               timer2,
-                    -timer, 0,        timer - a + gamma, a,
-                    0, -timer,     -a,                timer -a + gamma])
-    
-    return(row, col, dat)
-
-
-
-@nb.jit(nopython=True)
-def A_pos_nomat(dx, v, dt, mu, xsec_total):
-    assert(mu > 0)
-    gamma = (dx*xsec_total)/2
-    timer = dx/(v*dt)
-    timer2 = dx/(2*v*dt)
-    a = mu/2
-
-    col = np.array([0, 1, 2, 3,
-                    0, 1, 2, 3,
-                    0, 1, 2, 3,
-                    0, 1, 2, 3])
-
-    row = np.array([0, 0, 0, 0,
-                    1, 1, 1, 1,
-                    2, 2, 2, 2,
-                    3, 3, 3, 3])
-
-    dat = np.array([a + gamma, a, timer2, 0,
-                    -a, a + gamma, 0, timer2,
-                    -timer, 0, timer + a + gamma, a,
-                    0, -timer,    -a, timer +a + gamma])
-
-    return(row, col, dat)
-
-
-
-
-
 @nb.jit(nopython=True)
 def c_neg(dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi_halfLast_R, psi_rightBound, psi_halfNext_rightBound):
     timer2 = dx/(2*v*dt)
@@ -137,6 +79,27 @@ def b_neg(dx, v, dt, mu, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi
                     [dx/4*(xsec_scatter*phi_halfNext_L + Q_halfNext_L) ],
                     [dx/4*(xsec_scatter*phi_halfNext_R + Q_halfNext_R) - mu*psi_halfNext_rightBound]])
 
+    return(b_n)
+
+@nb.jit(nopython=True)
+def b_pos_interior(dx, v, dt, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi_halfLast_R, xsec_scatter, phi_L, phi_R, phi_halfNext_L, phi_halfNext_R):
+    timer2 = dx/(2*v*dt)
+
+    b_p = np.array([[dx/4*(xsec_scatter*phi_L + Ql) + timer2*psi_halfLast_L],
+                    [dx/4*(xsec_scatter*phi_R + Qr) + timer2*psi_halfLast_R],
+                    [dx/4*(xsec_scatter*phi_halfNext_L + Q_halfNext_L)],
+                    [dx/4*(xsec_scatter*phi_halfNext_R + Q_halfNext_R)]])
+
+    return(b_p)
+
+@nb.jit(nopython=True)
+def b_neg_interior(dx, v, dt, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L, psi_halfLast_R, xsec_scatter, phi_L, phi_R, phi_halfNext_L, phi_halfNext_R):
+    timer2 = dx/(2*v*dt)
+
+    b_n = np.array([[dx/4*(xsec_scatter*phi_L + Ql) + timer2*psi_halfLast_L],
+                    [dx/4*(xsec_scatter*phi_R + Qr) + timer2*psi_halfLast_R],
+                    [dx/4*(xsec_scatter*phi_halfNext_L + Q_halfNext_L) ],
+                    [dx/4*(xsec_scatter*phi_halfNext_R + Q_halfNext_R)]])
     return(b_n)
 
 @nb.jit(nopython=True)
