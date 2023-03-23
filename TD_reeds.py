@@ -15,10 +15,10 @@ from timeit import default_timer as timer
 
 #from tabulate import tabulate
 dt = 0.1
-max_time = 1
+max_time = 3
 N_time = int(max_time/dt)
 
-v = 8
+v = 4
 
 N_angle = 10
 
@@ -120,17 +120,17 @@ print(end - start)
 
 start = timer()
 print('SI BE SCB')
-[sfEuler, current, spec_rads, loops] = therefore.euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'SI')
+[sfEulerSI, current, spec_rads, loops] = therefore.euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'SI')
 end = timer()
 print(end - start)
 
 start = timer()
 print('SI BE SCB')
-[sfEuler, current, spec_rads, loops] = therefore.euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI')
+[sfEulerOCI, current, spec_rads, loops] = therefore.euler(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'OCI')
 end = timer()
 print(end - start)
 
-'''
+
 [sfSS, current2, spec_rad2, source_converged, loops] = therefore.OCI(sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh)
 
 #launch some problems
@@ -142,14 +142,12 @@ print(end - start)
 
 
 
-
-
 start = timer()
 print('SI MB SCB')
 [sfMBSi, current, spec_rads] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'SI_MB')
 end = timer()
 print(end - start)
-'''
+
 
 start = timer()
 print('OCI MB SCB CPU')
@@ -158,6 +156,7 @@ end = timer()
 print(end - start)
 
 
+np.savez('TD_Reeds.npz', sfMBSparse=sfMBSparse, sfEulerSI=sfEulerSI,  sfEulerOCI=sfEulerOCI, sfSS=sfSS, sfMBSiBig=sfMBSiBig, sfMBSi=sfMBSi, sfMB_trad=sfMB_trad)
 
 
 

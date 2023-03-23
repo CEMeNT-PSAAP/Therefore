@@ -4,13 +4,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import therefore
 from timeit import default_timer as timer
-#import ternary
+import ternary
 
 #import mcdc
 import numpy as np
 import h5py
 
-N_angles = np.array([2, 4, 8, 16, 32, 64, 128])
+N_angles = np.array([256])
 
 scale = 15
 
@@ -29,9 +29,8 @@ dts = np.linspace(0.05, 1.0, scale+1)
 N_mesh = 5
 max_time = 5
 dt = 5
-N_angle = 2
 sim_perams = {'data_type': data_type,
-              'N_angles': N_angle,
+              'N_angles': 2,
               'L': L,
               'N_mesh': N_mesh,
               'boundary_condition_left':  'vacuum',
@@ -97,7 +96,7 @@ for p in range(N_angles.size):
         sim_perams['dt'] = dt
         sim_perams['max_time'] = dt * N_time
         sim_perams['N_mesh'] = N_mesh
-        sim_perams['N_angle'] = N_angle
+        sim_perams['N_angles'] = N_angle
 
         xsec_mesh = xsec*np.ones(N_mesh, data_type)
         source_mesh = source_mat*np.ones([N_mesh], data_type)
@@ -135,7 +134,7 @@ for p in range(N_angles.size):
         itter += 1
 
     
-    np.savez('/local_runs/runtimes_{}.npz'.format(N_angle), runtimes_oci=runtimes_oci, runtimes_si=runtimes_si, runtime_ratio=runtime_ratio, scale=scale, raios=ratios, mfps=mfps, dts=dts)
+    np.savez('local_runs2/runtimes_{}.npz'.format(N_angle), runtimes_oci=runtimes_oci, runtimes_si=runtimes_si, runtime_ratio=runtime_ratio, scale=scale, raios=ratios, mfps=mfps, dts=dts)
 
 
 '''

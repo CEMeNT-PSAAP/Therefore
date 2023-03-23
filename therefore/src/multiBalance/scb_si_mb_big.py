@@ -16,7 +16,7 @@ np.set_printoptions(threshold=9999999)
 
 
 
-
+#@profile
 def SIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_mid_previous, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights):
 
     velocity = sim_perams['velocity']

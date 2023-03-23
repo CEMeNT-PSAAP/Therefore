@@ -11,7 +11,7 @@ np.set_printoptions(linewidth=np.inf)
 from scipy.sparse import csr_matrix, lil_matrix
 import betterspy
 
-
+#@profile
 def OCIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_midstep_previous, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights):
 
     velocity = sim_perams['velocity']
