@@ -5,11 +5,11 @@
 // ROW MAJOR!!!!!!!!!
 
 
-std::vector<double> A_neg(cell cell, float mu){
-    float gamma = (cell.dx*cell.xsec_total)/2;
-    float timer = cell.dx/(cell.v*cell.dt);
-    float timer2 = cell.dx/(2*cell.v*cell.dt);
-    float a = mu/2;
+std::vector<double> A_neg_rm(cell cell, double mu){
+    double gamma = (cell.dx*cell.xsec_total)/2;
+    double timer = cell.dx/(cell.v*cell.dt);
+    double timer2 = cell.dx/(2*cell.v*cell.dt);
+    double a = mu/2;
 
     std::vector<double> A_n = {-a + gamma, a,          timer2,            0,
                                -a,        -a + gamma,  0,                 timer2,
@@ -19,11 +19,11 @@ std::vector<double> A_neg(cell cell, float mu){
     return(A_n);
     }
 
-std::vector<double> A_pos(cell cell, float mu){
-    float gamma = (cell.dx*cell.xsec_total)/2;
-    float timer = cell.dx/(cell.v*cell.dt);
-    float timer2 = cell.dx/(2*cell.v*cell.dt);
-    float a = mu/2;
+std::vector<double> A_pos_rm(cell cell, double mu){
+    double gamma = (cell.dx*cell.xsec_total)/2;
+    double timer = cell.dx/(cell.v*cell.dt);
+    double timer2 = cell.dx/(2*cell.v*cell.dt);
+    double a = mu/2;
 
     std::vector<double> A_p = {a + gamma, a,         timer2,            0,
                               -a,         a + gamma, 0,                 timer2,
@@ -32,3 +32,20 @@ std::vector<double> A_pos(cell cell, float mu){
 
     return(A_p);
     }
+
+std::vector<double> scatter(cell cell, double *w, int N){
+    std::vector<double> S ((4*N*4*N));
+    double beta = cell.dx*cell.xsec_scatter/4;
+
+    for (int ca=0; ca<N; ca++){
+        for (int ra=0; ra<N; ra++){
+
+            S[4*ra+0 + 4*4*ca*N + 0*N*4]   = beta*w[ra];
+            S[4*ra+1 + 4*4*ca*N + 1*N*4] = beta*w[ra];
+            S[4*ra+2 + 4*4*ca*N + 2*N*4] = beta*w[ra];
+            S[4*ra+3 + 4*4*ca*N + 3*N*4] = beta*w[ra];
+        }
+    }
+
+    return(S);
+}

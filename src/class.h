@@ -1,7 +1,7 @@
 class cell{
     public:
         int cell_id;
-        float x_cell_center;
+        float x_left;
         float xsec_scatter;
         float xsec_total;
         float dx;

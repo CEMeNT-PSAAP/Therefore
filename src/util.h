@@ -28,6 +28,21 @@ void print_rm(std::vector<double> vec){
 }
 
 
+void print_vec(int N, double* vec){
+    using namespace std;
+
+    cout << "" << endl;
+
+    cout << N << endl;
+
+    for (int i=0; i<N; i++){
+        cout << vec[i] << endl;
+    }
+
+    cout << "" << endl;
+}
+
+
 
 
 /*
