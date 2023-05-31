@@ -1,12 +1,12 @@
 class cell{
     public:
         int cell_id;
-        float x_left;
-        float xsec_scatter;
-        float xsec_total;
-        float dx;
-        float v;
-        float dt;
+        double x_left;
+        std::vector<double> xsec_scatter;
+        std::vector<double> xsec_total;
+        std::vector<double> v;
+        double dx;
+        double dt;
 };
 
 class problem_space{
@@ -15,16 +15,16 @@ class problem_space{
         int N_cells; 
         int N_angles; 
         int N_time;
-        float Length;
-        float dt;
-        float dx;
-        float t_max;
-        float material_source;
-        float velocity;
+        double Length;
+        double dt;
+        double dx;
+        double t_max;
+        double material_source;
+        double velocity;
 
         // comptuational
         int hardware_precision;
-        float convergence_tolarance;
+        double convergence_tolarance;
 };
 
 class boundary_condition{
@@ -32,5 +32,5 @@ class boundary_condition{
         char side;
         int cell_id;
         int type;
-        float magnitude;
+        double magnitude;
 };

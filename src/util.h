@@ -2,7 +2,7 @@
 #include <vector>
 #include <stdio.h>
 #include <math.h>
-#include <boost/math/quadrature/gauss.hpp>
+#include <fstream>
 
 
 void rm2md(){
@@ -18,6 +18,8 @@ void print_rm(std::vector<double> vec){
     if (N > 100){
         cout << ">>>Warning: Matrix is over 100x100<<<" << endl;
     }
+
+    cout << "Matrix is of size ["<<N<<","<<N<<"]"<<endl;
 
     for (int i=0; i<N; i++){
         for (int j=0; j<N; j++){
@@ -54,3 +56,11 @@ int main(){
 
     return(0);
 }*/
+
+
+void print_title(){
+    std::ifstream f("title.txt");
+
+    if (f.is_open())
+        std::cout << f.rdbuf();
+}
