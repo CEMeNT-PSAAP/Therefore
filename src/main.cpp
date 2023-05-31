@@ -11,8 +11,9 @@ auth: J Piper Morgan (morgjack@oregonstate.edu)*/
 //#include <cuda.h>
 
 // row major!!!!!!
-
-
+void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vector<double> aflux_last, std::vector<cell> cells, problem_space ps);
+void A_c_gen(int i, std::vector<double> &A_c, std::vector<cell> cells, problem_space ps);
+void A_gen(std::vector<double> &A, std::vector<cell> cells, problem_space ps);
 
 // i space, m is angle, k is time, g is energy group
 
@@ -22,23 +23,46 @@ int main(void){
 
     using namespace std;
     
+    // problem deffinition
+    // eventually from an input deck
     double dx = 1;
     double dt = 0.5;
     vector<double> v = {1, 0.5};
     vector<double> xsec_total = {2, 1};
     vector<double> xsec_scatter = {1, 0.5};
+    vector<double> Q = {0, 1};
     double Length = 1;
-
-    int N_cells = 1; 
+    double IC_homo = 0;
+    
+    int N_cells = 2; 
     int N_angles = 2; 
     int N_time = 5;
     int N_groups = 2;
 
+    // homogenious initil condition vector
+    // will be stored as the soultion at time=0
+    vector<double> IC(N_cells*2, 1.0);
+    for (int p=0; p<N_cells*2; p++){IC[p] = IC[p]*IC_homo;}
+
+    // actaul computation below here
+
+    // generate g-l quadrature angles and weigths
     double weights[N_angles];
     double angles[N_angles];
     legendre_compute_glr(N_angles, angles, weights);
 
-    //cell construction;
+    // problem space class construction
+    problem_space ps;
+    ps.dt = dt;
+    ps.dx = dx;
+    ps.N_angles = N_angles;
+    ps.N_cells = N_cells;
+    ps.N_groups = N_groups;
+    ps.N_time = N_time;
+    ps.angles = angles;
+    ps.weights = weights;
+
+    // cell construction;
     vector<cell> cells;
 
     for (int i=0; i<N_cells; i++){
@@ -53,6 +77,20 @@ int main(void){
 
         cells.push_back(cellCon);
     }
+    
+    // initial condition stored as first element of soultion vector
+    vector<ts_soultion> soultions;
+
+    ts_soultion sol_con;
+    sol_con.aflux = IC;
+    sol_con.aflux_h = IC;
+    sol_con.time = 0.0;
+    sol_con.specral_radius = 0.0;
+    sol_con.N_step = 0;
+    sol_con.number_itteration = 0;
+
+    soultions.push_back(sol_con);
+
 
     // 4 = N_subspace (2) * N_subtime (2)
     int N_mat = 4 * N_cells * N_angles * N_groups;
@@ -60,62 +98,158 @@ int main(void){
     // N_cm is the size of the row major vetor
     int N_rm = N_mat*N_mat;
 
+    // allocation of the whole ass mat
     vector<double> A(N_rm);
+    
+    // generation of the whole ass mat
+    A_gen(A, cells, ps);
 
-    for (int i=0; i<N_cells; i++){
+    bool converged = false;
+    int itter = 0;
+    double error = 1;
 
-        vector<double> A_group(4 * N_groups * N_angles * 4 * N_groups * N_angles);
+    // vector org angular flux from last itteration
+    vector<double> aflux_last;
+    // vector org converged angular flux from previous time step
+    vector<double> aflux_previous;
+    // initilizing the inital previous as the IC
+    aflux_previous = IC;
 
-        for (int g=0; g<N_groups; g++){
+    for(int t=0; t<N_time; ++t){
 
-            vector<double> A_cell_group(4*N_angles * 4*N_angles);
-            vector<double> A_an_cell(4*4);
-            vector<double> S(4*N_angles * 4*N_angles);
+        aflux_last = soultions[t].aflux;
+        //aflux_last_h = soultions[t].aflux_h;
 
-            for (int j=0; j<N_angles; j++){
-                if (angles[j] > 0){
-                    A_an_cell = A_pos_rm(cells[i], angles[j], g);
-                } else {
-                    A_an_cell = A_neg_rm(cells[i], angles[j], g);
-                }
+        vector<double> b(N_mat, 0.0);
+        
+        while (converged){
 
-                // push it into an all angle cellwise fuck me
-                for (int r=0; r<4; r++){
-                    for (int c=0; c<4; c++){
-                        // awfully confusing I know
-                        // id_acell = (moves us betten angle blocks) + (moves us to diagonal) + 
-                        //            (moves us in rows w/in an angle) + (moves us in col w/in an angle)
-                        int id_acell  = ((4*N_angles * 4*j) + (4*j) + (4*N_angles)*r + (c));
-                        int id_ancell = 4*r + c;
-                        A_cell_group[id_acell] = A_an_cell[id_ancell];
-                    }
-                }
-            }
+            //build b
+            b_gen(b, aflux_previous, aflux_last, cells, ps);
 
-            S = scatter(cells[i], weights, N_angles, g);
+            //solve Ax=b
 
+            //compute error
 
-            int index_start = 4*g*N_angles * 4*N_angles*N_groups + 4*g*N_angles;
-            int Adim_angle = 4*N_angles; 
-
-            for (int r=0; r<Adim_angle; r++){
-                for (int c=0; c<Adim_angle; c++){
-
-                    int id_group = Adim_angle*r + c;
-                    int id_cell_group = index_start + r*(Adim_angle*N_groups) + c;
-                    
-                    A_group[id_cell_group] = A_cell_group[id_group] - S[id_group];
+            if (itter > 3){
+                if (error < ps.convergence_tolarance){
+                    converged == true;
                 }
             }
 
+        itter++;
         }
 
-        print_rm(A_group);
-
-
+        // store soultion vector org
     }
 
+    // convert vetor org to more friendly format
 
+    // save state
 
     return(0);
 }
+
+
+void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vector<double> aflux_last, std::vector<cell> cells, problem_space ps){
+    //breif: builds b
+    for (int i=0; i<ps.N_cells; i++){
+        int i_l = 2*i;
+        int i_r = 2*i+1;
+
+        for (int g=0; g<ps.N_groups; g++){
+            for (int j=0; j<ps.N_angles; j++){
+
+            }
+        }
+    }
+
+
+}
+
+
+void A_gen(std::vector<double> &A, std::vector<cell> cells, problem_space ps){ 
+
+    int dimA_c = 4 * ps.N_groups * ps.N_angles;
+
+    for (int i=0; i<ps.N_cells; i++){
+        
+        vector<double> A_c(dimA_c*dimA_c, 0.0);
+
+        A_c_gen(i, A_c, cells, ps);
+
+        int A_id_start = dimA_c*ps.N_cells * dimA_c*i + dimA_c*i;
+
+        for (int r=0; r<dimA_c; r++){
+            for (int c=0; c<dimA_c; c++){
+                int id_wp = A_id_start + r * (dimA_c*ps.N_cells) + c ;
+                int id_c = dimA_c*r + c;
+                A[id_wp] = A_c[id_c];
+            }
+        }
+
+    }
+}
+
+
+void A_c_gen(int i, std::vector<double> &A_c, std::vector<cell> cells, problem_space ps){
+    /*
+    breif: assembles a coefficant matrix within all groups and angles in a cell
+    NOTE: ROW MAJOR FORMAT
+    */
+
+   for (int g=0; g<ps.N_groups; g++){
+
+        vector<double> A_c_g(4*ps.N_angles * 4*ps.N_angles);
+        vector<double> A_c_g_a(4*4);
+        vector<double> S(4*ps.N_angles * 4*ps.N_angles);
+
+        for (int j=0; j<ps.N_angles; j++){
+            if (ps.angles[j] > 0){
+                A_c_g_a = A_pos_rm(cells[i], ps.angles[j], g);
+            } else {
+                A_c_g_a = A_neg_rm(cells[i], ps.angles[j], g);
+            }
+
+            // push it into an all angle cellwise fuck me
+            for (int r=0; r<4; r++){
+                for (int c=0; c<4; c++){
+                    // awfully confusing I know
+                    // id_acell = (moves us betten angle blocks) + (moves us to diagonal) + 
+                    //            (moves us in rows w/in an angle) + (moves us in col w/in an angle)
+                    int id_acell  = ((4*ps.N_angles * 4*j) + (4*j) + (4*ps.N_angles)*r + (c));
+                    int id_ancell = 4*r + c;
+                    A_c_g[id_acell] = A_c_g_a[id_ancell];
+                }
+            }
+        }
+
+        S = scatter(cells[i], ps.weights, ps.N_angles, g);
+
+        int index_start = 4*g*ps.N_angles * 4*ps.N_angles*ps.N_groups + 4*g*ps.N_angles;
+        int Adim_angle = 4*ps.N_angles; 
+
+        for (int r=0; r<Adim_angle; r++){
+            for (int c=0; c<Adim_angle; c++){
+
+                int id_group = Adim_angle*r + c;
+                int id_c_g = index_start + r*(Adim_angle*ps.N_groups) + c;
+
+                A_c[id_c_g] = A_c_g[id_group] - S[id_group];
+            }
+        }
+    
+    }
+}
+
+
+
+
+/*
+void A_gen_c_g(){
+    /*
+    breif: assmebles a coeeficant matrix within a given group and cell for all angles
+    NOTE: ROW MAJOR FORMAT
+    
+}
+*/
