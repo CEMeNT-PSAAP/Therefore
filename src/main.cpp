@@ -153,13 +153,71 @@ int main(void){
 
 void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vector<double> aflux_last, std::vector<cell> cells, problem_space ps){
     //breif: builds b
+    vector<double> b_small;
+
+    // size of the cell blocks in all groups and angle
+    int size_cellBlocks = ps.N_angles*ps.N_groups*4;
+    // size of the group blocks in all angle within a cell
+    int size_groupBlocks = ps.N_angles*4;
+    // size of the angle blocks within a group and angle
+    int size_angleBlocks = 4;
+    // helper index
+    int index_start;
+
     for (int i=0; i<ps.N_cells; i++){
-        int i_l = 2*i;
-        int i_r = 2*i+1;
+        
 
         for (int g=0; g<ps.N_groups; g++){
-            for (int j=0; j<ps.N_angles; j++){
 
+            // angular fluxes from the right bound (lhs of cell at right) last itteration
+            double af_rb;
+            // angular fluxes from the left bound (rhs if cell at left) last itteration
+            double af_lb;
+            // angular fluxes from the right bound (lhs of cell at right) k+1/2 last itteration
+            double af_hn_rb;
+            // angular fluxes from the left bound (rhs of cell at left) k+1/2 last itteration
+            double af_hn_lb;
+            // k is time step index
+            
+
+            for (int j=0; j<ps.N_angles; j++){
+                // the first index in the smallest chunk of 4
+                index_start = (i*(size_cellBlocks) + g*(size_groupBlocks) + 4*j);
+                // 4 blocks orginized af_l, af_r, af_hn_l, af_hn_r
+
+                // angular flux from the k-1+1/2 from within the cell
+                double af_hl_l = aflux_previous[index_start+2];
+                double af_hl_r = aflux_previous[index_start+3];
+
+                // negative angle
+                if (ps.angles[g] < 0){
+                    if (i == ps.N_cells-1){ // right boundary condition
+                        af_rb = ps.boundary_condition();
+                        af_hn_rb = ps.boundary_condition();
+                    } else { // pulling information from right to left
+                        af_rb = aflux_last[index_start+1+4];
+                        af_hn_rb = aflux_last[index_start+3+4];
+                    }
+
+                    b_small = b_neg(cells[i], g, ps.angles[j], af_hl_l, af_hl_r, af_rb, af_hn_rb);
+
+                // positive angles
+                } else {
+                    if (i == 0){ // left boundary condition
+                        af_lb    = ps.boundary_condition();
+                        af_hn_lb = ps.boundary_condition();
+                    } else { // pulling information from left to right
+                        af_lb = aflux_last[index_start-2];
+                        af_hn_lb = aflux_last[index_start+2-2];
+                    }
+
+                    b_small = b_pos(cells[i], g, ps.angles[j], af_hl_l, af_hl_r, af_rb, af_hn_rb);
+                }
+
+                b[index_start] = b_small[0];
+                b[index_start+1] = b_small[1];
+                b[index_start+2] = b_small[2];
+                b[index_start+3] = b_small[3];
             }
         }
     }

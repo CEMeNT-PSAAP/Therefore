@@ -30,6 +30,13 @@ class problem_space{
         // comptuational
         int hardware_precision;
         double convergence_tolarance;
+
+        int boundary_condition_left;
+        int boundary_condition_right;
+        
+        double boundary_condition(){
+            return(0.0);
+        }
 };
 
 class boundary_condition{

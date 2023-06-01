@@ -11,11 +11,11 @@
 
 pertentious gpu transient neutron transport
 
-author: J. piper morgan
-        oregon state university (Go Beavs!)
-        center for exascale monte carlo neutron transport
+author: J. Piper Morgan
+        Oregon State University (Go Beavs!)
+        Center for Exascale Monte Carlo Neutron Transport
 
-        under the direction of todd s. palmer and kyle e. niemeyer
+        Under the Direction of Todd S. Palmer and Kyle E. Niemeyer
 
 
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
