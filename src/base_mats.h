@@ -63,12 +63,14 @@ std::vector<double> b_pos(cell cell, int group, double mu, double af_hl_L, doubl
 }
 
 std::vector<double> b_neg(cell cell, int group, double mu, double af_hl_L, double af_hl_R, double af_R, double af_hn_R){
+
     double timer2 = cell.dx/(2*cell.v[group] * cell.dt);
 
     std::vector<double> b_neg ={cell.dx/1*cell.Q[group] + timer2*af_hl_L,
                                 cell.dx/1*cell.Q[group] + timer2*af_hl_R - mu* af_R,
                                 cell.dx/1*cell.Q[group],
                                 cell.dx/1*cell.Q[group] - mu*af_hn_R};
+    
 
     return(b_neg);
 }

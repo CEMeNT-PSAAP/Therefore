@@ -7,6 +7,7 @@ auth: J Piper Morgan (morgjack@oregonstate.edu)*/
 #include "legendre.h"
 #include "util.h"
 #include "base_mats.h"
+#include <Eigen/Dense>
 //#include <cusparse_v2.h>
 //#include <cuda.h>
 
@@ -14,6 +15,9 @@ auth: J Piper Morgan (morgjack@oregonstate.edu)*/
 void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vector<double> aflux_last, std::vector<cell> cells, problem_space ps);
 void A_c_gen(int i, std::vector<double> &A_c, std::vector<cell> cells, problem_space ps);
 void A_gen(std::vector<double> &A, std::vector<cell> cells, problem_space ps);
+Eigen::VectorXd std2eigen(std::vector<double> sv);
+
+
 
 // i space, m is angle, k is time, g is energy group
 
@@ -25,7 +29,7 @@ int main(void){
     
     // problem deffinition
     // eventually from an input deck
-    double dx = 1;
+    double dx = 0.5;
     double dt = 0.5;
     vector<double> v = {1, 0.5};
     vector<double> xsec_total = {2, 1};
@@ -37,7 +41,7 @@ int main(void){
     int N_cells = 2; 
     int N_angles = 2; 
     int N_time = 5;
-    int N_groups = 2;
+    int N_groups = 1;
 
     // homogenious initil condition vector
     // will be stored as the soultion at time=0
@@ -74,6 +78,7 @@ int main(void){
         cellCon.dx = dx;
         cellCon.v = v;
         cellCon.dt = dt;
+        cellCon.Q = Q;
 
         cells.push_back(cellCon);
     }
@@ -104,17 +109,38 @@ int main(void){
     // generation of the whole ass mat
     A_gen(A, cells, ps);
 
+    print_rm(A);
+
     bool converged = false;
     int itter = 0;
     double error = 1;
 
     // vector org angular flux from last itteration
-    vector<double> aflux_last;
+    vector<double> aflux_last(N_mat);
     // vector org converged angular flux from previous time step
-    vector<double> aflux_previous;
+    vector<double> aflux_previous(N_mat);
     // initilizing the inital previous as the IC
     aflux_previous = IC;
 
+    vector<double> b(N_mat);
+
+    b_gen(b, aflux_previous, aflux_last, cells, ps);
+
+    print_vec_sd(b);
+
+    cout << "" << endl;
+    Eigen::VectorXd b_eig = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(b.data(), b.size());
+
+    //Eigen::Vector3d b_eig = std2eigen(b);
+
+    cout << b_eig << endl;
+
+
+    Eigen::MatrixXd A_eig(N_mat, N_mat, Eigen::RowMajor); //A_eig = Eigen::Map<Eigen::MatrixXd, Eigen::Unaligned>(A.data(), A.size());
+    //A_eig[0,0] = A[0];
+    cout << A_eig <<endl;
+
+    /*
     for(int t=0; t<N_time; ++t){
 
         aflux_last = soultions[t].aflux;
@@ -141,7 +167,7 @@ int main(void){
         }
 
         // store soultion vector org
-    }
+    }*/
 
     // convert vetor org to more friendly format
 
@@ -213,7 +239,6 @@ void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vect
 
                     b_small = b_pos(cells[i], g, ps.angles[j], af_hl_l, af_hl_r, af_rb, af_hn_rb);
                 }
-
                 b[index_start] = b_small[0];
                 b[index_start+1] = b_small[1];
                 b[index_start+2] = b_small[2];
@@ -301,8 +326,19 @@ void A_c_gen(int i, std::vector<double> &A_c, std::vector<cell> cells, problem_s
 }
 
 
+Eigen::VectorXd std2eigen(std::vector<double> sv){
+    Eigen::VectorXd ev = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(sv.data(), sv.size());
+    return(ev);
+}
 
 
+void std2cuda_bsr(problem_space ps){
+    int block_size = 4*ps.N_angles*ps.N_groups;
+    int number_row_blocks = ps.N_cells;
+    int number_col_blocks = ps.N_cells;
+    int number_nonzero_blocks = ps.N_cells;
+
+}
 /*
 void A_gen_c_g(){
     /*

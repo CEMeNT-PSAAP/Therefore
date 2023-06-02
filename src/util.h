@@ -46,6 +46,21 @@ void print_vec(int N, double* vec){
 
 
 
+void print_vec_sd(std::vector<double> vec){
+    using namespace std;
+
+    int N = vec.size();
+
+    cout << "" << endl;
+
+    cout << N << endl;
+
+    for (int i=0; i<N; i++){
+        cout << vec[i] << endl;
+    }
+
+    cout << "" << endl;
+}
 
 /*
 int main(){
