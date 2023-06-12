@@ -246,8 +246,6 @@ void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vect
             }
         }
     }
-
-
 }
 
 
@@ -270,7 +268,6 @@ void A_gen(std::vector<double> &A, std::vector<cell> cells, problem_space ps){
                 A[id_wp] = A_c[id_c];
             }
         }
-
     }
 }
 
