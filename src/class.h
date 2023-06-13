@@ -1,3 +1,5 @@
+using namespace std;
+
 class cell{
     public:
         int cell_id;
@@ -27,9 +29,10 @@ class problem_space{
         double *weights;
         double *angles;
 
-        // comptuational
+        // computational
         int hardware_precision;
-        double convergence_tolarance;
+        double convergence_tolerance;
+        bool initialize_from_previous;
 
         int boundary_condition_left;
         int boundary_condition_right;
@@ -48,14 +51,31 @@ class boundary_condition{
 };
 
 
-class ts_soultion{
+class ts_solutions{
     public:
         std::vector<double> aflux;
-        std::vector<double> aflux_h;
-        std::vector<double> sflux;
         double time;
-        double specral_radius;
-        int number_itteration;
+        double spectral_radius;
+        double final_error;
+        int number_iteration;
         int N_step;
+};
+
+class WholeProblem{
+    public:
+        vector<cell> cells;
+        problem_space ps;
+        vector<ts_solutions> solutions;
+
+        WholeProblem(vector<cell> c, problem_space p, vector<ts_solutions> sol){
+            cells = c;
+            ps = p;
+            solutions = sol;
+        }
+
+        void PublishWholeProblem(){
+            
+        }
+
 
 };

@@ -30,12 +30,12 @@ void print_rm(std::vector<double> vec){
 }
 
 
-void print_vec(int N, double* vec){
+void print_vec(int N, std::vector<double> vec){
     using namespace std;
 
     cout << "" << endl;
 
-    cout << N << endl;
+    cout << "Size of Vector: "<< N << endl;
 
     for (int i=0; i<N; i++){
         cout << vec[i] << endl;
@@ -53,7 +53,7 @@ void print_vec_sd(std::vector<double> vec){
 
     cout << "" << endl;
 
-    cout << N << endl;
+    cout << "Size of Vector: "<< N << endl;
 
     for (int i=0; i<N; i++){
         cout << vec[i] << endl;
@@ -78,4 +78,36 @@ void print_title(){
 
     if (f.is_open())
         std::cout << f.rdbuf();
+}
+
+double relativeError(double a, double b){
+    return (abs(a - b) / b);
+}
+
+std::vector<double> relativeError_ebe ( std::vector<double> v1, std::vector<double> v2 ){
+    /*brei: computing the relative error between two vectors element by element*/
+
+    if (v1.size() != v2.size()){
+        std::cout << "WARNING: vectors are not of same size --relativeError_ebe" << std::endl;
+    }
+
+    std::vector<double> error(v1.size());
+
+    for (int i=0; i<v1.size(); i++){
+        error[i] = relativeError(v1[i], v2[i]);
+    }
+
+    return(error);
+}
+
+
+double infNorm_error ( std::vector<double> v1, std::vector<double> v2 ){
+    /*brief: computing the max relative error between two vectors*/
+
+    std::vector<double> error = relativeError_ebe(v1, v2);
+
+    double relError = *max_element(error.begin(), error.end());
+
+    return(relError);
+
 }

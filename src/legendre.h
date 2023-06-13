@@ -184,7 +184,7 @@ string i4_to_string ( int i4, string format )
   char i4_char[80];
   string i4_string;
 
-  sprintf ( i4_char, format.c_str ( ), i4 );
+  //sprintf ( i4_char, format.c_str ( ), i4 );
 
   i4_string = string ( i4_char );
 

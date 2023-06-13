@@ -15,7 +15,7 @@ int main() {
     std::vector<double> b(SIZE);
     b = {22, 13, 17};
 
-    LAPACK_ROW_MAJOR
+    //LAPACK_ROW_MAJOR
 
     dgesv_( &SIZE, &nrhs, &*A.begin(), &lda, &*i_piv.begin(), &*b.begin(), &ldb, &info );
 
