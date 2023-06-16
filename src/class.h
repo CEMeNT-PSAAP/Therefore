@@ -33,6 +33,7 @@ class problem_space{
         int hardware_precision;
         double convergence_tolerance;
         bool initialize_from_previous;
+        int max_iteration;
 
         int boundary_condition_left;
         int boundary_condition_right;
@@ -73,8 +74,21 @@ class WholeProblem{
             solutions = sol;
         }
 
-        void PublishWholeProblem(){
-            
+        void PublishUnsorted(){
+            for (int t=0; t<ps.N_time; t++){
+                string ext = ".csv";
+                string file_name = "afluxUnsorted";
+                string dt = to_string(t);
+
+                file_name = file_name + dt + ext;
+
+                std::ofstream output(file_name);
+                output << "TIME STEP: " << t << "Unsorted solution vector" << endl;
+                output << "N_space: " << ps.N_cells << " N_groups: " << ps.N_groups << " N_angles: " << ps.N_angles << endl;
+                for (int i=0; i<solutions[t].aflux.size(); i++){
+                    output << solutions[t].aflux[i] << "," << endl;
+                }
+            }
         }
 
 
