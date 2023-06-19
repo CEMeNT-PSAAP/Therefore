@@ -7,11 +7,13 @@ auth: J Piper Morgan (morgjack@oregonstate.edu)*/
 #include "legendre.h"
 #include "util.h"
 #include "builders.h"
-#include "H5Cpp.h"
-#include "mkl_lapacke.h"
+//#include "H5Cpp.h"
+#include "lapacke.h"
 //#include <Eigen/Dense>
 //#include <cusparse_v2.h>
 //#include <cuda.h>
+
+// compile command
 
 void eosPrint(ts_solutions state);
 
@@ -162,13 +164,18 @@ int main(void){
         double spec_rad;
 
         while (converged){
+
+
+            // lapack requires a copy of data that it uses for row piviot (A after _dgesv != A)
+            vector<double> A_copy = A;
+
             // build b
             b_gen(b, aflux_previous, aflux_last, cells, ps);
             // reminder: last refers to iteration, previous refers to time step
 
             print_vec_sd(b);
             // solve Ax=b
-            info = LAPACKE_dgesv( LAPACK_ROW_MAJOR, N_mat, nrhs, &A[0], lda, &i_piv[0], &b[0], ldb );
+            info = LAPACKE_dgesv( LAPACK_ROW_MAJOR, N_mat, nrhs, &A_copy[0], lda, &i_piv[0], &b[0], ldb );
             //Lapack solver dgesv_( &N_mat, &nrhs, &*A.begin(), &lda, &*i_piv.begin(), &*b.begin(), &ldb, &info );
             //print_vec_sd(b);
 
