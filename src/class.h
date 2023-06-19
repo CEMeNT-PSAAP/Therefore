@@ -26,12 +26,12 @@ class problem_space{
         double material_source;
         double velocity;
 
-        double *weights;
-        double *angles;
+        std::vector<double> weights;
+        std::vector<double> angles;
 
         // computational
         int hardware_precision;
-        double convergence_tolerance;
+        double convergence_tolerance = 1e-9;
         bool initialize_from_previous;
         int max_iteration;
 

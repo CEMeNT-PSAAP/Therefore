@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include "base_mats.h"
+#include "legendre.h"
 
 using namespace std;
 
@@ -9,6 +10,7 @@ using namespace std;
 void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vector<double> aflux_last, std::vector<cell> cells, problem_space ps);
 void A_c_gen(int i, std::vector<double> &A_c, std::vector<cell> cells, problem_space ps);
 void A_gen(std::vector<double> &A, std::vector<cell> cells, problem_space ps);
+void quadrature(std::vector<double> angles, std::vector<double> weights);
 
 
 void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vector<double> aflux_last, std::vector<cell> cells, problem_space ps){
@@ -23,6 +25,8 @@ void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vect
     int size_angleBlocks = 4;
     // helper index
     int index_start;
+
+    
 
     for (int i=0; i<ps.N_cells; i++){
         
@@ -71,6 +75,7 @@ void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vect
 
                     b_small = b_pos(cells[i], g, ps.angles[j], af_hl_l, af_hl_r, af_rb, af_hn_rb);
                 }
+
                 b[index_start] = b_small[0];
                 b[index_start+1] = b_small[1];
                 b[index_start+2] = b_small[2];
@@ -151,5 +156,25 @@ void A_c_gen(int i, std::vector<double> &A_c, std::vector<cell> cells, problem_s
             }
         }
     
+    }
+}
+
+
+void quadrature(std::vector<double> angles, std::vector<double> weights){
+
+    // infred from size of pre-allocated std::vector
+    int N_angles = angles.size();
+
+    // allocation for function
+    double weights_d[N_angles];
+    double angles_d[N_angles];
+
+    // some superduper fast function that gereates everyting but in double arrays
+    legendre_compute_glr(N_angles, angles_d, weights_d);
+
+    // converting to std::vectors
+    for (int i=0; i<N_angles; i++){
+        angles[i] = angles_d[i];
+        weights[i] = weights_d[i];
     }
 }
