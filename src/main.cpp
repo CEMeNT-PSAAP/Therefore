@@ -8,7 +8,8 @@ auth: J Piper Morgan (morgjack@oregonstate.edu)*/
 #include "util.h"
 #include "builders.h"
 #include "H5Cpp.h"
-#include "mkl_lapacke.h"
+#include <lapacke>
+//#include "lapacke.h"
 //#include <Eigen/Dense>
 //#include <cusparse_v2.h>
 //#include <cuda.h>
@@ -23,6 +24,22 @@ std::vector<double> row2colSq(std::vector<double> row);
 
 // i space, m is angle, k is time, g is energy group
 
+
+
+/* Some notes:
+    1) All matrices are constructed stored in ROW MAJOR FORMAT.
+    2) std::vectors are the primary data storage mechanism
+    3) CPU Implementations use LAPACKE (the E is specifically for C stuff where we can solve with Row major form)
+    4) Smallest matrix deffinitions are from theory
+    5) TODO:
+        [U] Multi-group matrix builders
+        [ ] Python Interface
+        [U] Sparse builders
+        [U] LAPACK Solvers (MKL or Basic)
+        [ ] CUDA implementation
+        [ ] PETSc implementation
+        [ ] Trillinos implementation
+*/
 int main(void){
 
     print_title();
