@@ -49,7 +49,7 @@ int main(void){
     vector<double> v = {1};
     vector<double> xsec_total = {1};
     vector<double> xsec_scatter = {0};
-    vector<double> Q = {0};
+    vector<double> Q = {1};
     double Length = 1;
     double IC_homo = 0;
     
@@ -66,15 +66,32 @@ int main(void){
 
     // homogeneous initial condition vector
     // will be stored as the solution at time=0
-    vector<double> IC(N_mat, 1.0);
+    vector<double> IC(N_mat, 0.0);
     for (int p=0; p<N_cells*2; p++){IC[p] = IC[p]*IC_homo;}
 
     // actual computation below here
 
     // generate g-l quadrature angles and weights
-    vector<double> weights(N_angles);
-    vector<double> angles(N_angles);
-    quadrature(angles, weights);
+    vector<double> weights(N_angles, 0.0);
+    vector<double> angles(N_angles, 0.0);
+    //quadrature(angles, weights);
+
+    // allocation for function
+    double weights_d[N_angles];
+    double angles_d[N_angles];
+
+    // some superduper fast function that gereates everyting but in double arrays
+    legendre_compute_glr(N_angles, angles_d, weights_d);
+
+    // converting to std::vectors
+    for (int i=0; i<N_angles; i++){
+        angles[i] = angles_d[i];
+        weights[i] = weights_d[i];
+    }
+
+
+    print_vec_sd(angles);
+    print_vec_sd(weights);
 
     // problem space class construction
     problem_space ps;
@@ -132,7 +149,7 @@ int main(void){
 
     int nrhs = 1; // one column in b
     int lda = N_mat;
-    int ldb = N_mat;
+    int ldb = 1; // 
     std::vector<int> i_piv(N_mat, 0);  // pivot column vector
     int info;
 
@@ -168,25 +185,30 @@ int main(void){
         bool converged = true; // converged boolean
         double spec_rad;
 
+        //vector<double> A_copy;
+        vector<double> A_copy(N_mat);
+
         while (converged){
 
             // lapack requires a copy of data that it uses for row piviot (A after _dgesv != A)
-            vector<double> A_copy = A;
+            A_copy = A;
 
-            //fill(b.begin(), b.end(), 0.0);
-            // build b
             b_gen(b, aflux_previous, aflux_last, cells, ps);
             // reminder: last refers to iteration, previous refers to time step
             
             if (print_mats){
-                print_rm(A_copy);
+                cout << "Cycle: " << itter << endl;
+                cout << "RHS" << endl;
                 print_vec_sd(b);
             }
             // solve Ax=b
             info = LAPACKE_dgesv( LAPACK_ROW_MAJOR, N_mat, nrhs, &A_copy[0], lda, &i_piv[0], &b[0], ldb );
+
+            //info = LAPACKE_dgesv( LAPACK_ROW_MAJOR, n, nrhs, a, lda, ipiv, b, ldb );
             //Lapack solver dgesv_( &N_mat, &nrhs, &*A.begin(), &lda, &*i_piv.begin(), &*b.begin(), &ldb, &info );
 
             if (print_mats){
+                cout << "x" <<endl;
                 print_vec_sd(b);
             }
 
@@ -212,7 +234,7 @@ int main(void){
             //cout << error << endl;
 
             if (itter > 3){
-                
+                converged = false;
                 // if relative error between the last and just down iteration end the time step
                 if ( error < ps.convergence_tolerance ){ converged = false; }
 
@@ -232,12 +254,14 @@ int main(void){
             }
 
             aflux_last = b;
-
+            cout << "END OF CYCLE PRINT" <<endl;
+            print_vec_sd(b);
+            print_vec_sd(aflux_last);
             itter++;
 
         } // end convergence loop
 
-        print_vec_sd(aflux_last);
+        //print_vec_sd(aflux_last);
 
         // store solution vector org
         //ts_solutions save_timestep;

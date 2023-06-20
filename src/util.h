@@ -23,7 +23,7 @@ void print_rm(std::vector<double> vec){
 
     for (int i=0; i<N; i++){
         for (int j=0; j<N; j++){
-            printf("%5.2f ", vec[i*N+j]) ;
+            printf("%5.4f ", vec[i*N+j]) ;
         }
         printf("\n");
     }
@@ -55,7 +55,7 @@ void print_cm(std::vector<double> vec){
 
 
 
-void print_vec(int N, std::vector<double> vec){
+void print_vec(int N, double *vec){
     using namespace std;
 
     cout << "" << endl;

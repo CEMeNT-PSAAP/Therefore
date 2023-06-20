@@ -10,11 +10,12 @@ using namespace std;
 void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vector<double> aflux_last, std::vector<cell> cells, problem_space ps);
 void A_c_gen(int i, std::vector<double> &A_c, std::vector<cell> cells, problem_space ps);
 void A_gen(std::vector<double> &A, std::vector<cell> cells, problem_space ps);
-void quadrature(std::vector<double> angles, std::vector<double> weights);
+void quadrature(std::vector<double> &angles, std::vector<double> &weights);
 
 
 void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vector<double> aflux_last, std::vector<cell> cells, problem_space ps){
     //brief: builds b
+
     vector<double> b_small;
 
     // size of the cell blocks in all groups and angle
@@ -25,8 +26,6 @@ void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vect
     int size_angleBlocks = 4;
     // helper index
     int index_start;
-
-    
 
     for (int i=0; i<ps.N_cells; i++){
         
@@ -42,6 +41,7 @@ void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vect
             double af_hn_lb;
             
             for (int j=0; j<ps.N_angles; j++){
+
 
                 // the first index in the smallest chunk of 4
                 index_start = (i*(size_cellBlocks) + g*(size_groupBlocks) + 4*j);
@@ -60,7 +60,6 @@ void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vect
                         af_rb = aflux_last[index_start+1+4];
                         af_hn_rb = aflux_last[index_start+3+4];
                     }
-
                     b_small = b_neg(cells[i], g, ps.angles[j], af_hl_l, af_hl_r, af_rb, af_hn_rb);
 
                 // positive angles
@@ -75,7 +74,7 @@ void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vect
 
                     b_small = b_pos(cells[i], g, ps.angles[j], af_hl_l, af_hl_r, af_rb, af_hn_rb);
                 }
-
+                
                 b[index_start] = b_small[0];
                 b[index_start+1] = b_small[1];
                 b[index_start+2] = b_small[2];
@@ -128,6 +127,8 @@ void A_c_gen(int i, std::vector<double> &A_c, std::vector<cell> cells, problem_s
                 A_c_g_a = A_neg_rm(cells[i], ps.angles[j], g);
             }
 
+            print_rm(A_c_g_a);
+
             // push it into an all angle cellwise fuck me
             for (int r=0; r<4; r++){
                 for (int c=0; c<4; c++){
@@ -137,9 +138,13 @@ void A_c_gen(int i, std::vector<double> &A_c, std::vector<cell> cells, problem_s
                     int id_acell  = ((4*ps.N_angles * 4*j) + (4*j) + (4*ps.N_angles)*r + (c));
                     int id_ancell = 4*r + c;
                     A_c_g[id_acell] = A_c_g_a[id_ancell];
+
+                    
                 }
             }
         }
+
+        
 
         S = scatter(cells[i], ps.weights, ps.N_angles, g);
 
@@ -160,7 +165,7 @@ void A_c_gen(int i, std::vector<double> &A_c, std::vector<cell> cells, problem_s
 }
 
 
-void quadrature(std::vector<double> angles, std::vector<double> weights){
+void quadrature(std::vector<double> &angles, std::vector<double> &weights){
 
     // infred from size of pre-allocated std::vector
     int N_angles = angles.size();
@@ -172,9 +177,13 @@ void quadrature(std::vector<double> angles, std::vector<double> weights){
     // some superduper fast function that gereates everyting but in double arrays
     legendre_compute_glr(N_angles, angles_d, weights_d);
 
+    print_vec(N_angles, angles_d);
+
     // converting to std::vectors
     for (int i=0; i<N_angles; i++){
         angles[i] = angles_d[i];
         weights[i] = weights_d[i];
     }
+
+    print_vec_sd(angles);
 }
