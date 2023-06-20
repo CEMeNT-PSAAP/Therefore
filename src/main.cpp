@@ -4,15 +4,25 @@ auth: J Piper Morgan (morgjack@oregonstate.edu)*/
 
 #include <iostream>
 #include <vector>
-#include "legendre.h"
 #include "util.h"
 #include "builders.h"
-#include "H5Cpp.h"
-#include <lapacke>
-//#include "lapacke.h"
+//#include "H5Cpp.h"
+#include "lapacke.h"
 //#include <Eigen/Dense>
 //#include <cusparse_v2.h>
 //#include <cuda.h>
+
+/* compile notes and prerecs
+
+    In ubuntu yyou need these libarires:
+        sudo apt-get install libblas-dev checkinstall
+        sudo apt-get install libblas-doc checkinstall
+        sudo apt-get install liblapacke-dev checkinstall
+        sudo apt-get install liblapack-doc checkinstall
+
+    Should be able to configure with: 
+        g++ main.cpp -std=c++20 -llapacke
+*/
 
 void eosPrint(ts_solutions state);
 
@@ -24,22 +34,8 @@ std::vector<double> row2colSq(std::vector<double> row);
 
 // i space, m is angle, k is time, g is energy group
 
+const bool print_mats = true;
 
-
-/* Some notes:
-    1) All matrices are constructed stored in ROW MAJOR FORMAT.
-    2) std::vectors are the primary data storage mechanism
-    3) CPU Implementations use LAPACKE (the E is specifically for C stuff where we can solve with Row major form)
-    4) Smallest matrix deffinitions are from theory
-    5) TODO:
-        [U] Multi-group matrix builders
-        [ ] Python Interface
-        [U] Sparse builders
-        [U] LAPACK Solvers (MKL or Basic)
-        [ ] CUDA implementation
-        [ ] PETSc implementation
-        [ ] Trillinos implementation
-*/
 int main(void){
 
     print_title();
@@ -53,7 +49,7 @@ int main(void){
     vector<double> v = {1};
     vector<double> xsec_total = {1};
     vector<double> xsec_scatter = {0};
-    vector<double> Q = {1};
+    vector<double> Q = {0};
     double Length = 1;
     double IC_homo = 0;
     
@@ -76,9 +72,9 @@ int main(void){
     // actual computation below here
 
     // generate g-l quadrature angles and weights
-    double weights[N_angles];
-    double angles[N_angles];
-    legendre_compute_glr(N_angles, angles, weights);
+    vector<double> weights(N_angles);
+    vector<double> angles(N_angles);
+    quadrature(angles, weights);
 
     // problem space class construction
     problem_space ps;
@@ -90,9 +86,10 @@ int main(void){
     ps.N_time = N_time;
     ps.angles = angles;
     ps.weights = weights;
-    ps.convergence_tolerance = 1e-9;
     ps.initialize_from_previous = true;
-    ps.max_iteration = int(1);
+    ps.max_iteration = int(4);
+
+    cout << ps.convergence_tolerance << endl;
 
     // cell construction;
     vector<cell> cells;
@@ -143,16 +140,9 @@ int main(void){
     // generation of the whole ass mat
     A_gen(A, cells, ps);
 
-    print_rm(A);
-
-    //A = row2colSq(A);
-
-    //print_vec_sd(A);
-    //print_rm(A);
-
-    //cout <<"thru" << endl;
-
-    //print_cm(A);
+    if (print_mats){
+        print_rm(A);
+    }
 
     vector<double> b(N_mat);
 
@@ -179,18 +169,33 @@ int main(void){
         double spec_rad;
 
         while (converged){
+
+            // lapack requires a copy of data that it uses for row piviot (A after _dgesv != A)
+            vector<double> A_copy = A;
+
+            //fill(b.begin(), b.end(), 0.0);
             // build b
             b_gen(b, aflux_previous, aflux_last, cells, ps);
             // reminder: last refers to iteration, previous refers to time step
-
-            print_vec_sd(b);
+            
+            if (print_mats){
+                print_rm(A_copy);
+                print_vec_sd(b);
+            }
             // solve Ax=b
-            info = LAPACKE_dgesv( LAPACK_ROW_MAJOR, N_mat, nrhs, &A[0], lda, &i_piv[0], &b[0], ldb );
+            info = LAPACKE_dgesv( LAPACK_ROW_MAJOR, N_mat, nrhs, &A_copy[0], lda, &i_piv[0], &b[0], ldb );
             //Lapack solver dgesv_( &N_mat, &nrhs, &*A.begin(), &lda, &*i_piv.begin(), &*b.begin(), &ldb, &info );
-            //print_vec_sd(b);
 
-            print_rm(A);
-            print_vec_sd(b);
+            if (print_mats){
+                print_vec_sd(b);
+            }
+
+            if( info > 0 ) {
+                printf( "The diagonal element of the triangular factor of A,\n" );
+                printf( "U(%i,%i) is zero, so that A is singular;\n", info, info );
+                printf( "the solution could not be computed.\n" );
+                exit( 1 );
+            }
 
             // compute the relative error between the last and current iteration
             error = infNorm_error(aflux_last, b);
@@ -203,36 +208,50 @@ int main(void){
             spec_rad = abs(error-error_n1) / abs(error_n1 - error_n2);
 
             // too allow for a error computation we need at least three cycles
+            //cout << ps.convergence_tolerance << endl;
+            //cout << error << endl;
+
             if (itter > 3){
+                
                 // if relative error between the last and just down iteration end the time step
                 if ( error < ps.convergence_tolerance ){ converged = false; }
+
+                //cout << "e" << endl;
+            }
+
+            if (!converged){
+                cout << "End of cycle set" << endl;
             }
 
             if (itter > ps.max_iteration){
-                cout << "WARNING: Computation did not converge" << endl;
+                cout << "WARNING: Computation did not converge after " << ps.max_iteration << "iterations" << endl;
                 cout << "       itter: " << itter << endl;
                 cout << "       error: " << error << endl;
                 cout << "" << endl;
                 converged = false;
             }
 
-        itter++;
+            aflux_last = b;
+
+            itter++;
 
         } // end convergence loop
 
+        print_vec_sd(aflux_last);
+
         // store solution vector org
-        ts_solutions save_timestep;
-        save_timestep.time = (t+1)*ps.dt;
-        save_timestep.spectral_radius = spec_rad;
-        save_timestep.N_step = t+1;
-        save_timestep.number_iteration = itter;
+        //ts_solutions save_timestep;
+        //save_timestep.time = (t+1)*ps.dt;
+        //save_timestep.spectral_radius = spec_rad;
+        //save_timestep.N_step = t+1;
+        //save_timestep.number_iteration = itter;
 
         // print end of step information
-        eosPrint(save_timestep);
+        //eosPrint(save_timestep);
         //print_vec_sd(b);
-        save_timestep.aflux = b;
+        //save_timestep.aflux = b;
         //print_vec_sd(save_timestep.aflux);
-        solutions.push_back(save_timestep);
+        //solutions.push_back(save_timestep);
 
 
     } // end of time step loop
