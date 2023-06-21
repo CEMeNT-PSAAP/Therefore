@@ -35,6 +35,7 @@ std::vector<double> row2colSq(std::vector<double> row);
 // i space, m is angle, k is time, g is energy group
 
 const bool print_mats = false;
+const bool cycle_print = true;
 
 int main(void){
 
@@ -45,7 +46,7 @@ int main(void){
     // problem definition
     // eventually from an input deck
     double dx = 0.1;
-    double dt = 0.5;
+    double dt = 0.1;
     vector<double> v = {1};
     vector<double> xsec_total = {1};
     vector<double> xsec_scatter = {0};
@@ -55,7 +56,7 @@ int main(void){
     
     int N_cells = 10; 
     int N_angles = 2; 
-    int N_time = 1;
+    int N_time = 5;
     int N_groups = 1;
 
     // 4 = N_subspace (2) * N_subtime (2)
@@ -74,24 +75,9 @@ int main(void){
     // generate g-l quadrature angles and weights
     vector<double> weights(N_angles, 0.0);
     vector<double> angles(N_angles, 0.0);
-    //quadrature(angles, weights);
 
-    // allocation for function
-    double weights_d[N_angles];
-    double angles_d[N_angles];
+    quadrature(angles, weights);
 
-    // some superduper fast function that gereates everyting but in double arrays
-    legendre_compute_glr(N_angles, angles_d, weights_d);
-
-    // converting to std::vectors
-    for (int i=0; i<N_angles; i++){
-        angles[i] = angles_d[i];
-        weights[i] = weights_d[i];
-    }
-
-
-    print_vec_sd(angles);
-    print_vec_sd(weights);
 
     // problem space class construction
     problem_space ps;
@@ -104,9 +90,7 @@ int main(void){
     ps.angles = angles;
     ps.weights = weights;
     ps.initialize_from_previous = true;
-    ps.max_iteration = int(4);
-
-    cout << ps.convergence_tolerance << endl;
+    ps.max_iteration = int(1e4);
 
     // cell construction;
     vector<cell> cells;
@@ -153,7 +137,6 @@ int main(void){
     std::vector<int> i_piv(N_mat, 0);  // pivot column vector
     int info;
 
-
     // generation of the whole ass mat
     A_gen(A, cells, ps);
 
@@ -163,6 +146,7 @@ int main(void){
 
     vector<double> b(N_mat);
 
+    cout << "howdy" << endl;
 
     // time step loop
     for(int t=0; t<N_time; ++t){
@@ -222,27 +206,13 @@ int main(void){
             // compute the relative error between the last and current iteration
             error = infNorm_error(aflux_last, b);
 
-            // move errors back
-            error_n1 = error;
-            error_n2 = error_n1;
-
             // compute spectral radius
             spec_rad = abs(error-error_n1) / abs(error_n1 - error_n2);
 
             // too allow for a error computation we need at least three cycles
-            //cout << ps.convergence_tolerance << endl;
-            //cout << error << endl;
-
             if (itter > 3){
-                converged = false;
                 // if relative error between the last and just down iteration end the time step
                 if ( error < ps.convergence_tolerance ){ converged = false; }
-
-                //cout << "e" << endl;
-            }
-
-            if (!converged){
-                cout << "End of cycle set" << endl;
             }
 
             if (itter > ps.max_iteration){
@@ -254,14 +224,34 @@ int main(void){
             }
 
             aflux_last = b;
-            //cout << "END OF CYCLE PRINT" <<endl;
-            //print_vec_sd(b);
-            //print_vec_sd(aflux_last);
             itter++;
+
+            if (cycle_print){
+                cout << "cycle: " <<itter<<" of time step: "<<t<<endl;
+                cout << "error: " <<error<<" error-1: "<<error_n1<<" error-2: "<<error_n2<<endl; 
+                cout << "spec rad: " << spec_rad <<endl;
+                cout << "" << endl;
+            }
+
+            error_n2 = error_n1;
+            error_n1 = error;
 
         } // end convergence loop
 
-        //print_vec_sd(aflux_last);
+        string ext = ".csv";
+        string file_name = "afluxUnsorted";
+        string dt = to_string(t);
+
+        file_name = file_name + dt + ext;
+
+        std::ofstream output(file_name);
+        output << "TIME STEP: " << t << "Unsorted solution vector" << endl;
+        output << "N_space: " << ps.N_cells << " N_groups: " << ps.N_groups << " N_angles: " << ps.N_angles << endl;
+        for (int i=0; i<b.size(); i++){
+            output << b[i] << "," << endl;
+        }
+
+        cout << "file saved under: " << file_name << endl;
 
         // store solution vector org
         //ts_solutions save_timestep;
@@ -276,12 +266,12 @@ int main(void){
         //save_timestep.aflux = b;
         //print_vec_sd(save_timestep.aflux);
         //solutions.push_back(save_timestep);
-
+        print_vec_sd(b);
 
     } // end of time step loop
 
-    WholeProblem wp = WholeProblem(cells, ps, solutions);
-    wp.PublishUnsorted();
+    //WholeProblem wp = WholeProblem(cells, ps, solutions);
+    //wp.PublishUnsorted();
     
     return(0);
 } // end of main

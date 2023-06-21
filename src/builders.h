@@ -29,7 +29,6 @@ void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vect
     int index_start;
 
     for (int i=0; i<ps.N_cells; i++){
-        cout << i << endl;
         
         for (int g=0; g<ps.N_groups; g++){
 
@@ -190,15 +189,12 @@ void quadrature(std::vector<double> &angles, std::vector<double> &weights){
     // some superduper fast function that gereates everyting but in double arrays
     legendre_compute_glr(N_angles, angles_d, weights_d);
 
-    print_vec(N_angles, angles_d);
-
     // converting to std::vectors
     for (int i=0; i<N_angles; i++){
         angles[i] = angles_d[i];
         weights[i] = weights_d[i];
     }
 
-    print_vec_sd(angles);
 }
 
 

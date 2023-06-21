@@ -44,8 +44,8 @@ def OCIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_midstep_pre
     scalar_flux_next = np.zeros(N_ans, data_type)
 
     A = BuildHer(xsec_mesh, xsec_scatter_mesh, dx_mesh, dt, velocity, angles, weights)
-    print(A)
-    print()
+    #print(A)
+    #print()
 
     A = csr_matrix(A)
     #A_gpu = spMat.csr_matrix(A) 
@@ -60,8 +60,8 @@ def OCIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_midstep_pre
         BCr = utl.BoundaryCondition(sim_perams['boundary_condition_right'], -1, N_mesh, angular_flux=angular_flux, incident_flux_mag=sim_perams['right_in_mag'], angle=sim_perams['right_in_angle'], angles=angles)
         
         c = BuildC(angular_flux_midstep_previous, angular_flux_last, angular_flux_mid_last, source_mesh, dx_mesh, dt, velocity, angles, BCl, BCr)
-        print(c)
-        print()
+        #print(c)
+        #print()
         #c_gpu = cu.asarray(c)
 
         #angular_flux_raw = runBig(A, c)
@@ -100,6 +100,8 @@ def OCIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_midstep_pre
         scalar_flux = scalar_flux_next
         
         source_counter  += 1
+        
+    print(angular_flux_raw)
 
     return(angular_flux, angular_flux_midstep, current, spec_rad, source_counter, source_converged)
 

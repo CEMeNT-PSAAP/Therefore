@@ -15,7 +15,7 @@ def t2p(time):
 data_type = np.float64
 
 L = 1
-dx = 0.5
+dx = 0.1
 N_mesh = int(L/dx)
 xsec = 1
 ratio = 0
@@ -56,7 +56,7 @@ sim_perams = {'data_type': data_type,
               'boundary_condition_left':  'vacuum',
               'boundary_condition_right': 'vacuum',
               'left_in_mag': 0,
-              'right_in_mag': 0.3,
+              'right_in_mag': 0,
               'left_in_angle': 0,
               'right_in_angle': 0,
               'max loops': 10000,
@@ -75,3 +75,9 @@ print('OCI MB SCB Single big gpu')
 [sfMB, current, spec_rads, time] = therefore.multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatter_mesh, source_mesh, 'Big') #OCI_MB_GPU
 end = timer()
 print(end - start)
+print(sfMB.shape)
+x = np.linspace(0,1,sfMB.shape[0])
+
+plt.figure()
+plt.plot(x,sfMB[:,1])
+plt.show()
