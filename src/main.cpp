@@ -182,7 +182,7 @@ int main(void){
         double error = 1;       // error from current iteration
         double error_n1 = 1;    // error back one iteration (from last)
         double error_n2 = 1;    // error back two iterations
-        bool converged = true; // converged boolean
+        bool converged = true;  // converged boolean
         double spec_rad;
 
         //vector<double> A_copy;
@@ -254,9 +254,9 @@ int main(void){
             }
 
             aflux_last = b;
-            cout << "END OF CYCLE PRINT" <<endl;
-            print_vec_sd(b);
-            print_vec_sd(aflux_last);
+            //cout << "END OF CYCLE PRINT" <<endl;
+            //print_vec_sd(b);
+            //print_vec_sd(aflux_last);
             itter++;
 
         } // end convergence loop

@@ -11,6 +11,7 @@ void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vect
 void A_c_gen(int i, std::vector<double> &A_c, std::vector<cell> cells, problem_space ps);
 void A_gen(std::vector<double> &A, std::vector<cell> cells, problem_space ps);
 void quadrature(std::vector<double> &angles, std::vector<double> &weights);
+void outofbounds_check(int index, std::vector<double> &vec);
 
 
 void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vector<double> aflux_last, std::vector<cell> cells, problem_space ps){
@@ -28,6 +29,7 @@ void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vect
     int index_start;
 
     for (int i=0; i<ps.N_cells; i++){
+        cout << i << endl;
         
         for (int g=0; g<ps.N_groups; g++){
 
@@ -42,7 +44,6 @@ void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vect
             
             for (int j=0; j<ps.N_angles; j++){
 
-
                 // the first index in the smallest chunk of 4
                 index_start = (i*(size_cellBlocks) + g*(size_groupBlocks) + 4*j);
                 // 4 blocks organized af_l, af_r, af_hn_l, af_hn_r
@@ -52,12 +53,16 @@ void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vect
                 double af_hl_r = aflux_previous[index_start+3];
 
                 // negative angle
-                if (ps.angles[g] < 0){
+                if (ps.angles[j] < 0){
                     if (i == ps.N_cells-1){ // right boundary condition
                         af_rb = ps.boundary_condition();
                         af_hn_rb = ps.boundary_condition();
                     } else { // pulling information from right to left
-                        af_rb = aflux_last[index_start+1+4];
+
+                        outofbounds_check(index_start+1+4, aflux_last);
+                        outofbounds_check(index_start+3+4, aflux_last);
+
+                        af_rb    = aflux_last[index_start+1+4];
                         af_hn_rb = aflux_last[index_start+3+4];
                     }
                     b_small = b_neg(cells[i], g, ps.angles[j], af_hl_l, af_hl_r, af_rb, af_hn_rb);
@@ -67,15 +72,25 @@ void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vect
                     if (i == 0){ // left boundary condition
                         af_lb    = ps.boundary_condition();
                         af_hn_lb = ps.boundary_condition();
+
                     } else { // pulling information from left to right
-                        af_lb = aflux_last[index_start-2];
+
+                        outofbounds_check(index_start-2, aflux_last);
+                        outofbounds_check(index_start+2-2, aflux_last);
+
+                        af_lb    = aflux_last[index_start-2];
                         af_hn_lb = aflux_last[index_start+2-2];
                     }
 
-                    b_small = b_pos(cells[i], g, ps.angles[j], af_hl_l, af_hl_r, af_rb, af_hn_rb);
+                    b_small = b_pos(cells[i], g, ps.angles[j], af_hl_l, af_hl_r, af_lb, af_hn_lb);
                 }
+
+                outofbounds_check(index_start,   b);
+                outofbounds_check(index_start+1, b);
+                outofbounds_check(index_start+2, b);
+                outofbounds_check(index_start+3, b);
                 
-                b[index_start] = b_small[0];
+                b[index_start]   = b_small[0];
                 b[index_start+1] = b_small[1];
                 b[index_start+2] = b_small[2];
                 b[index_start+3] = b_small[3];
@@ -126,8 +141,6 @@ void A_c_gen(int i, std::vector<double> &A_c, std::vector<cell> cells, problem_s
             } else {
                 A_c_g_a = A_neg_rm(cells[i], ps.angles[j], g);
             }
-
-            print_rm(A_c_g_a);
 
             // push it into an all angle cellwise fuck me
             for (int r=0; r<4; r++){
@@ -186,4 +199,15 @@ void quadrature(std::vector<double> &angles, std::vector<double> &weights){
     }
 
     print_vec_sd(angles);
+}
+
+
+inline void outofbounds_check(int index, std::vector<double> &vec){
+    if ( index < 0 ) {
+        cout<<">>>>>>>>>>>>ERROR<<<<<<<<<<<<"<<endl;
+        cout<<"sometihng was indexed under 0"<<endl;
+    } else if ( index >= vec.size() ) {
+        cout<<">>>>>>>>>>>>>>>>>>>>ERROR<<<<<<<<<<<<<<<<<<<<"<<endl;
+        cout<<"sometihng was indexed over a vectors max size"<<endl;
+    }
 }
