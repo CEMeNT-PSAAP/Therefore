@@ -34,7 +34,7 @@ std::vector<double> row2colSq(std::vector<double> row);
 
 // i space, m is angle, k is time, g is energy group
 
-const bool print_mats = true;
+const bool print_mats = false;
 
 int main(void){
 
@@ -44,7 +44,7 @@ int main(void){
     
     // problem definition
     // eventually from an input deck
-    double dx = 0.5;
+    double dx = 0.1;
     double dt = 0.5;
     vector<double> v = {1};
     vector<double> xsec_total = {1};
@@ -53,7 +53,7 @@ int main(void){
     double Length = 1;
     double IC_homo = 0;
     
-    int N_cells = 2; 
+    int N_cells = 10; 
     int N_angles = 2; 
     int N_time = 1;
     int N_groups = 1;
