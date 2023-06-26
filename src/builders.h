@@ -27,6 +27,8 @@ void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vect
     int size_angleBlocks = 4;
     // helper index
     int index_start;
+    int index_start_n1;
+    int index_start_p1;
 
     for (int i=0; i<ps.N_cells; i++){
         
@@ -47,6 +49,10 @@ void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vect
                 index_start = (i*(size_cellBlocks) + g*(size_groupBlocks) + 4*j);
                 // 4 blocks organized af_l, af_r, af_hn_l, af_hn_r
 
+                index_start_n1 = index_start - size_cellBlocks;
+                index_start_p1 = index_start + size_cellBlocks;
+
+
                 // angular flux from the k-1+1/2 from within the cell
                 double af_hl_l = aflux_previous[index_start+2];
                 double af_hl_r = aflux_previous[index_start+3];
@@ -58,11 +64,11 @@ void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vect
                         af_hn_rb = ps.boundary_condition();
                     } else { // pulling information from right to left
 
-                        outofbounds_check(index_start+1+4, aflux_last);
-                        outofbounds_check(index_start+3+4, aflux_last);
+                        outofbounds_check(index_start_p1, aflux_last);
+                        outofbounds_check(index_start_p1+2, aflux_last);
 
-                        af_rb    = aflux_last[index_start+1+4];
-                        af_hn_rb = aflux_last[index_start+3+4];
+                        af_rb    = aflux_last[index_start_p1];
+                        af_hn_rb = aflux_last[index_start_p1+2];
                     }
                     b_small = b_neg(cells[i], g, ps.angles[j], af_hl_l, af_hl_r, af_rb, af_hn_rb);
 
@@ -74,11 +80,11 @@ void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vect
 
                     } else { // pulling information from left to right
 
-                        outofbounds_check(index_start-2, aflux_last);
-                        outofbounds_check(index_start+2-2, aflux_last);
+                        outofbounds_check(index_start_n1+1, aflux_last);
+                        outofbounds_check(index_start_n1+3, aflux_last);
 
-                        af_lb    = aflux_last[index_start-2];
-                        af_hn_lb = aflux_last[index_start+2-2];
+                        af_lb    = aflux_last[index_start_n1+1];
+                        af_hn_lb = aflux_last[index_start_n1+3];
                     }
 
                     b_small = b_pos(cells[i], g, ps.angles[j], af_hl_l, af_hl_r, af_lb, af_hn_lb);
@@ -156,9 +162,9 @@ void A_c_gen(int i, std::vector<double> &A_c, std::vector<cell> cells, problem_s
             }
         }
 
-        
-
         S = scatter(cells[i], ps.weights, ps.N_angles, g);
+
+        print_rm(S);
 
         int index_start = 4*g*ps.N_angles * 4*ps.N_angles*ps.N_groups + 4*g*ps.N_angles;
         int Adim_angle = 4*ps.N_angles; 

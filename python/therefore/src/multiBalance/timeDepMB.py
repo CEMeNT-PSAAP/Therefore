@@ -58,7 +58,7 @@ def multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatt
         #     [angular_flux[:,:,t], angular_flux_mid[:,:,t], current_total[:,t], spec_rad[t], loops, 
         #     source_converged] = SIMBTimeStep(sim_perams, angular_flux_last, angular_flux_mid_last, source_mesh_send, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights)
         if (backend == 'Big'):
-            [angular_flux[:,:,t], angular_flux_mid[:,:,t], current_total[:,t], spec_rad[t], loops, 
+            [angular_flux[:,:,t], angular_flux_mid[:,:,t], af_raw, current_total[:,t], spec_rad[t], loops, 
             source_converged] = OCIMBTimeStepBig(sim_perams, angular_flux_last, angular_flux_mid_last, source_mesh, xsec_mesh, xsec_scatter_mesh, dx_mesh, angles, weights)
         #elif (backend ==  'SI_MB_GPU'):
         #    [angular_flux[:,:,t], angular_flux_mid[:,:,t], current_total[:,t], spec_rad[t], loops, 
@@ -90,5 +90,5 @@ def multiBalance(inital_angular_flux, sim_perams, dx_mesh, xsec_mesh, xsec_scatt
         angular_flux_last = angular_flux[:,:,t]
         scalar_flux[:,t+1] = utl.ScalarFlux(angular_flux_mid[:,:,t], weights)
     
-    return(scalar_flux, current_total, spec_rad, end-start)
+    return(scalar_flux, af_raw, current_total, spec_rad, end-start)
     
