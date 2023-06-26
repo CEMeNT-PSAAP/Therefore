@@ -45,7 +45,7 @@ int main(void){
     
     // problem definition
     // eventually from an input deck
-    double dx = 0.1;
+    double dx = 0.05;
     double dt = 0.5;
     vector<double> v = {1, .5};
     vector<double> xsec_total = {1, 0.5};
@@ -54,8 +54,8 @@ int main(void){
     double Length = 1;
     double IC_homo = 0;
     
-    int N_cells = 10; 
-    int N_angles = 4; 
+    int N_cells = 20; 
+    int N_angles = 16; 
     int N_time = 1;
     int N_groups = 2;
 
@@ -143,8 +143,6 @@ int main(void){
     if (print_mats){
         print_rm(A);
     }
-
-    print_rm(A);
 
     vector<double> b(N_mat);
 
@@ -268,7 +266,6 @@ int main(void){
         //save_timestep.aflux = b;
         //print_vec_sd(save_timestep.aflux);
         //solutions.push_back(save_timestep);
-        print_vec_sd(b);
 
     } // end of time step loop
 

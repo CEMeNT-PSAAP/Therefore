@@ -164,8 +164,6 @@ void A_c_gen(int i, std::vector<double> &A_c, std::vector<cell> cells, problem_s
 
         S = scatter(cells[i], ps.weights, ps.N_angles, g);
 
-        print_rm(S);
-
         int index_start = 4*g*ps.N_angles * 4*ps.N_angles*ps.N_groups + 4*g*ps.N_angles;
         int Adim_angle = 4*ps.N_angles; 
 
