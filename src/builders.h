@@ -7,13 +7,13 @@ using namespace std;
 
 // NOTE: ROW MAJOR FORMAT
 
-void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vector<double> aflux_last, std::vector<cell> cells, problem_space ps);
+void b_gen(std::vector<double> &b, std::vector<double> &aflux_previous, std::vector<double> &aflux_last, std::vector<cell> cells, problem_space ps);
 void A_c_gen(int i, std::vector<double> &A_c, std::vector<cell> cells, problem_space ps);
 void A_gen(std::vector<double> &A, std::vector<cell> cells, problem_space ps);
 void quadrature(std::vector<double> &angles, std::vector<double> &weights);
 void outofbounds_check(int index, std::vector<double> &vec);
 
-void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vector<double> aflux_last, std::vector<cell> cells, problem_space ps){
+void b_gen(std::vector<double> &b, std::vector<double> &aflux_previous, std::vector<double> &aflux_last, std::vector<cell> cells, problem_space ps){
     //brief: builds b
 
     ps.assign_boundary(aflux_last);
@@ -44,10 +44,6 @@ void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vect
                 index_start = (i*(ps.SIZE_cellBlocks) + g*(ps.SIZE_groupBlocks) + 4*j);
                 // 4 blocks organized af_l, af_r, af_hn_l, af_hn_r
 
-                index_start_n1 = index_start - ps.SIZE_cellBlocks;
-                index_start_p1 = index_start + ps.SIZE_cellBlocks;
-
-
                 // angular flux from the k-1+1/2 from within the cell
                 double af_hl_l = aflux_previous[index_start+2];
                 double af_hl_r = aflux_previous[index_start+3];
@@ -58,6 +54,7 @@ void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vect
                         af_rb = ps.boundary_condition(1,g,j);
                         af_hn_rb = ps.boundary_condition(1,g,j);
                     } else { // pulling information from right to left
+                        index_start_p1 = index_start + ps.SIZE_cellBlocks;
 
                         outofbounds_check(index_start_p1, aflux_last);
                         outofbounds_check(index_start_p1+2, aflux_last);
@@ -74,6 +71,7 @@ void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vect
                         af_hn_lb = ps.boundary_condition(0,g,j);
 
                     } else { // pulling information from left to right
+                        index_start_n1 = index_start - ps.SIZE_cellBlocks;
 
                         outofbounds_check(index_start_n1+1, aflux_last);
                         outofbounds_check(index_start_n1+3, aflux_last);

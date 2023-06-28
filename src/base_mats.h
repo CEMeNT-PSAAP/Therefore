@@ -37,7 +37,7 @@ std::vector<double> A_pos_rm(cell cell, double mu, int group){
 std::vector<double> scatter(cell cell, std::vector<double> w, int N, int group){
     std::vector<double> S ((4*N*4*N));
     double beta = cell.dx*cell.xsec_scatter[group]/4;
-
+    
     for (int ca=0; ca<N; ca++){
         for (int ra=0; ra<N; ra++){
 
@@ -55,10 +55,10 @@ std::vector<double> b_pos(cell const &cell, int group, double mu, double af_hl_L
 
     double timer2 = cell.dx/(2*cell.v[group] * cell.dt);
 
-    std::vector<double> b_pos = {cell.dx/4*cell.Q[group] + timer2*af_hl_L + mu* af_L,
-                                 cell.dx/4*cell.Q[group] + timer2*af_hl_R,
-                                 cell.dx/4*cell.Q[group] + mu*af_hn_L,
-                                 cell.dx/4*cell.Q[group]};
+    std::vector<double> b_pos = {cell.dx/8*cell.Q[group] + timer2*af_hl_L + mu* af_L,
+                                 cell.dx/8*cell.Q[group] + timer2*af_hl_R,
+                                 cell.dx/8*cell.Q[group] + mu*af_hn_L,
+                                 cell.dx/8*cell.Q[group]};
 
     return(b_pos);
 
@@ -68,10 +68,10 @@ std::vector<double> b_neg(cell const &cell, int group, double mu, double af_hl_L
 
     double timer2 = cell.dx/(2*cell.v[group] * cell.dt);
 
-    std::vector<double> b_neg ={cell.dx/4*cell.Q[group] + timer2*af_hl_L,
-                                cell.dx/4*cell.Q[group] + timer2*af_hl_R - mu* af_R,
-                                cell.dx/4*cell.Q[group],
-                                cell.dx/4*cell.Q[group] - mu*af_hn_R};
+    std::vector<double> b_neg ={cell.dx/8*cell.Q[group] + timer2*af_hl_L,
+                                cell.dx/8*cell.Q[group] + timer2*af_hl_R - mu* af_R,
+                                cell.dx/8*cell.Q[group],
+                                cell.dx/8*cell.Q[group] - mu*af_hn_R};
 
     return(b_neg);
 }

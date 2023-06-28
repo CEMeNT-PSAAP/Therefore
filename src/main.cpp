@@ -36,6 +36,7 @@ std::vector<double> row2colSq(std::vector<double> row);
 // i space, m is angle, k is time, g is energy group
 
 const bool print_mats = false;
+const bool debug_print = false;
 const bool cycle_print = true;
 
 int main(void){
@@ -48,7 +49,7 @@ int main(void){
     // eventually from an input deck
     double dx = 0.05;
     double dt = 0.1;
-    vector<double> v = {1};
+    vector<double> v = {4};
     vector<double> xsec_total = {1, 0.5};
     vector<double> xsec_scatter = {0.25, 0.1};
     vector<double> Q = {1, 0};
@@ -56,7 +57,7 @@ int main(void){
     double IC_homo = 0;
     
     int N_cells = 170; 
-    int N_angles = 2; 
+    int N_angles = 4; 
     int N_time = 5;
     int N_groups = 1;
 
@@ -103,11 +104,11 @@ int main(void){
     ps.initilize_boundary();
 
     // reeds problem mat stuff
-    vector<double> sigma_s_reeds = {.9, .9, 0, 0, 0};
-    vector<double> sigma_t_reeds = {1, 1, 0, 5, 50};
-    vector<double> Source_reeds  = {0, 1, 0, 0, 50};
-    vector<double> dx_reeds = {0.25, 0.25, 0.25, 0.02, 0.02};
-    vector<int> N_per_region = {8, 8, 4, 50, 100};
+    vector<double> sigma_s_reeds = {.99, .9,    0,    0,    0};
+    vector<double> sigma_t_reeds = {1,    1,    0,    5,    50};
+    vector<double> Source_reeds  = {0,    1,    0,    0,    50};
+    vector<double> dx_reeds =      {0.25, 0.25, 0.25, 0.02, 0.02};
+    vector<int> N_per_region =     {8,    8 ,   4,    50,   100};
 
     // cell construction;
     vector<cell> cells;
@@ -116,15 +117,20 @@ int main(void){
     int N_next = N_per_region[0]-1;
 
     for (int i=0; i<N_cells; i++){
+        /*building reeds problem from left to right*/
 
-        if (i==N_next){
+        if (i==N_next+1){
             region_id ++;
             N_next += N_per_region[region_id];
         }
 
         cell cellCon;
         cellCon.cell_id = i;
-        cellCon.x_left = i*dx;
+        if (i ==0 )
+            cellCon.x_left = 0;
+        else
+            cellCon.x_left = cells[cells.size()-1].x_left+cells[cells.size()-1].dx;
+        
         cellCon.xsec_scatter = vector<double> {sigma_s_reeds[region_id]};
         cellCon.xsec_total = vector<double> {sigma_t_reeds[region_id]};
         cellCon.dx = dx_reeds[region_id];
@@ -134,6 +140,14 @@ int main(void){
         cellCon.region_id = region_id;
 
         cells.push_back(cellCon);
+    }
+
+    if (debug_print){
+        for (int k=0; k<N_cells; k++){
+            cout << cells[k].cell_id << " " << cells[k].x_left  << "   " << cells[k].region_id << "   " << cells[k].dx << "   " << cells[k].Q[0] << "   " << cells[k].xsec_scatter[0] << "   " << cells[k].xsec_total[0] << endl;
+        }
+
+        return(0);
     }
     
     // initial condition stored as first element of solution vector
@@ -174,7 +188,7 @@ int main(void){
     vector<double> b(N_mat);
 
     // time step loop
-    for(int t=0; t<N_time; ++t){
+    for(int t=0; t<1; ++t){
 
         
         cout << "howdy" << endl;
@@ -281,6 +295,14 @@ int main(void){
             output << b[i] << "," << endl;
         }
 
+        std::ofstream dist("x.csv");
+        dist << "x: " << endl;
+        for (int i=0; i<cells.size(); i++){
+            dist << cells[i].x_left << "," << endl;
+            dist << cells[i].x_left + cells[i].dx/2 << "," <<endl;
+        }
+
+
         cout << "file saved under: " << file_name << endl;
 
         // store solution vector org
@@ -305,6 +327,24 @@ int main(void){
     return(0);
 } // end of main
 
+/*
+class run{
+    
+    
+
+    public:
+        problem_space ps;
+        vector<cell> cells;
+
+
+
+
+        // functions
+
+        void run_whole_problem(){
+
+        }
+};*/
 
 
 std::vector<double> row2colSq(std::vector<double> row){
