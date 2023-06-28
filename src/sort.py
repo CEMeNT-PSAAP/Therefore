@@ -2,10 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-N_angles = 16
-N_cells = 20
-N_groups = 2
-N_time = 1
+N_angles = 2
+N_cells = 170
+N_groups = 1
+N_time = 5
 
 file_name_base = 'afluxUnsorted'
 file_ext = '.csv'
@@ -21,9 +21,23 @@ SIZE_groupBlocks = N_angles*4
 # size of the angle blocks within a group and angle
 SIZE_angleBlocks = 4
 
+
+dx_mesh = np.empty(N_cells)
+N_region = np.array((8, 8, 4, 50, 100), int)
+dx = np.array((0.25, 0.25, 0.25, 0.02, 0.02))
+for i in range(N_region.size):
+    LB = sum(N_region[:i])
+    RB = sum(N_region[:i+1])
+    dx_mesh[LB:RB] = dx[i]
+
+x = np.zeros(N_cells*2)
+for i in range(N_cells):
+    x[2*i] = sum(dx_mesh[:i])
+    x[2*i+1] = sum(dx_mesh[:i+1])
+
 af_wp = np.zeros((N_time*2, N_groups, N_angles, 2*N_cells))
 
-assert (af_wp.size == SIZE_problem)
+assert (int(af_wp.size/N_time) == SIZE_problem)
 
 sf_wp = np.zeros((N_time*2, N_groups, 2*N_cells))
 
@@ -56,8 +70,15 @@ for t in range(N_time):
                 sf_wp[t*2+1,g,2*i]   += weights[n] * af_raw[index_start+2]
                 sf_wp[t*2+1,g,2*i+1] += weights[n] * af_raw[index_start+3]
 
-x = np.linspace(0, 1, N_cells*2)
+#x = np.linspace(0, 1, N_cells*2)
 
 plt.figure()
-plt.plot(x, sf_wp[1,1,:])
+plt.plot(x, sf_wp[1,0,:], label='1')
+plt.plot(x, sf_wp[3,0,:], label='2')
+plt.plot(x, sf_wp[5,0,:], label='3')
+plt.plot(x, sf_wp[6,0,:], label='4')
+plt.xlabel('Distance')
+plt.ylabel('Sc Fl')
+plt.title('Trans Reeds -- trouble shoot')
+plt.legend()
 plt.show()

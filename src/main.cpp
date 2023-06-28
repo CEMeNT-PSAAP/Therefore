@@ -4,6 +4,7 @@ auth: J Piper Morgan (morgjack@oregonstate.edu)*/
 
 #include <iostream>
 #include <vector>
+
 #include "util.h"
 #include "builders.h"
 //#include "H5Cpp.h"
@@ -14,7 +15,7 @@ auth: J Piper Morgan (morgjack@oregonstate.edu)*/
 
 /* compile notes and prerecs
 
-    In ubuntu yyou need these libarires:
+    In ubuntu you need these libarires:
         sudo apt-get install libblas-dev checkinstall
         sudo apt-get install libblas-doc checkinstall
         sudo apt-get install liblapacke-dev checkinstall
@@ -46,18 +47,18 @@ int main(void){
     // problem definition
     // eventually from an input deck
     double dx = 0.05;
-    double dt = 0.5;
-    vector<double> v = {1, .5};
+    double dt = 0.1;
+    vector<double> v = {1};
     vector<double> xsec_total = {1, 0.5};
     vector<double> xsec_scatter = {0.25, 0.1};
     vector<double> Q = {1, 0};
     double Length = 1;
     double IC_homo = 0;
     
-    int N_cells = 20; 
-    int N_angles = 16; 
-    int N_time = 1;
-    int N_groups = 2;
+    int N_cells = 170; 
+    int N_angles = 2; 
+    int N_time = 5;
+    int N_groups = 1;
 
     // 4 = N_subspace (2) * N_subtime (2)
     int N_mat = 4 * N_cells * N_angles * N_groups;
@@ -78,7 +79,6 @@ int main(void){
 
     quadrature(angles, weights);
 
-
     // problem space class construction
     problem_space ps;
     ps.dt = dt;
@@ -89,22 +89,49 @@ int main(void){
     ps.N_time = N_time;
     ps.angles = angles;
     ps.weights = weights;
-    ps.initialize_from_previous = true;
+    ps.initialize_from_previous = false;
     ps.max_iteration = int(1e4);
+    ps.boundary_conditions = {0,1};
+
+    // size of the cell blocks in all groups and angle
+    ps.SIZE_cellBlocks = ps.N_angles*ps.N_groups*4;
+    // size of the group blocks in all angle within a cell
+    ps.SIZE_groupBlocks = ps.N_angles*4;
+    // size of the angle blocks within a group and angle
+    ps.SIZE_angleBlocks = 4;
+
+    ps.initilize_boundary();
+
+    // reeds problem mat stuff
+    vector<double> sigma_s_reeds = {.9, .9, 0, 0, 0};
+    vector<double> sigma_t_reeds = {1, 1, 0, 5, 50};
+    vector<double> Source_reeds  = {0, 1, 0, 0, 50};
+    vector<double> dx_reeds = {0.25, 0.25, 0.25, 0.02, 0.02};
+    vector<int> N_per_region = {8, 8, 4, 50, 100};
 
     // cell construction;
     vector<cell> cells;
 
+    int region_id = 0;
+    int N_next = N_per_region[0]-1;
+
     for (int i=0; i<N_cells; i++){
+
+        if (i==N_next){
+            region_id ++;
+            N_next += N_per_region[region_id];
+        }
+
         cell cellCon;
         cellCon.cell_id = i;
         cellCon.x_left = i*dx;
-        cellCon.xsec_scatter = xsec_scatter;
-        cellCon.xsec_total = xsec_total;
-        cellCon.dx = dx;
+        cellCon.xsec_scatter = vector<double> {sigma_s_reeds[region_id]};
+        cellCon.xsec_total = vector<double> {sigma_t_reeds[region_id]};
+        cellCon.dx = dx_reeds[region_id];
         cellCon.v = v;
         cellCon.dt = dt;
-        cellCon.Q = Q;
+        cellCon.Q = vector<double> {Source_reeds[region_id]};
+        cellCon.region_id = region_id;
 
         cells.push_back(cellCon);
     }
@@ -146,19 +173,19 @@ int main(void){
 
     vector<double> b(N_mat);
 
-    cout << "howdy" << endl;
-
     // time step loop
     for(int t=0; t<N_time; ++t){
 
         
+        cout << "howdy" << endl;
         if (ps.initialize_from_previous){
             // all the angular fluxes start from the previous converged time step
-            aflux_last = solutions[t].aflux;
+            aflux_last = aflux_last;
         } else {
             // all angular fluxes start this time step iteration from 0
             fill(aflux_last.begin(), aflux_last.end(), 0.0);
         }
+        
 
         vector<double> b(N_mat, 0.0);
         
@@ -172,6 +199,7 @@ int main(void){
         //vector<double> A_copy;
         vector<double> A_copy(N_mat);
 
+        
         while (converged){
 
             // lapack requires a copy of data that it uses for row piviot (A after _dgesv != A)
@@ -237,6 +265,8 @@ int main(void){
             error_n1 = error;
 
         } // end convergence loop
+
+        aflux_previous = b;
 
         string ext = ".csv";
         string file_name = "afluxUnsorted";
