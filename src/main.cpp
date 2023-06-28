@@ -45,19 +45,19 @@ int main(void){
     
     // problem definition
     // eventually from an input deck
-    double dx = 0.1;
-    double dt = 0.1;
-    vector<double> v = {1};
-    vector<double> xsec_total = {1};
-    vector<double> xsec_scatter = {0};
-    vector<double> Q = {1};
+    double dx = 0.05;
+    double dt = 0.5;
+    vector<double> v = {1, .5};
+    vector<double> xsec_total = {1, 0.5};
+    vector<double> xsec_scatter = {0.25, 0.1};
+    vector<double> Q = {1, 0};
     double Length = 1;
     double IC_homo = 0;
     
-    int N_cells = 10; 
-    int N_angles = 2; 
-    int N_time = 5;
-    int N_groups = 1;
+    int N_cells = 20; 
+    int N_angles = 16; 
+    int N_time = 1;
+    int N_groups = 2;
 
     // 4 = N_subspace (2) * N_subtime (2)
     int N_mat = 4 * N_cells * N_angles * N_groups;
@@ -266,7 +266,6 @@ int main(void){
         //save_timestep.aflux = b;
         //print_vec_sd(save_timestep.aflux);
         //solutions.push_back(save_timestep);
-        print_vec_sd(b);
 
     } // end of time step loop
 
