@@ -140,3 +140,15 @@ double infNorm_error ( std::vector<double> v1, std::vector<double> v2 ){
     return(relError);
 
 }
+
+inline void outofbounds_check(int index, std::vector<double> &vec){
+    using namespace std;
+
+    if ( index < 0 ) {
+        cout<<">>>>>>>>>>>>ERROR<<<<<<<<<<<<"<<endl;
+        cout<<"sometihng was indexed under 0"<<endl;
+    } else if ( index >= vec.size() ) {
+        cout<<">>>>>>>>>>>>>>>>>>>>ERROR<<<<<<<<<<<<<<<<<<<<"<<endl;
+        cout<<"sometihng was indexed over a vectors max size"<<endl;
+    }
+}

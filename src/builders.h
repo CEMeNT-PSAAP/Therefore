@@ -7,24 +7,19 @@ using namespace std;
 
 // NOTE: ROW MAJOR FORMAT
 
-void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vector<double> aflux_last, std::vector<cell> cells, problem_space ps);
+void b_gen(std::vector<double> &b, std::vector<double> &aflux_previous, std::vector<double> &aflux_last, std::vector<cell> cells, problem_space ps);
 void A_c_gen(int i, std::vector<double> &A_c, std::vector<cell> cells, problem_space ps);
 void A_gen(std::vector<double> &A, std::vector<cell> cells, problem_space ps);
 void quadrature(std::vector<double> &angles, std::vector<double> &weights);
 void outofbounds_check(int index, std::vector<double> &vec);
 
-
-void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vector<double> aflux_last, std::vector<cell> cells, problem_space ps){
+void b_gen(std::vector<double> &b, std::vector<double> &aflux_previous, std::vector<double> &aflux_last, std::vector<cell> cells, problem_space ps){
     //brief: builds b
+
+    ps.assign_boundary(aflux_last);
 
     vector<double> b_small;
 
-    // size of the cell blocks in all groups and angle
-    int size_cellBlocks = ps.N_angles*ps.N_groups*4;
-    // size of the group blocks in all angle within a cell
-    int size_groupBlocks = ps.N_angles*4;
-    // size of the angle blocks within a group and angle
-    int size_angleBlocks = 4;
     // helper index
     int index_start;
     int index_start_n1;
@@ -46,12 +41,8 @@ void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vect
             for (int j=0; j<ps.N_angles; j++){
 
                 // the first index in the smallest chunk of 4
-                index_start = (i*(size_cellBlocks) + g*(size_groupBlocks) + 4*j);
+                index_start = (i*(ps.SIZE_cellBlocks) + g*(ps.SIZE_groupBlocks) + 4*j);
                 // 4 blocks organized af_l, af_r, af_hn_l, af_hn_r
-
-                index_start_n1 = index_start - size_cellBlocks;
-                index_start_p1 = index_start + size_cellBlocks;
-
 
                 // angular flux from the k-1+1/2 from within the cell
                 double af_hl_l = aflux_previous[index_start+2];
@@ -60,9 +51,10 @@ void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vect
                 // negative angle
                 if (ps.angles[j] < 0){
                     if (i == ps.N_cells-1){ // right boundary condition
-                        af_rb = ps.boundary_condition();
-                        af_hn_rb = ps.boundary_condition();
+                        af_rb = ps.boundary_condition(1,g,j);
+                        af_hn_rb = ps.boundary_condition(1,g,j);
                     } else { // pulling information from right to left
+                        index_start_p1 = index_start + ps.SIZE_cellBlocks;
 
                         outofbounds_check(index_start_p1, aflux_last);
                         outofbounds_check(index_start_p1+2, aflux_last);
@@ -75,10 +67,11 @@ void b_gen(std::vector<double> &b, std::vector<double> aflux_previous, std::vect
                 // positive angles
                 } else {
                     if (i == 0){ // left boundary condition
-                        af_lb    = ps.boundary_condition();
-                        af_hn_lb = ps.boundary_condition();
+                        af_lb    = ps.boundary_condition(0,g,j);
+                        af_hn_lb = ps.boundary_condition(0,g,j);
 
                     } else { // pulling information from left to right
+                        index_start_n1 = index_start - ps.SIZE_cellBlocks;
 
                         outofbounds_check(index_start_n1+1, aflux_last);
                         outofbounds_check(index_start_n1+3, aflux_last);
@@ -202,12 +195,5 @@ void quadrature(std::vector<double> &angles, std::vector<double> &weights){
 }
 
 
-inline void outofbounds_check(int index, std::vector<double> &vec){
-    if ( index < 0 ) {
-        cout<<">>>>>>>>>>>>ERROR<<<<<<<<<<<<"<<endl;
-        cout<<"sometihng was indexed under 0"<<endl;
-    } else if ( index >= vec.size() ) {
-        cout<<">>>>>>>>>>>>>>>>>>>>ERROR<<<<<<<<<<<<<<<<<<<<"<<endl;
-        cout<<"sometihng was indexed over a vectors max size"<<endl;
-    }
-}
+
+

@@ -4,17 +4,18 @@ auth: J Piper Morgan (morgjack@oregonstate.edu)*/
 
 #include <iostream>
 #include <vector>
+
 #include "util.h"
 #include "builders.h"
 //#include "H5Cpp.h"
-#include "mkl_lapacke.h"
+//#include "lapacke.h"
 //#include <Eigen/Dense>
 //#include <cusparse_v2.h>
 //#include <cuda.h>
 
 /* compile notes and prerecs
 
-    In ubuntu yyou need these libarires:
+    In ubuntu you need these libarires:
         sudo apt-get install libblas-dev checkinstall
         sudo apt-get install libblas-doc checkinstall
         sudo apt-get install liblapacke-dev checkinstall
@@ -27,7 +28,7 @@ auth: J Piper Morgan (morgjack@oregonstate.edu)*/
 void eosPrint(ts_solutions state);
 
 // row major!!!!!!
-//extern "C" void dgesv_( int *n, int *nrhs, double  *a, int *lda, int *ipiv, double *b, int *lbd, int *info  );
+extern "C" void dgesv_( int *n, int *nrhs, double  *a, int *lda, int *ipiv, double *b, int *lbd, int *info  );
 //extern "C" void LAPACKE_dgesv_( LAPACK_ROW_MAJOR, int *n, int *nrhs, double  *a, int *lda, int *ipiv, double *b, int *lbd, int *info  );
 //-llapacke
 std::vector<double> row2colSq(std::vector<double> row);
@@ -35,6 +36,7 @@ std::vector<double> row2colSq(std::vector<double> row);
 // i space, m is angle, k is time, g is energy group
 
 const bool print_mats = false;
+const bool debug_print = false;
 const bool cycle_print = true;
 
 int main(void){
@@ -46,18 +48,18 @@ int main(void){
     // problem definition
     // eventually from an input deck
     double dx = 0.05;
-    double dt = 0.5;
-    vector<double> v = {1, .5};
+    double dt = 0.1;
+    vector<double> v = {4};
     vector<double> xsec_total = {1, 0.5};
     vector<double> xsec_scatter = {0.25, 0.1};
     vector<double> Q = {1, 0};
     double Length = 1;
     double IC_homo = 0;
     
-    int N_cells = 20; 
-    int N_angles = 16; 
-    int N_time = 1;
-    int N_groups = 2;
+    int N_cells = 170; 
+    int N_angles = 4; 
+    int N_time = 5;
+    int N_groups = 1;
 
     // 4 = N_subspace (2) * N_subtime (2)
     int N_mat = 4 * N_cells * N_angles * N_groups;
@@ -78,7 +80,6 @@ int main(void){
 
     quadrature(angles, weights);
 
-
     // problem space class construction
     problem_space ps;
     ps.dt = dt;
@@ -89,24 +90,64 @@ int main(void){
     ps.N_time = N_time;
     ps.angles = angles;
     ps.weights = weights;
-    ps.initialize_from_previous = true;
+    ps.initialize_from_previous = false;
     ps.max_iteration = int(1e4);
+    ps.boundary_conditions = {0,1};
+
+    // size of the cell blocks in all groups and angle
+    ps.SIZE_cellBlocks = ps.N_angles*ps.N_groups*4;
+    // size of the group blocks in all angle within a cell
+    ps.SIZE_groupBlocks = ps.N_angles*4;
+    // size of the angle blocks within a group and angle
+    ps.SIZE_angleBlocks = 4;
+
+    ps.initilize_boundary();
+
+    // reeds problem mat stuff
+    vector<double> sigma_s_reeds = {.9,  .9,    0,    0,    0};
+    vector<double> sigma_t_reeds = {1,    1,    0,    5,    50};
+    vector<double> Source_reeds  = {0,    1,    0,    0,    50};
+    vector<double> dx_reeds =      {0.25, 0.25, 0.25, 0.02, 0.02};
+    vector<int> N_per_region =     {8,    8 ,   4,    50,   100};
 
     // cell construction;
     vector<cell> cells;
 
+    int region_id = 0;
+    int N_next = N_per_region[0]-1;
+
     for (int i=0; i<N_cells; i++){
+        /*building reeds problem from left to right*/
+
+        if (i==N_next+1){
+            region_id ++;
+            N_next += N_per_region[region_id];
+        }
+
         cell cellCon;
         cellCon.cell_id = i;
-        cellCon.x_left = i*dx;
-        cellCon.xsec_scatter = xsec_scatter;
-        cellCon.xsec_total = xsec_total;
-        cellCon.dx = dx;
+        if (i ==0 )
+            cellCon.x_left = 0;
+        else
+            cellCon.x_left = cells[cells.size()-1].x_left+cells[cells.size()-1].dx;
+        
+        cellCon.xsec_scatter = vector<double> {sigma_s_reeds[region_id]};
+        cellCon.xsec_total = vector<double> {sigma_t_reeds[region_id]};
+        cellCon.dx = dx_reeds[region_id];
         cellCon.v = v;
         cellCon.dt = dt;
-        cellCon.Q = Q;
+        cellCon.Q = vector<double> {Source_reeds[region_id]};
+        cellCon.region_id = region_id;
 
         cells.push_back(cellCon);
+    }
+
+    if (debug_print){
+        for (int k=0; k<N_cells; k++){
+            cout << cells[k].cell_id << " " << cells[k].x_left  << "   " << cells[k].region_id << "   " << cells[k].dx << "   " << cells[k].Q[0] << "   " << cells[k].xsec_scatter[0] << "   " << cells[k].xsec_total[0] << endl;
+        }
+
+        return(0);
     }
     
     // initial condition stored as first element of solution vector
@@ -133,12 +174,16 @@ int main(void){
 
     int nrhs = 1; // one column in b
     int lda = N_mat;
-    int ldb = 1; // 
+    int ldb = 1; // leading b dimention for row major
+    int ldb_col = N_mat; // leading b dim for col major
     std::vector<int> i_piv(N_mat, 0);  // pivot column vector
     int info;
 
     // generation of the whole ass mat
     A_gen(A, cells, ps);
+    cout << "howdy" << endl;
+    vector<double> A_col = row2colSq(A);
+    
 
     if (print_mats){
         print_rm(A);
@@ -146,19 +191,19 @@ int main(void){
 
     vector<double> b(N_mat);
 
-    cout << "howdy" << endl;
-
     // time step loop
-    for(int t=0; t<N_time; ++t){
+    for(int t=0; t<1; ++t){
 
+        
         
         if (ps.initialize_from_previous){
             // all the angular fluxes start from the previous converged time step
-            aflux_last = solutions[t].aflux;
+            aflux_last = aflux_last;
         } else {
             // all angular fluxes start this time step iteration from 0
             fill(aflux_last.begin(), aflux_last.end(), 0.0);
         }
+        
 
         vector<double> b(N_mat, 0.0);
         
@@ -172,10 +217,11 @@ int main(void){
         //vector<double> A_copy;
         vector<double> A_copy(N_mat);
 
+        
         while (converged){
 
             // lapack requires a copy of data that it uses for row piviot (A after _dgesv != A)
-            A_copy = A;
+            A_copy = A_col;
 
             b_gen(b, aflux_previous, aflux_last, cells, ps);
             // reminder: last refers to iteration, previous refers to time step
@@ -186,10 +232,11 @@ int main(void){
                 print_vec_sd(b);
             }
             // solve Ax=b
-            info = LAPACKE_dgesv( LAPACK_ROW_MAJOR, N_mat, nrhs, &A_copy[0], lda, &i_piv[0], &b[0], ldb );
+            //info = LAPACKE_dgesv( LAPACK_ROW_MAJOR, N_mat, nrhs, &A_copy[0], lda, &i_piv[0], &b[0], ldb );
 
             //info = LAPACKE_dgesv( LAPACK_ROW_MAJOR, n, nrhs, a, lda, ipiv, b, ldb );
-            //Lapack solver dgesv_( &N_mat, &nrhs, &*A.begin(), &lda, &*i_piv.begin(), &*b.begin(), &ldb, &info );
+            //Lapack solver 
+            dgesv_( &N_mat, &nrhs, &A_copy[0], &lda, &i_piv[0], &b[0], &ldb_col, &info );
 
             if (print_mats){
                 cout << "x" <<endl;
@@ -238,6 +285,8 @@ int main(void){
 
         } // end convergence loop
 
+        aflux_previous = b;
+
         string ext = ".csv";
         string file_name = "afluxUnsorted";
         string dt = to_string(t);
@@ -250,6 +299,14 @@ int main(void){
         for (int i=0; i<b.size(); i++){
             output << b[i] << "," << endl;
         }
+
+        std::ofstream dist("x.csv");
+        dist << "x: " << endl;
+        for (int i=0; i<cells.size(); i++){
+            dist << cells[i].x_left << "," << endl;
+            dist << cells[i].x_left + cells[i].dx/2 << "," <<endl;
+        }
+
 
         cout << "file saved under: " << file_name << endl;
 
@@ -275,17 +332,39 @@ int main(void){
     return(0);
 } // end of main
 
+/*
+class run{
+    
+    
+
+    public:
+        problem_space ps;
+        vector<cell> cells;
+
+
+
+
+        // functions
+
+        void run_whole_problem(){
+
+        }
+};*/
 
 
 std::vector<double> row2colSq(std::vector<double> row){
     /*brief */
-
+    
     int SIZE = sqrt(row.size());
 
-    std::vector<double> col(SIZE);
+    std::vector<double> col(SIZE*SIZE);
 
     for (int i = 0; i < SIZE; ++i){
         for (int j = 0; j < SIZE; ++j){
+            outofbounds_check(i * SIZE + j, col);
+            outofbounds_check(j * SIZE + i, row);
+
+
             col[ i * SIZE + j ] = row[ j * SIZE + i ];
         }
     }
