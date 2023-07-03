@@ -8,7 +8,7 @@ auth: J Piper Morgan (morgjack@oregonstate.edu)*/
 #include "util.h"
 #include "builders.h"
 //#include "H5Cpp.h"
-#include "lapacke.h"
+//#include "lapacke.h"
 //#include <Eigen/Dense>
 //#include <cusparse_v2.h>
 //#include <cuda.h>
@@ -28,7 +28,7 @@ auth: J Piper Morgan (morgjack@oregonstate.edu)*/
 void eosPrint(ts_solutions state);
 
 // row major!!!!!!
-//extern "C" void dgesv_( int *n, int *nrhs, double  *a, int *lda, int *ipiv, double *b, int *lbd, int *info  );
+extern "C" void dgesv_( int *n, int *nrhs, double  *a, int *lda, int *ipiv, double *b, int *lbd, int *info  );
 //extern "C" void LAPACKE_dgesv_( LAPACK_ROW_MAJOR, int *n, int *nrhs, double  *a, int *lda, int *ipiv, double *b, int *lbd, int *info  );
 //-llapacke
 std::vector<double> row2colSq(std::vector<double> row);
@@ -104,7 +104,7 @@ int main(void){
     ps.initilize_boundary();
 
     // reeds problem mat stuff
-    vector<double> sigma_s_reeds = {.99, .9,    0,    0,    0};
+    vector<double> sigma_s_reeds = {.9,  .9,    0,    0,    0};
     vector<double> sigma_t_reeds = {1,    1,    0,    5,    50};
     vector<double> Source_reeds  = {0,    1,    0,    0,    50};
     vector<double> dx_reeds =      {0.25, 0.25, 0.25, 0.02, 0.02};
@@ -174,12 +174,16 @@ int main(void){
 
     int nrhs = 1; // one column in b
     int lda = N_mat;
-    int ldb = 1; // 
+    int ldb = 1; // leading b dimention for row major
+    int ldb_col = N_mat; // leading b dim for col major
     std::vector<int> i_piv(N_mat, 0);  // pivot column vector
     int info;
 
     // generation of the whole ass mat
     A_gen(A, cells, ps);
+    cout << "howdy" << endl;
+    vector<double> A_col = row2colSq(A);
+    
 
     if (print_mats){
         print_rm(A);
@@ -191,7 +195,7 @@ int main(void){
     for(int t=0; t<1; ++t){
 
         
-        cout << "howdy" << endl;
+        
         if (ps.initialize_from_previous){
             // all the angular fluxes start from the previous converged time step
             aflux_last = aflux_last;
@@ -217,7 +221,7 @@ int main(void){
         while (converged){
 
             // lapack requires a copy of data that it uses for row piviot (A after _dgesv != A)
-            A_copy = A;
+            A_copy = A_col;
 
             b_gen(b, aflux_previous, aflux_last, cells, ps);
             // reminder: last refers to iteration, previous refers to time step
@@ -228,10 +232,11 @@ int main(void){
                 print_vec_sd(b);
             }
             // solve Ax=b
-            info = LAPACKE_dgesv( LAPACK_ROW_MAJOR, N_mat, nrhs, &A_copy[0], lda, &i_piv[0], &b[0], ldb );
+            //info = LAPACKE_dgesv( LAPACK_ROW_MAJOR, N_mat, nrhs, &A_copy[0], lda, &i_piv[0], &b[0], ldb );
 
             //info = LAPACKE_dgesv( LAPACK_ROW_MAJOR, n, nrhs, a, lda, ipiv, b, ldb );
-            //Lapack solver dgesv_( &N_mat, &nrhs, &*A.begin(), &lda, &*i_piv.begin(), &*b.begin(), &ldb, &info );
+            //Lapack solver 
+            dgesv_( &N_mat, &nrhs, &A_copy[0], &lda, &i_piv[0], &b[0], &ldb_col, &info );
 
             if (print_mats){
                 cout << "x" <<endl;
@@ -349,13 +354,17 @@ class run{
 
 std::vector<double> row2colSq(std::vector<double> row){
     /*brief */
-
+    
     int SIZE = sqrt(row.size());
 
-    std::vector<double> col(SIZE);
+    std::vector<double> col(SIZE*SIZE);
 
     for (int i = 0; i < SIZE; ++i){
         for (int j = 0; j < SIZE; ++j){
+            outofbounds_check(i * SIZE + j, col);
+            outofbounds_check(j * SIZE + i, row);
+
+
             col[ i * SIZE + j ] = row[ j * SIZE + i ];
         }
     }
