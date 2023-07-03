@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <math.h>
 #include <fstream>
+#include<algorithm>
+
 
 
 void rm2md(){
@@ -128,6 +130,8 @@ std::vector<double> relativeError_ebe ( std::vector<double> v1, std::vector<doub
 
 double infNorm_error ( std::vector<double> v1, std::vector<double> v2 ){
     /*brief: computing the max relative error between two vectors*/
+
+    using namespace std;
 
     std::vector<double> error = relativeError_ebe(v1, v2);
 

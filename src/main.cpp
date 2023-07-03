@@ -7,7 +7,7 @@ auth: J Piper Morgan (morgjack@oregonstate.edu)*/
 #include "util.h"
 #include "builders.h"
 //#include "H5Cpp.h"
-#include "lapacke.h"
+#include "mkl_lapacke.h"
 //#include <Eigen/Dense>
 //#include <cusparse_v2.h>
 //#include <cuda.h>
