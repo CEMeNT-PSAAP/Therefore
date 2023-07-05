@@ -56,7 +56,7 @@ int main(void){
     // problem definition
     // eventually from an input deck
     double dx = 0.05;
-    double dt = 0.1;
+    double dt = 1.0;
     vector<double> v = {4};
     vector<double> xsec_total = {1, 0.5};
     vector<double> xsec_scatter = {0.25, 0.1};
@@ -67,7 +67,7 @@ int main(void){
     int N_cells = 170; 
     int N_angles = 2; 
     int N_time = 5;
-    int N_groups = 1;
+    int N_groups = 2;
 
     // 4 = N_subspace (2) * N_subtime (2)
     int N_mat = 4 * N_cells * N_angles * N_groups;
@@ -141,12 +141,12 @@ int main(void){
         else
             cellCon.x_left = cells[cells.size()-1].x_left+cells[cells.size()-1].dx;
         
-        cellCon.xsec_scatter = vector<double> {sigma_s_reeds[region_id]};
-        cellCon.xsec_total = vector<double> {sigma_t_reeds[region_id]};
+        cellCon.xsec_scatter = vector<double> {sigma_s_reeds[region_id], sigma_s_reeds[region_id]};
+        cellCon.xsec_total = vector<double> {sigma_t_reeds[region_id], sigma_t_reeds[region_id]};
         cellCon.dx = dx_reeds[region_id];
         cellCon.v = v;
         cellCon.dt = dt;
-        cellCon.Q = vector<double> {Source_reeds[region_id]};
+        cellCon.Q = vector<double> {Source_reeds[region_id], Source_reeds[region_id]};
         cellCon.region_id = region_id;
 
         cells.push_back(cellCon);
@@ -192,10 +192,6 @@ int main(void){
     // generation of the whole ass mat
     A_gen(A, cells, ps);
     vector<double> A_col = row2colSq(A);
-    
-    print_rm(A);
-
-    return(0);
 
     if (print_mats){
         print_rm(A);
@@ -204,7 +200,7 @@ int main(void){
     vector<double> b(N_mat);
 
     // time step loop
-    for(int t=0; t<1; ++t){
+    for(int t=0; t<N_time; ++t){
 
         
         

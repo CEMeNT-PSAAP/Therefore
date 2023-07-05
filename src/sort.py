@@ -2,9 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-N_angles = 4
+N_angles = 2
 N_cells = 170
-N_groups = 1
+N_groups = 2
 N_time = 5
 
 file_name_base = 'afluxUnsorted'
@@ -30,7 +30,7 @@ assert (int(af_wp.size/N_time) == SIZE_problem)
 sf_wp = np.zeros((N_time*2, N_groups, 2*N_cells))
 
 # schuky duck the angular flux together
-for t in range(1):
+for t in range(N_time):
     # import csv file 
     file = file_name_base+str(t)+file_ext
     af_raw = np.genfromtxt(file, dtype=np.float64, delimiter=',', skip_header=2)
@@ -60,12 +60,11 @@ for t in range(1):
 
 #x = np.linspace(0, 1, N_cells*2)
 
+print(sf_wp.shape)
+
 plt.figure()
-plt.plot(x, sf_wp[0,0,:], label='0')
-plt.plot(x, sf_wp[1,0,:], label='1')
-#plt.plot(x, sf_wp[3,0,:], label='2')
-#plt.plot(x, sf_wp[5,0,:], label='3')
-#plt.plot(x, sf_wp[6,0,:], label='4')
+plt.plot(x, sf_wp[4,0,:], label='g0')
+plt.plot(x, sf_wp[4,1,:], label='g1')
 plt.xlabel('Distance')
 plt.ylabel('Sc Fl')
 plt.title('Trans Reeds -- trouble shoot')
