@@ -15,14 +15,22 @@ auth: J Piper Morgan (morgjack@oregonstate.edu)*/
 
 /* compile notes and prerecs
 
-    In ubuntu you need these libarires:
-        sudo apt-get install libblas-dev checkinstall
-        sudo apt-get install libblas-doc checkinstall
-        sudo apt-get install liblapacke-dev checkinstall
-        sudo apt-get install liblapack-doc checkinstall
+    In UBUNTU 
+        you need these libraries:
+            sudo apt-get install libblas-dev checkinstall
+            sudo apt-get install libblas-doc checkinstall
+            sudo apt-get install liblapacke-dev checkinstall
+            sudo apt-get install liblapack-doc checkinstall
+        Should be able to configure with: 
+            g++ main.cpp -std=c++20 -llapack
 
-    Should be able to configure with: 
-        g++ main.cpp -std=c++20 -llapacke
+    In OSX
+        you need:
+            brew install gcc
+            brew install lapack
+        Should be able to compile with: 
+            g++-13 main.cpp -std=c++20 -llapack
+            
 */
 
 void eosPrint(ts_solutions state);
@@ -57,7 +65,7 @@ int main(void){
     double IC_homo = 0;
     
     int N_cells = 170; 
-    int N_angles = 4; 
+    int N_angles = 2; 
     int N_time = 5;
     int N_groups = 1;
 
@@ -101,6 +109,8 @@ int main(void){
     // size of the angle blocks within a group and angle
     ps.SIZE_angleBlocks = 4;
 
+
+    // allocates a zero vector of nessacary size
     ps.initilize_boundary();
 
     // reeds problem mat stuff
@@ -181,9 +191,11 @@ int main(void){
 
     // generation of the whole ass mat
     A_gen(A, cells, ps);
-    cout << "howdy" << endl;
     vector<double> A_col = row2colSq(A);
     
+    print_rm(A);
+
+    return(0);
 
     if (print_mats){
         print_rm(A);
@@ -217,6 +229,11 @@ int main(void){
         //vector<double> A_copy;
         vector<double> A_copy(N_mat);
 
+        if (cycle_print){
+            cout << ">>>CYCLE INFO FOR TIME STEP: " << t <<"<<<"<< endl;
+            printf("cycle   error         error_n1      error_n2     spec_rad   cycle_time\n");
+            printf("===================================================================================\n");
+        }
         
         while (converged){
 
@@ -263,7 +280,7 @@ int main(void){
             }
 
             if (itter > ps.max_iteration){
-                cout << "WARNING: Computation did not converge after " << ps.max_iteration << "iterations" << endl;
+                cout << ">>>WARNING: Computation did not converge after " << ps.max_iteration << "iterations<<<" << endl;
                 cout << "       itter: " << itter << endl;
                 cout << "       error: " << error << endl;
                 cout << "" << endl;
@@ -274,10 +291,7 @@ int main(void){
             itter++;
 
             if (cycle_print){
-                cout << "cycle: " <<itter<<" of time step: "<<t<<endl;
-                cout << "error: " <<error<<" error-1: "<<error_n1<<" error-2: "<<error_n2<<endl; 
-                cout << "spec rad: " << spec_rad <<endl;
-                cout << "" << endl;
+                printf("%3d      %1.4e    %1.4e    %1.4e   %1.4e \n", itter, error, error_n1, error_n2, spec_rad );
             }
 
             error_n2 = error_n1;
