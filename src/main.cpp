@@ -57,7 +57,7 @@ int main(void){
     // eventually from an input deck
     double dx = 0.05;
     double dt = 1.0;
-    vector<double> v = {4};
+    vector<double> v = {4, 4};
     vector<double> xsec_total = {1, 0.5};
     vector<double> xsec_scatter = {0.25, 0.1};
     vector<double> Q = {1, 0};
