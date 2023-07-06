@@ -152,6 +152,8 @@ int main(void){
         cells.push_back(cellCon);
     }
 
+    
+
     if (debug_print){
         for (int k=0; k<N_cells; k++){
             cout << cells[k].cell_id << " " << cells[k].x_left  << "   " << cells[k].region_id << "   " << cells[k].dx << "   " << cells[k].Q[0] << "   " << cells[k].xsec_scatter[0] << "   " << cells[k].xsec_total[0] << endl;
@@ -201,8 +203,6 @@ int main(void){
 
     // time step loop
     for(int t=0; t<N_time; ++t){
-
-        
         
         if (ps.initialize_from_previous){
             // all the angular fluxes start from the previous converged time step
