@@ -32,6 +32,7 @@ auth: J Piper Morgan (morgjack@oregonstate.edu)*/
             g++-13 main.cpp -std=c++20 -llapack
             
 */
+using namespace std;
 
 void eosPrint(ts_solutions state);
 
@@ -46,6 +47,213 @@ std::vector<double> row2colSq(std::vector<double> row);
 const bool print_mats = false;
 const bool debug_print = false;
 const bool cycle_print = true;
+
+
+class run{
+
+    public:
+
+        problem_space ps;
+        vector<cell> cells;
+        vector<double> IC;
+
+        vector<double> aflux_last;
+        vector<double> aflux_previous;
+
+
+
+        int cycle_print_flag = 0; // for printing headers
+
+        int itter;          // iteration counter
+        double error;       // error from current iteration
+        double error_n1;    // error back one iteration (from last)
+        double error_n2;    // error back two iterations
+        bool converged;  // converged boolean
+        double spec_rad;
+
+        // lapack variables!
+        int nrhs; // one column in b
+        int lda;
+        int ldb; // leading b dimention for row major
+        int ldb_col; // leading b dim for col major
+        std::vector<int> i_piv;  // pivot column vector
+        int info;
+
+        void init_vectors(){
+            // vector org angular flux from last iteration
+            aflux_last.resize(ps.N_mat);
+            // vector org converged angular flux from previous time step
+            aflux_previous.resize(ps.N_mat);
+            // initializing the inital previous as the IC
+            aflux_previous = IC;
+        }
+
+        void init_af_timestep(){
+            if (ps.initialize_from_previous){
+                    // all the angular fluxes start from the previous converged time step
+                    aflux_last = aflux_last;
+                } else {
+                    // all angular fluxes start this time step iteration from 0
+                    fill(aflux_last.begin(), aflux_last.end(), 0.0);
+                }
+        }
+
+        void cycle_print_func(int t){
+            if (itter == 0)
+                cycle_print_flag = 0;
+            else 
+                cycle_print_flag = 1;
+
+            if (cycle_print){
+                if (cycle_print_flag == 0) {
+                    cout << ">>>CYCLE INFO FOR TIME STEP: " << t <<"<<<"<< endl;
+                    printf("cycle   error         error_n1      error_n2     spec_rad   cycle_time\n");
+                    printf("===================================================================================\n");
+                    cycle_print_flag = 1;
+                }
+                printf("%3d      %1.4e    %1.4e    %1.4e   %1.4e \n", itter, error, error_n1, error_n2, spec_rad );
+            }
+        }
+
+        void save_eos_data(int t){
+                string ext = ".csv";
+                string file_name = "afluxUnsorted";
+                string dt = to_string(t);
+
+                file_name = file_name + dt + ext;
+
+                std::ofstream output(file_name);
+                output << "TIME STEP: " << t << "Unsorted solution vector" << endl;
+                output << "N_space: " << ps.N_cells << " N_groups: " << ps.N_groups << " N_angles: " << ps.N_angles << endl;
+                for (int i=0; i<aflux_last.size(); i++){
+                    output << aflux_last[i] << "," << endl;
+                }
+
+                std::ofstream dist("x.csv");
+                dist << "x: " << endl;
+                for (int i=0; i<cells.size(); i++){
+                    dist << cells[i].x_left << "," << endl;
+                    dist << cells[i].x_left + cells[i].dx/2 << "," <<endl;
+                }
+
+
+                cout << "file saved under: " << file_name << endl;
+        }
+
+        void linear_solver(vector<double> &A_copy, vector<double> &b){
+            if (itter == 0){
+                // lapack variables!
+                int nrhs = 1; // one column in b
+                int lda = ps.N_mat;
+                int ldb = 1; // leading b dimention for row major
+                int ldb_col = ps.N_mat; // leading b dim for col major
+                std::vector<int> i_piv(ps.N_mat, 0);  // pivot column vector
+            }
+            // solve Ax=b
+            //info = LAPACKE_dgesv( LAPACK_ROW_MAJOR, N_mat, nrhs, &A_copy[0], lda, &i_piv[0], &b[0], ldb );
+            dgesv_( &ps.N_mat, &nrhs, &A_copy[0], &lda, &i_piv[0], &b[0], &ldb_col, &info );
+
+            if( info > 0 ) {
+                printf( ">>>ERROR<<<" );
+                printf( "The diagonal element of the triangular factor of A,\n" );
+                printf( "U(%i,%i) is zero, so that A is singular;\n", info, info );
+                printf( "the solution could not be computed.\n" );
+                exit( 1 );
+            }
+        }
+
+
+        void run_timestep(){
+
+            init_vectors();
+
+            // allocation of the whole ass mat
+            vector<double> A(ps.N_rm);
+
+            // generation of the whole ass mat
+            A_gen(A, cells, ps);
+            vector<double> A_col = row2colSq(A);
+
+            vector<double> b(ps.N_mat);
+
+            // time step loop
+            for(int t=0; t<ps.N_time; ++t){
+                init_af_timestep();
+
+                vector<double> b(ps.N_mat, 0.0);
+                
+                // resets
+                itter = 0;          // iteration counter
+                error = 1;          // error from current iteration 
+                error_n1 = 1;       // error back one iteration (from last)
+                error_n2 = 1;       // error back two iterations
+                converged = true;   // converged boolean
+
+                //vector<double> A_copy;
+                vector<double> A_copy(ps.N_mat);
+                
+                while (converged){
+
+                    // lapack requires a copy of data that it uses for row piviot (A after _dgesv != A)
+                    A_copy = A_col;
+
+                    b_gen(b, aflux_previous, aflux_last, cells, ps);
+                    // reminder: last refers to iteration, previous refers to time step
+
+                    //Lapack solver 
+                    linear_solver(A_copy, b);
+                    
+                    // compute the relative error between the last and current iteration
+                    error = infNorm_error(aflux_last, b);
+
+                    // compute spectral radius
+                    spec_rad = abs(error-error_n1) / abs(error_n1 - error_n2);
+
+                    // too allow for a error computation we need at least three cycles
+                    if (itter > 3){
+                        // if relative error between the last and just down iteration end the time step
+                        if ( error < ps.convergence_tolerance ){ converged = false; }
+                    }
+
+                    if (itter > ps.max_iteration){
+                        cout << ">>>WARNING: Computation did not converge after " << ps.max_iteration << "iterations<<<" << endl;
+                        cout << "       itter: " << itter << endl;
+                        cout << "       error: " << error << endl;
+                        cout << "" << endl;
+                        converged = false;
+                    }
+
+                    aflux_last = b;
+                    itter++;
+
+                    error_n2 = error_n1;
+                    error_n1 = error;
+
+                    cycle_print_func(t);
+
+                } // end convergence loop
+
+                aflux_previous = b;
+
+                save_eos_data(t);
+
+                // store solution vector org
+                //ts_solutions save_timestep;
+                //save_timestep.time = (t+1)*ps.dt;
+                //save_timestep.spectral_radius = spec_rad;
+                //save_timestep.N_step = t+1;
+                //save_timestep.number_iteration = itter;
+
+                // print end of step information
+                //eosPrint(save_timestep);
+                //print_vec_sd(b);
+                //save_timestep.aflux = b;
+                //print_vec_sd(save_timestep.aflux);
+                //solutions.push_back(save_timestep);
+
+            } // end of time step loop
+        }
+};
 
 int main(void){
 
@@ -96,6 +304,8 @@ int main(void){
     ps.N_cells = N_cells;
     ps.N_groups = N_groups;
     ps.N_time = N_time;
+    ps.N_rm = N_rm;
+    ps.N_mat = N_mat;
     ps.angles = angles;
     ps.weights = weights;
     ps.initialize_from_previous = false;
@@ -151,16 +361,6 @@ int main(void){
 
         cells.push_back(cellCon);
     }
-
-    
-
-    if (debug_print){
-        for (int k=0; k<N_cells; k++){
-            cout << cells[k].cell_id << " " << cells[k].x_left  << "   " << cells[k].region_id << "   " << cells[k].dx << "   " << cells[k].Q[0] << "   " << cells[k].xsec_scatter[0] << "   " << cells[k].xsec_total[0] << endl;
-        }
-
-        return(0);
-    }
     
     // initial condition stored as first element of solution vector
     vector<ts_solutions> solutions;
@@ -174,192 +374,17 @@ int main(void){
 
     solutions.push_back(sol_con);
 
-    // allocation of the whole ass mat
-    vector<double> A(N_rm);
+
+    run problem;
+    problem.ps = ps;
+    problem.cells = cells;
+    problem.IC = IC;
+
     
-    // vector org angular flux from last iteration
-    vector<double> aflux_last(N_mat, 0.0);
-    // vector org converged angular flux from previous time step
-    vector<double> aflux_previous(N_mat, 0.0);
-    // initializing the inital previous as the IC
-    aflux_previous = IC;
-
-    int nrhs = 1; // one column in b
-    int lda = N_mat;
-    int ldb = 1; // leading b dimention for row major
-    int ldb_col = N_mat; // leading b dim for col major
-    std::vector<int> i_piv(N_mat, 0);  // pivot column vector
-    int info;
-
-    // generation of the whole ass mat
-    A_gen(A, cells, ps);
-    vector<double> A_col = row2colSq(A);
-
-    if (print_mats){
-        print_rm(A);
-    }
-
-    vector<double> b(N_mat);
-
-    // time step loop
-    for(int t=0; t<N_time; ++t){
-        
-        if (ps.initialize_from_previous){
-            // all the angular fluxes start from the previous converged time step
-            aflux_last = aflux_last;
-        } else {
-            // all angular fluxes start this time step iteration from 0
-            fill(aflux_last.begin(), aflux_last.end(), 0.0);
-        }
-        
-
-        vector<double> b(N_mat, 0.0);
-        
-        int itter = 0;          // iteration counter
-        double error = 1;       // error from current iteration
-        double error_n1 = 1;    // error back one iteration (from last)
-        double error_n2 = 1;    // error back two iterations
-        bool converged = true;  // converged boolean
-        double spec_rad;
-
-        //vector<double> A_copy;
-        vector<double> A_copy(N_mat);
-
-        if (cycle_print){
-            cout << ">>>CYCLE INFO FOR TIME STEP: " << t <<"<<<"<< endl;
-            printf("cycle   error         error_n1      error_n2     spec_rad   cycle_time\n");
-            printf("===================================================================================\n");
-        }
-        
-        while (converged){
-
-            // lapack requires a copy of data that it uses for row piviot (A after _dgesv != A)
-            A_copy = A_col;
-
-            b_gen(b, aflux_previous, aflux_last, cells, ps);
-            // reminder: last refers to iteration, previous refers to time step
-            
-            if (print_mats){
-                cout << "Cycle: " << itter << endl;
-                cout << "RHS" << endl;
-                print_vec_sd(b);
-            }
-            // solve Ax=b
-            //info = LAPACKE_dgesv( LAPACK_ROW_MAJOR, N_mat, nrhs, &A_copy[0], lda, &i_piv[0], &b[0], ldb );
-
-            //info = LAPACKE_dgesv( LAPACK_ROW_MAJOR, n, nrhs, a, lda, ipiv, b, ldb );
-            //Lapack solver 
-            dgesv_( &N_mat, &nrhs, &A_copy[0], &lda, &i_piv[0], &b[0], &ldb_col, &info );
-
-            if (print_mats){
-                cout << "x" <<endl;
-                print_vec_sd(b);
-            }
-
-            if( info > 0 ) {
-                printf( "The diagonal element of the triangular factor of A,\n" );
-                printf( "U(%i,%i) is zero, so that A is singular;\n", info, info );
-                printf( "the solution could not be computed.\n" );
-                exit( 1 );
-            }
-
-            // compute the relative error between the last and current iteration
-            error = infNorm_error(aflux_last, b);
-
-            // compute spectral radius
-            spec_rad = abs(error-error_n1) / abs(error_n1 - error_n2);
-
-            // too allow for a error computation we need at least three cycles
-            if (itter > 3){
-                // if relative error between the last and just down iteration end the time step
-                if ( error < ps.convergence_tolerance ){ converged = false; }
-            }
-
-            if (itter > ps.max_iteration){
-                cout << ">>>WARNING: Computation did not converge after " << ps.max_iteration << "iterations<<<" << endl;
-                cout << "       itter: " << itter << endl;
-                cout << "       error: " << error << endl;
-                cout << "" << endl;
-                converged = false;
-            }
-
-            aflux_last = b;
-            itter++;
-
-            if (cycle_print){
-                printf("%3d      %1.4e    %1.4e    %1.4e   %1.4e \n", itter, error, error_n1, error_n2, spec_rad );
-            }
-
-            error_n2 = error_n1;
-            error_n1 = error;
-
-        } // end convergence loop
-
-        aflux_previous = b;
-
-        string ext = ".csv";
-        string file_name = "afluxUnsorted";
-        string dt = to_string(t);
-
-        file_name = file_name + dt + ext;
-
-        std::ofstream output(file_name);
-        output << "TIME STEP: " << t << "Unsorted solution vector" << endl;
-        output << "N_space: " << ps.N_cells << " N_groups: " << ps.N_groups << " N_angles: " << ps.N_angles << endl;
-        for (int i=0; i<b.size(); i++){
-            output << b[i] << "," << endl;
-        }
-
-        std::ofstream dist("x.csv");
-        dist << "x: " << endl;
-        for (int i=0; i<cells.size(); i++){
-            dist << cells[i].x_left << "," << endl;
-            dist << cells[i].x_left + cells[i].dx/2 << "," <<endl;
-        }
-
-
-        cout << "file saved under: " << file_name << endl;
-
-        // store solution vector org
-        //ts_solutions save_timestep;
-        //save_timestep.time = (t+1)*ps.dt;
-        //save_timestep.spectral_radius = spec_rad;
-        //save_timestep.N_step = t+1;
-        //save_timestep.number_iteration = itter;
-
-        // print end of step information
-        //eosPrint(save_timestep);
-        //print_vec_sd(b);
-        //save_timestep.aflux = b;
-        //print_vec_sd(save_timestep.aflux);
-        //solutions.push_back(save_timestep);
-
-    } // end of time step loop
-
-    //WholeProblem wp = WholeProblem(cells, ps, solutions);
-    //wp.PublishUnsorted();
+    problem.run_timestep();
     
     return(0);
 } // end of main
-
-/*
-class run{
-    
-    
-
-    public:
-        problem_space ps;
-        vector<cell> cells;
-
-
-
-
-        // functions
-
-        void run_whole_problem(){
-
-        }
-};*/
 
 
 std::vector<double> row2colSq(std::vector<double> row){
@@ -380,36 +405,4 @@ std::vector<double> row2colSq(std::vector<double> row){
     }
 
     return(col);
-}
-
-void std2cuda_bsr(problem_space ps){
-    int block_size = 4*ps.N_angles*ps.N_groups;
-    int number_row_blocks = ps.N_cells;
-    int number_col_blocks = ps.N_cells;
-    int number_nonzero_blocks = ps.N_cells;
-
-}
-/*
-void A_gen_c_g(){
-    
-    breif: assmebles a coeeficant matrix within a given group and cell for all angles
-    NOTE: ROW MAJOR FORMAT
-    
-}
-*/
-
-void eosPrint(ts_solutions state){
-    using namespace std;
-    /* brief: end of time step printer*/
-
-    if (state.N_step == 0){
-        // print header
-        printf("Time    Step Table\n");
-        printf("step    time    error   spectral\n");
-        printf("                        radius\n");
-        printf("============================================================================\n");
-    } 
-    
-    // print cycle information table
-    printf("%3d     %2.3e    %1.4e     %5f\n", state.N_step, state.time, state.final_error, state.spectral_radius);
 }

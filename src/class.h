@@ -20,6 +20,8 @@ class problem_space{
         int N_angles; 
         int N_time;
         int N_groups;
+        int N_mat; 
+        int N_rm;
         double Length;
         double dt;
         double dx;
