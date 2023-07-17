@@ -32,6 +32,26 @@ void print_rm(std::vector<double> vec){
 }
 
 
+void print_cm(std::vector<double> vec){
+    using namespace std;
+
+    // Assuming square
+    int N = sqrt(vec.size());
+
+    if (N > 100){
+        cout << ">>>Warning: Matrix is over 100x100<<<" << endl;
+    }
+
+    cout << "Matrix is of size ["<<N<<","<<N<<"]"<<endl;
+
+    for (int i=0; i<N; i++){
+        for (int j=0; j<N; j++){
+            printf("%5.2f ", vec[j*N+i]);
+        }
+        printf("\n");
+    }
+}
+
 
 void print_cm(std::vector<double> vec){
     using namespace std;

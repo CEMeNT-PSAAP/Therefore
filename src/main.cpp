@@ -201,6 +201,10 @@ class run{
                     // reminder: last refers to iteration, previous refers to time step
 
                     //Lapack solver 
+                    cout << A_copy.size() << endl;
+                    cout << b.size() << endl;
+                    print_cm(A_copy);
+                    //return(0);
                     linear_solver(A_copy, b);
                     
                     // compute the relative error between the last and current iteration
