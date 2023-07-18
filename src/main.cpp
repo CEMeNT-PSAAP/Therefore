@@ -143,12 +143,13 @@ class run{
         void linear_solver(vector<double> &A_copy, vector<double> &b){
             if (itter == 0){
                 // lapack variables!
-                int nrhs = 1; // one column in b
-                int lda = ps.N_mat;
-                int ldb = 1; // leading b dimention for row major
-                int ldb_col = ps.N_mat; // leading b dim for col major
-                std::vector<int> i_piv(ps.N_mat, 0);  // pivot column vector
+                nrhs = 1; // one column in b
+                lda = ps.N_mat;
+                ldb = ps.N_mat; // leading b dimention for row major
+                ldb_col = ps.N_mat; // leading b dim for col major
+                i_piv.resize(ps.N_mat, 0);  // pivot column vector
             }
+
             // solve Ax=b
             //info = LAPACKE_dgesv( LAPACK_ROW_MAJOR, N_mat, nrhs, &A_copy[0], lda, &i_piv[0], &b[0], ldb );
             dgesv_( &ps.N_mat, &nrhs, &A_copy[0], &lda, &i_piv[0], &b[0], &ldb_col, &info );
@@ -177,7 +178,7 @@ class run{
             vector<double> b(ps.N_mat);
 
             // time step loop
-            for(int t=0; t<ps.N_time; ++t){
+            for(int t=0; t<ps.N_time; ++t){ //
                 init_af_timestep();
 
                 vector<double> b(ps.N_mat, 0.0);
@@ -189,7 +190,6 @@ class run{
                 error_n2 = 1;       // error back two iterations
                 converged = true;   // converged boolean
 
-                //vector<double> A_copy;
                 vector<double> A_copy(ps.N_mat);
                 
                 while (converged){
@@ -201,10 +201,6 @@ class run{
                     // reminder: last refers to iteration, previous refers to time step
 
                     //Lapack solver 
-                    cout << A_copy.size() << endl;
-                    cout << b.size() << endl;
-                    print_cm(A_copy);
-                    //return(0);
                     linear_solver(A_copy, b);
                     
                     // compute the relative error between the last and current iteration

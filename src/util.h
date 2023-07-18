@@ -53,29 +53,6 @@ void print_cm(std::vector<double> vec){
 }
 
 
-void print_cm(std::vector<double> vec){
-    using namespace std;
-    cout << "in print cm" << endl;
-    // Assuming square
-    int N = sqrt(vec.size());
-
-    cout << "in print cm" << endl;
-
-    if (N > 100){
-        cout << ">>>Warning: Matrix is over 100x100<<<" << endl;
-    }
-
-    cout << "Matrix is of size ["<<N<<","<<N<<"]"<<endl;
-
-    for (int row=0; row<N; row++){
-        for (int col=0; col<N; col++){
-            printf("%5.2f ", vec[row+N*col]);
-        }
-        printf("\n");
-    }
-}
-
-
 
 void print_vec(int N, double *vec){
     using namespace std;
@@ -108,6 +85,23 @@ void print_vec_sd(std::vector<double> vec){
 
     cout << "" << endl;
 }
+
+void print_vec_sd_int(std::vector<int> vec){
+    using namespace std;
+
+    int N = vec.size();
+
+    cout << "" << endl;
+
+    cout << "Size of Vector: "<< N << endl;
+
+    for (int i=0; i<N; i++){
+        cout << vec[i] << endl;
+    }
+
+    cout << "" << endl;
+}
+
 
 /*
 int main(){
