@@ -36,10 +36,9 @@ using namespace std;
 
 void eosPrint(ts_solutions state);
 
-// row major!!!!!!
+// row major to start -> column major for lapack computation
 extern "C" void dgesv_( int *n, int *nrhs, double  *a, int *lda, int *ipiv, double *b, int *lbd, int *info  );
 //extern "C" void LAPACKE_dgesv_( LAPACK_ROW_MAJOR, int *n, int *nrhs, double  *a, int *lda, int *ipiv, double *b, int *lbd, int *info  );
-//-llapacke
 std::vector<double> row2colSq(std::vector<double> row);
 
 // i space, m is angle, k is time, g is energy group
@@ -163,7 +162,6 @@ class run{
             }
         }
 
-
         void run_timestep(){
 
             init_vectors();
@@ -237,20 +235,6 @@ class run{
 
                 save_eos_data(t);
 
-                // store solution vector org
-                //ts_solutions save_timestep;
-                //save_timestep.time = (t+1)*ps.dt;
-                //save_timestep.spectral_radius = spec_rad;
-                //save_timestep.N_step = t+1;
-                //save_timestep.number_iteration = itter;
-
-                // print end of step information
-                //eosPrint(save_timestep);
-                //print_vec_sd(b);
-                //save_timestep.aflux = b;
-                //print_vec_sd(save_timestep.aflux);
-                //solutions.push_back(save_timestep);
-
             } // end of time step loop
         }
 };
@@ -263,7 +247,7 @@ int main(void){
     
     // problem definition
     // eventually from an input deck
-    double dx = 0.05;
+    double dx = .1;
     double dt = 1.0;
     vector<double> v = {4, 4};
     vector<double> xsec_total = {1, 0.5};
@@ -323,13 +307,16 @@ int main(void){
     // allocates a zero vector of nessacary size
     ps.initilize_boundary();
 
-    // reeds problem mat stuff
+    // =================== REEDS Problem
+
+    // reeds problem mat stuff 
+
     vector<double> sigma_s_reeds = {.9,  .9,    0,    0,    0};
     vector<double> sigma_t_reeds = {1,    1,    0,    5,    50};
     vector<double> Source_reeds  = {0,    1,    0,    0,    50};
     vector<double> dx_reeds =      {0.25, 0.25, 0.25, 0.02, 0.02};
     vector<int> N_per_region =     {8,    8 ,   4,    50,   100};
-
+    
     // cell construction;
     vector<cell> cells;
 
@@ -337,7 +324,7 @@ int main(void){
     int N_next = N_per_region[0]-1;
 
     for (int i=0; i<N_cells; i++){
-        /*building reeds problem from left to right*/
+        // /*building reeds problem from left to right
 
         if (i==N_next+1){
             region_id ++;
@@ -356,12 +343,44 @@ int main(void){
         cellCon.dx = dx_reeds[region_id];
         cellCon.v = v;
         cellCon.dt = dt;
-        cellCon.Q = vector<double> {Source_reeds[region_id], Source_reeds[region_id]};
+        cellCon.Q = vector<double> {Source_reeds[region_id], 0};
         cellCon.region_id = region_id;
 
         cells.push_back(cellCon);
     }
-    
+
+   // ===================
+   /*
+
+    vector<cell> cells;
+
+    for (int i=0; i<N_cells; i++){
+        // /*building reeds problem from left to right
+
+        cell cellCon;
+        cellCon.cell_id = i;
+        if (i ==0 )
+            cellCon.x_left = 0;
+        else
+            cellCon.x_left = cells[cells.size()-1].x_left+cells[cells.size()-1].dx;
+        
+        cellCon.xsec_scatter = xsec_scatter;
+        cellCon.xsec_total = xsec_total;
+        cellCon.dx = dx;
+        cellCon.v = v;
+        cellCon.dt = dt;
+        cellCon.Q = Q;
+        cellCon.region_id = 1;
+
+        cells.push_back(cellCon);
+
+    }
+
+    */
+
+    // ===================
+
+
     // initial condition stored as first element of solution vector
     vector<ts_solutions> solutions;
 

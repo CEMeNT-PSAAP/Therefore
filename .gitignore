@@ -14,6 +14,11 @@ __pycache__/
 *.txt
 *.csv
 
+
+# MAC crap--Folder view configuration files
+.DS_Store
+Desktop.ini
+
 # C extensions
 *.so
 

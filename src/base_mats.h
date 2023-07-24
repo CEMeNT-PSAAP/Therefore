@@ -34,9 +34,9 @@ std::vector<double> A_pos_rm(cell cell, double mu, int group){
     return(A_p);
     }
 
-std::vector<double> scatter(cell cell, std::vector<double> w, int N, int group){
+std::vector<double> scatter(double dx, double xsec_scatter, std::vector<double> w, int N){
     std::vector<double> S ((4*N*4*N));
-    double beta = cell.dx*cell.xsec_scatter[group]/4;
+    double beta = dx*xsec_scatter/4;
     
     for (int ca=0; ca<N; ca++){
         for (int ra=0; ra<N; ra++){

@@ -127,11 +127,14 @@ void A_c_gen(int i, std::vector<double> &A_c, std::vector<cell> cells, problem_s
     NOTE: ROW MAJOR FORMAT
     */
 
+   bool ds_make = true;
+
    for (int g=0; g<ps.N_groups; g++){
 
         vector<double> A_c_g(4*ps.N_angles * 4*ps.N_angles);
         vector<double> A_c_g_a(4*4);
         vector<double> S(4*ps.N_angles * 4*ps.N_angles);
+        vector<double> DS(4*ps.N_angles * 4*ps.N_angles);
 
         for (int j=0; j<ps.N_angles; j++){
             if (ps.angles[j] > 0){
@@ -155,7 +158,16 @@ void A_c_gen(int i, std::vector<double> &A_c, std::vector<cell> cells, problem_s
             }
         }
 
-        S = scatter(cells[i], ps.weights, ps.N_angles, g);
+        S = scatter(cells[i].dx, cells[i].xsec_scatter[g], ps.weights, ps.N_angles);
+
+        // down scattering!!!!
+        bool ds_flag = false;
+        if (g==1){
+            double xsec_ds = .25;
+            //cout <<"howdy1!" << endl;
+            DS = scatter(cells[i].dx, xsec_ds, ps.weights, ps.N_angles);
+            bool ds_flag = true;
+        }
 
         int index_start = 4*g*ps.N_angles * 4*ps.N_angles*ps.N_groups + 4*g*ps.N_angles;
         int Adim_angle = 4*ps.N_angles; 
@@ -167,9 +179,13 @@ void A_c_gen(int i, std::vector<double> &A_c, std::vector<cell> cells, problem_s
                 int id_c_g = index_start + r*(Adim_angle*ps.N_groups) + c;
 
                 A_c[id_c_g] = A_c_g[id_group] - S[id_group];
+
+                if (g==1){
+                    //cout << "howdy2" << endl;
+                    A_c[id_c_g-4*ps.N_angles] -= DS[id_group];
+                }
             }
         }
-    
     }
 }
 

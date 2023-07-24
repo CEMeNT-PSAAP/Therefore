@@ -63,8 +63,8 @@ for t in range(N_time):
 print(sf_wp.shape)
 
 plt.figure()
-plt.plot(x, sf_wp[4,0,:], label='g0')
-plt.plot(x, sf_wp[4,1,:], label='g1')
+plt.plot(x, sf_wp[6,0,:], label='g0')
+plt.plot(x, sf_wp[6,1,:], label='g1')
 plt.xlabel('Distance')
 plt.ylabel('Sc Fl')
 plt.title('Trans Reeds -- trouble shoot')
