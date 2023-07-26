@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-N_angles = 2
-N_cells = 170
+N_angles = 4
+N_cells = 10
 N_groups = 2
 N_time = 5
 
@@ -60,13 +60,14 @@ for t in range(N_time):
 
 #x = np.linspace(0, 1, N_cells*2)
 
-print(sf_wp.shape)
+print(sf_wp[2,0,:].shape)
+print(x.shape)
 
 plt.figure()
-plt.plot(x, sf_wp[6,0,:], label='g0')
-plt.plot(x, sf_wp[6,1,:], label='g1')
+plt.plot(x[:,0], sf_wp[2,0,:], label='g0 -- source')
+plt.plot(x[:,0], sf_wp[2,1,:], label='g1 -- no source')
 plt.xlabel('Distance')
 plt.ylabel('Sc Fl')
-plt.title('Trans Reeds -- trouble shoot')
+plt.title('Single region -- trouble shoot time step=1')
 plt.legend()
 plt.show()

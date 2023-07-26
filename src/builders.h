@@ -61,6 +61,10 @@ void b_gen(std::vector<double> &b, std::vector<double> &aflux_previous, std::vec
 
                         af_rb    = aflux_last[index_start_p1];
                         af_hn_rb = aflux_last[index_start_p1+2];
+
+                        cout << af_rb << endl;
+                        cout << af_hn_rb << endl;
+
                     }
                     b_small = b_neg(cells[i], g, ps.angles[j], af_hl_l, af_hl_r, af_rb, af_hn_rb);
 

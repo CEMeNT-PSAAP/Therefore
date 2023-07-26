@@ -11,7 +11,7 @@
 
 pertentious gpu transient neutron transport
 
-author: J. Piper Morgan
+author: Joanna Piper Morgan
         Oregon State University (Go Beavs!)
         Center for Exascale Monte Carlo Neutron Transport
 

@@ -247,17 +247,18 @@ int main(void){
     
     // problem definition
     // eventually from an input deck
-    double dx = .1;
+    double dx = .5;
     double dt = 1.0;
     vector<double> v = {4, 4};
     vector<double> xsec_total = {1, 0.5};
-    vector<double> xsec_scatter = {0.25, 0.1};
+    vector<double> xsec_scatter = {0.25, 0.25};
     vector<double> Q = {1, 0};
+
     double Length = 1;
     double IC_homo = 0;
     
-    int N_cells = 170; 
-    int N_angles = 2; 
+    int N_cells = 10; 
+    int N_angles = 4; 
     int N_time = 5;
     int N_groups = 2;
 
@@ -307,6 +308,7 @@ int main(void){
     // allocates a zero vector of nessacary size
     ps.initilize_boundary();
 
+    /*
     // =================== REEDS Problem
 
     // reeds problem mat stuff 
@@ -348,9 +350,10 @@ int main(void){
 
         cells.push_back(cellCon);
     }
+    */
 
    // ===================
-   /*
+   
 
     vector<cell> cells;
 
@@ -376,7 +379,7 @@ int main(void){
 
     }
 
-    */
+    
 
     // ===================
 
