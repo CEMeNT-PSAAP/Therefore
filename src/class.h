@@ -62,18 +62,16 @@ class problem_space{
             int helper_index;
 
             if (side == 0){
-                helper_index = angle - N_angles/2;
 
-                outofbounds_check(group*N_angles + helper_index, af_left_bound);
+                outofbounds_check(group*N_angles + angle, af_left_bound);
 
                 return(af_left_bound[group*N_angles + helper_index]);
 
             } else if (side == 1) {
-                helper_index = angle + N_angles/2;
 
-                outofbounds_check(group*N_angles + helper_index, af_left_bound);
+                outofbounds_check(group*N_angles + angle, af_left_bound);
 
-                return(af_right_bound[group*N_angles + helper_index]);
+                return(af_right_bound[group*N_angles + angle]);
 
             } else {
 
@@ -116,14 +114,14 @@ class problem_space{
         for (int g=0; g<N_groups; g++){
             for (int j=0; j<N_angles; j++){
 
-                index_left = g*(SIZE_groupBlocks) + 4*j +2;
+                index_left  = g*(SIZE_groupBlocks) + 4*j + 2;
                 index_right = ((N_cells-1)*(SIZE_cellBlocks) + g*(SIZE_groupBlocks) + 4*j) + 3;
 
                 outofbounds_check(index_right, aflux_last);
                 outofbounds_check(index_left, aflux_last);
 
-                af_left_bound[j] = aflux_last[index_left];
-                af_right_bound[j] = aflux_last[index_right];
+                af_left_bound[g*N_groups + j] = aflux_last[index_left];
+                af_right_bound[g*N_groups +j] = aflux_last[index_right];
             }
         }
     }

@@ -16,8 +16,6 @@ void outofbounds_check(int index, std::vector<double> &vec);
 void b_gen(std::vector<double> &b, std::vector<double> &aflux_previous, std::vector<double> &aflux_last, std::vector<cell> cells, problem_space ps){
     //brief: builds b
 
-    ps.assign_boundary(aflux_last);
-
     vector<double> b_small;
 
     // helper index
@@ -62,8 +60,8 @@ void b_gen(std::vector<double> &b, std::vector<double> &aflux_previous, std::vec
                         af_rb    = aflux_last[index_start_p1];
                         af_hn_rb = aflux_last[index_start_p1+2];
 
-                        cout << af_rb << endl;
-                        cout << af_hn_rb << endl;
+                        //cout << af_rb << endl;
+                        //cout << af_hn_rb << endl;
 
                     }
                     b_small = b_neg(cells[i], g, ps.angles[j], af_hl_l, af_hl_r, af_rb, af_hn_rb);
@@ -153,9 +151,10 @@ void A_c_gen(int i, std::vector<double> &A_c, std::vector<cell> cells, problem_s
                     // awfully confusing I know
                     // id_acell = (moves us betten angle blocks) + (moves us to diagonal) + 
                     //            (moves us in rows w/in an angle) + (moves us in col w/in an angle)
+                    //             the discritization in angle can only be multiplied by a functional expansion
                     int id_acell  = ((4*ps.N_angles * 4*j) + (4*j) + (4*ps.N_angles)*r + (c));
                     int id_ancell = 4*r + c;
-                    A_c_g[id_acell] = A_c_g_a[id_ancell];
+                    A_c_g[id_acell] = A_c_g_a[id_ancell]; 
 
                     
                 }
