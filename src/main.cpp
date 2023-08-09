@@ -226,10 +226,12 @@ class run{
                     aflux_last = b;
                     itter++;
 
+                    cycle_print_func(t);
+                    
                     error_n2 = error_n1;
                     error_n1 = error;
 
-                    cycle_print_func(t);
+                    
 
                 } // end convergence loop
 
@@ -259,8 +261,8 @@ int main(void){
     double Length = 1;
     double IC_homo = 0;
     
-    int N_cells = 10; 
-    int N_angles = 4; 
+    int N_cells = 170; //10
+    int N_angles = 2; 
     int N_time = 5;
     int N_groups = 2;
 
@@ -310,11 +312,12 @@ int main(void){
     // allocates a zero vector of nessacary size
     ps.initilize_boundary();
 
-    /*
+    
     // =================== REEDS Problem
 
     // reeds problem mat stuff 
-
+    
+    // mono-energetic data
     vector<double> sigma_s_reeds = {.9,  .9,    0,    0,    0};
     vector<double> sigma_t_reeds = {1,    1,    0,    5,    50};
     vector<double> Source_reeds  = {0,    1,    0,    0,    50};
@@ -347,15 +350,17 @@ int main(void){
         cellCon.dx = dx_reeds[region_id];
         cellCon.v = v;
         cellCon.dt = dt;
-        cellCon.Q = vector<double> {Source_reeds[region_id], 0};
+        cellCon.Q = vector<double> {Source_reeds[region_id], Source_reeds[region_id], Source_reeds[region_id], Source_reeds[region_id],
+                                    0, 0, 0, 0};
         cellCon.region_id = region_id;
+        cellCon.N_angle = N_angles;
 
         cells.push_back(cellCon);
     }
-    */
+    
 
    // ===================
-   
+   /*
 
     vector<cell> cells;
 
@@ -384,6 +389,7 @@ int main(void){
     
 
     // ===================
+    */
 
 
     // initial condition stored as first element of solution vector

@@ -121,21 +121,34 @@ void print_title(){
         std::cout << f.rdbuf();
 }
 
-double relativeError(double a, double b){
-    return (abs(a - b) / b);
+double relativeError(double a, double b, double max){
+    return ( abs(a - b) / max);
 }
 
-std::vector<double> relativeError_ebe ( std::vector<double> v1, std::vector<double> v2 ){
+std::vector<double> relativeError_ebe ( std::vector<double> v1, std::vector<double> v2){
+    using namespace std;
     /*brei: computing the relative error between two vectors element by element*/
 
     if (v1.size() != v2.size()){
         std::cout << "WARNING: vectors are not of same size --relativeError_ebe" << std::endl;
     }
 
-    std::vector<double> error(v1.size());
+    // taking the absoulte value of all vectors
+    //for (int i=0; i<v1.size(); i++){
+    //    v1[i] = abs(v1[i]);
+    //    v2[i] = abs(v2[i]);
+    //}
 
+    // find the maximum element between all vectors
+    vector<double> max_vec = {*max_element(v2.begin(), v2.end()), *max_element(v1.begin(), v1.end())};
+    double max = *max_element( max_vec.begin(), max_vec.end() ) ;
+
+    // allocate an error vector
+    vector<double> error(v1.size());
+
+    // compute the relative error
     for (int i=0; i<v1.size(); i++){
-        error[i] = relativeError(v1[i], v2[i]);
+        error[i] = relativeError(v1[i], v2[i], max);
     }
 
     return(error);

@@ -55,10 +55,11 @@ std::vector<double> b_pos(cell const &cell, int group, double mu, double af_hl_L
 
     double timer2 = cell.dx/(2*cell.v[group] * cell.dt);
 
-    std::vector<double> b_pos = {cell.dx/4*cell.Q[group] + timer2*af_hl_L + mu* af_L,
-                                 cell.dx/4*cell.Q[group] + timer2*af_hl_R,
-                                 cell.dx/4*cell.Q[group] + mu*af_hn_L,
-                                 cell.dx/4*cell.Q[group]};
+    // explanation on indicies of Q located in cell class
+    std::vector<double> b_pos = {cell.dx/4*cell.Q[0 + group*cell.N_angle] + timer2*af_hl_L + mu* af_L,
+                                 cell.dx/4*cell.Q[1 + group*cell.N_angle] + timer2*af_hl_R,
+                                 cell.dx/4*cell.Q[2 + group*cell.N_angle] + mu*af_hn_L,
+                                 cell.dx/4*cell.Q[3 + group*cell.N_angle]};
 
     return(b_pos);
 
@@ -68,10 +69,10 @@ std::vector<double> b_neg(cell const &cell, int group, double mu, double af_hl_L
 
     double timer2 = cell.dx/(2*cell.v[group] * cell.dt);
 
-    std::vector<double> b_neg ={cell.dx/4*cell.Q[group] + timer2*af_hl_L,
-                                cell.dx/4*cell.Q[group] + timer2*af_hl_R - mu* af_R,
-                                cell.dx/4*cell.Q[group],
-                                cell.dx/4*cell.Q[group] - mu*af_hn_R};
+    std::vector<double> b_neg ={cell.dx/4*cell.Q[0 + group*cell.N_angle] + timer2*af_hl_L,
+                                cell.dx/4*cell.Q[1 + group*cell.N_angle] + timer2*af_hl_R - mu* af_R,
+                                cell.dx/4*cell.Q[2 + group*cell.N_angle],
+                                cell.dx/4*cell.Q[3 + group*cell.N_angle] - mu*af_hn_R};
 
     return(b_neg);
 }

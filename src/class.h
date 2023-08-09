@@ -4,11 +4,19 @@ class cell{
     public:
         int cell_id;
         int region_id;
+        int N_angle;
         double x_left;
         std::vector<double> xsec_scatter;
         std::vector<double> xsec_total;
         std::vector<double> v;
+
+        // Q stores non-homogenous terms in rm-form of dims [4 x N_groups] where within a group
+            // 0   left half cell space integrated, time averaged
+            // 1   right half cell space integrated, time averaged
+            // 2   left half cell space integrated, time edge
+            // 2   right half cell space integrated, time edge
         std::vector<double> Q;
+
         double dx;
         double dt;
 };

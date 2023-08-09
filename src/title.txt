@@ -9,7 +9,7 @@
 |                                                                                        |
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-pertentious gpu transient neutron transport
+pretentious gpu transient neutron transport
 
 author: Joanna Piper Morgan
         Oregon State University (Go Beavs!)

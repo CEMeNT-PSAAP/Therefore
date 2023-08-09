@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-N_angles = 4
-N_cells = 10
+N_angles = 2
+N_cells = 170
 N_groups = 2
 N_time = 5
 
@@ -29,7 +29,7 @@ assert (int(af_wp.size/N_time) == SIZE_problem)
 
 sf_wp = np.zeros((N_time*2, N_groups, 2*N_cells))
 
-# schuky duck the angular flux together
+# schuky-duck the angular flux together
 for t in range(N_time):
     # import csv file 
     file = file_name_base+str(t)+file_ext
@@ -65,7 +65,11 @@ print(x.shape)
 
 plt.figure()
 plt.plot(x[:,0], sf_wp[2,0,:], label='g0 -- source')
-plt.plot(x[:,0], sf_wp[2,1,:], label='g1 -- no source')
+#plt.plot(x[:,0], sf_wp[2,1,:], label='g1 -- no source')
+plt.plot(x[:,0], sf_wp[5,0,:], label='g1 -- no source')
+#plt.plot(x[:,0], sf_wp[5,1,:], label='g1 -- no source')
+plt.plot(x[:,0], sf_wp[7,0,:], label='g1 -- no source')
+#plt.plot(x[:,0], sf_wp[7,1,:], label='g1 -- no source')
 plt.xlabel('Distance')
 plt.ylabel('Sc Fl')
 plt.title('Single region -- trouble shoot time step=1')
