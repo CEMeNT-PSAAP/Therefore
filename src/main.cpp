@@ -209,11 +209,11 @@ class run{
                     // compute spectral radius
                     spec_rad = abs(error-error_n1) / abs(error_n1 - error_n2);
 
-                    // too allow for a error computation we need at least three cycles
-                    if (itter > 3){
+                    // too allow for an error & spectral radius computation we need at least three cycles (indexing from zero)
+                    if (itter > 2){
                         // if relative error between the last and just down iteration end the time step
-                        if ( error < ps.convergence_tolerance ){ converged = false; }
-                    }
+                        // including false solution protection
+                        if ( error < ps.convergence_tolerance*(1-spec_rad) ){ converged = false; } }
 
                     if (itter > ps.max_iteration){
                         cout << ">>>WARNING: Computation did not converge after " << ps.max_iteration << "iterations<<<" << endl;
@@ -224,14 +224,14 @@ class run{
                     }
 
                     aflux_last = b;
-                    itter++;
+                    
 
                     cycle_print_func(t);
                     
+                    itter++;
+
                     error_n2 = error_n1;
                     error_n1 = error;
-
-                    
 
                 } // end convergence loop
 
