@@ -202,7 +202,7 @@ void quadrature(std::vector<double> &angles, std::vector<double> &weights){
     double weights_d[N_angles];
     double angles_d[N_angles];
 
-    // some superduper fast function that gereates everyting but in double arrays
+    // some super-duper fast function that generates everything but in double arrays
     legendre_compute_glr(N_angles, angles_d, weights_d);
 
     // converting to std::vectors
