@@ -161,13 +161,14 @@ void A_c_gen(int i, std::vector<double> &A_c, std::vector<cell> cells, problem_s
             }
         }
 
+        // within group scattering 
         S = scatter(cells[i].dx, cells[i].xsec_scatter[g], ps.weights, ps.N_angles);
 
         // down scattering!!!!
         bool ds_flag = false;
         if (g==1){
-            double xsec_ds = .25;
-            //cout <<"howdy1!" << endl;
+            double xsec_ds = 0;
+            //down scattering look the same just with an off axis terms
             DS = scatter(cells[i].dx, xsec_ds, ps.weights, ps.N_angles);
             bool ds_flag = true;
         }
@@ -184,7 +185,6 @@ void A_c_gen(int i, std::vector<double> &A_c, std::vector<cell> cells, problem_s
                 A_c[id_c_g] = A_c_g[id_group] - S[id_group];
 
                 if (g==1){
-                    //cout << "howdy2" << endl;
                     A_c[id_c_g-4*ps.N_angles] -= DS[id_group];
                 }
             }

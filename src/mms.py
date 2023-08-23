@@ -50,9 +50,13 @@ class mms:
         t_p = t+dt/2
         t_m = t-dt/2
 
+        # evaluating the integral over dx_i-1/2
         Qa = self.group1sourceUNINT(mu,x_i,t_p, sigma) - self.group1sourceUNINT(mu,x_m,t_p,sigma)
+        # evaluating the integral over dx_i+1/2
         Qb = self.group1sourceUNINT(mu,x_p,t_p, sigma) - self.group1sourceUNINT(mu,x_i,t_p,sigma)
+        # finding the time averaged integral dx_i-1/2 
         Qc = ( Qa + (self.group1sourceUNINT(mu,x_i,t_m, sigma) - self.group1sourceUNINT(mu,x_m,t_m,sigma)) ) / 2
+        # finding the time averaged integral dx_i+1/2 
         Qd = ( Qb +  self.group1sourceUNINT(mu,x_p,t_m, sigma) - self.group1sourceUNINT(mu,x_i,t_m,sigma) ) / 2
 
         return( Qa, Qb, Qc, Qd )

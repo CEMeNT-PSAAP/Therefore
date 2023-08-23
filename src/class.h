@@ -6,11 +6,13 @@ class cell{
         int region_id;
         int N_angle;
         double x_left;
+        double x;
+        double x_right;
         std::vector<double> xsec_scatter;
         std::vector<double> xsec_total;
         std::vector<double> v;
 
-        // Q stores non-homogenous terms in rm-form of dims [4 x N_groups] where within a group
+        // Q stores non-homogenous terms in rm-form of dims [4 x N_groups x N_angles] where within a group
             // 0   left half cell space integrated, time averaged
             // 1   right half cell space integrated, time averaged
             // 2   left half cell space integrated, time edge
@@ -36,6 +38,8 @@ class problem_space{
         double t_max;
         double material_source;
         double velocity;
+
+        bool mms;
 
         std::vector<double> weights;
         std::vector<double> angles;

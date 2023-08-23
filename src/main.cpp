@@ -6,7 +6,9 @@ auth: J Piper Morgan (morgjack@oregonstate.edu)*/
 #include <vector>
 
 #include "util.h"
+#include "mms.h"
 #include "builders.h"
+
 //#include "H5Cpp.h"
 //#include "lapacke.h"
 //#include <Eigen/Dense>
@@ -70,6 +72,8 @@ class run{
         bool converged;  // converged boolean
         double spec_rad;
 
+        double time = 0;
+
         // lapack variables!
         int nrhs; // one column in b
         int lda;
@@ -77,6 +81,9 @@ class run{
         int ldb_col; // leading b dim for col major
         std::vector<int> i_piv;  // pivot column vector
         int info;
+
+        // source for the method of manufactured solution
+        mms manSource;
 
         void init_vectors(){
             // vector org angular flux from last iteration
@@ -139,6 +146,32 @@ class run{
                 cout << "file saved under: " << file_name << endl;
         }
 
+
+
+        void sourceSource( ){
+            vector<double> temp;
+            for (int i=0; i<ps.N_cells; ++i){
+                for (int j=0; j<ps.N_angles; ++j){
+                    
+                    // group 1
+                    temp = manSource.group1source(cells[i].x, cells[i].dx, time,  ps.dt, ps.angles[j], cells[i].xsec_total[0]);
+                    cells[i].Q[j  ] = temp[0];
+                    cells[i].Q[j+1] = temp[1];
+                    cells[i].Q[j+2] = temp[2];
+                    cells[i].Q[j+3] = temp[3];
+
+                    // group 2
+                    temp = manSource.group1source(cells[i].x, cells[i].dx, time,  ps.dt, ps.angles[j], cells[i].xsec_total[1]);
+                    cells[i].Q[4+j  ] = temp[0];
+                    cells[i].Q[4+j+1] = temp[1];
+                    cells[i].Q[4+j+2] = temp[2];
+                    cells[i].Q[4+j+3] = temp[3];
+                }
+            }
+        }
+
+
+
         void linear_solver(vector<double> &A_copy, vector<double> &b){
             if (itter == 0){
                 // lapack variables!
@@ -154,13 +187,28 @@ class run{
             dgesv_( &ps.N_mat, &nrhs, &A_copy[0], &lda, &i_piv[0], &b[0], &ldb_col, &info );
 
             if( info > 0 ) {
-                printf( ">>>ERROR<<<" );
+                printf( ">>>ERROR<<<\n" );
                 printf( "The diagonal element of the triangular factor of A,\n" );
                 printf( "U(%i,%i) is zero, so that A is singular;\n", info, info );
                 printf( "the solution could not be computed.\n" );
                 exit( 1 );
             }
         }
+
+
+        void checkSpecRad (){
+            if (itter > 9){
+                if ( spec_rad > 1.0 ){
+                    printf( ">>>ERROR<<<\n" );
+                    printf( "An unfortunate spectral radius has been detected\n" );
+                    printf( "ρ = %1.4e ", spec_rad );
+                    printf( "the solution could not be computed" );
+                    exit( 1 );
+                }
+            }
+        }
+
+
 
         void run_timestep(){
 
@@ -177,7 +225,13 @@ class run{
 
             // time step loop
             for(int t=0; t<ps.N_time; ++t){ //
+                time += ps.dt;
                 init_af_timestep();
+
+                if ( ps.mms ){
+                    sourceSource( );
+                }
+
 
                 vector<double> b(ps.N_mat, 0.0);
                 
@@ -208,6 +262,7 @@ class run{
 
                     // compute spectral radius
                     spec_rad = abs(error-error_n1) / abs(error_n1 - error_n2);
+                    checkSpecRad( );
 
                     // too allow for an error & spectral radius computation we need at least three cycles (indexing from zero)
                     if (itter > 2){
@@ -251,17 +306,17 @@ int main(void){
     
     // problem definition
     // eventually from an input deck
-    double dx = .5;
+    double dx = .01;
     double dt = 1.0;
     vector<double> v = {4, 4};
-    vector<double> xsec_total = {1, 0.5};
-    vector<double> xsec_scatter = {0.25, 0.25};
+    vector<double> xsec_total = {1, 1};
+    vector<double> xsec_scatter = {0, 0};
     vector<double> Q = {1, 0};
 
     double Length = 1;
     double IC_homo = 0;
     
-    int N_cells = 170; //10
+    int N_cells = 100; //10
     int N_angles = 2; 
     int N_time = 5;
     int N_groups = 2;
@@ -312,7 +367,7 @@ int main(void){
     // allocates a zero vector of nessacary size
     ps.initilize_boundary();
 
-    
+    /*
     // =================== REEDS Problem
 
     // reeds problem mat stuff 
@@ -357,10 +412,10 @@ int main(void){
 
         cells.push_back(cellCon);
     }
-    
+    */
 
    // ===================
-   /*
+   
 
     vector<cell> cells;
 
@@ -373,23 +428,23 @@ int main(void){
             cellCon.x_left = 0;
         else
             cellCon.x_left = cells[cells.size()-1].x_left+cells[cells.size()-1].dx;
-        
+        cellCon.x = cellCon.x_left + dx/2;
         cellCon.xsec_scatter = xsec_scatter;
         cellCon.xsec_total = xsec_total;
         cellCon.dx = dx;
         cellCon.v = v;
         cellCon.dt = dt;
-        cellCon.Q = Q;
+        vector<double> temp (N_angles*N_groups*4);
+        cellCon.Q = temp;
         cellCon.region_id = 1;
 
         cells.push_back(cellCon);
 
     }
 
-    
+    ps.mms = true;
 
     // ===================
-    */
 
 
     // initial condition stored as first element of solution vector
@@ -409,6 +464,14 @@ int main(void){
     problem.ps = ps;
     problem.cells = cells;
     problem.IC = IC;
+    // mms coefficients
+    problem.manSource.A = 1.0;
+    problem.manSource.B = 1.0;
+    problem.manSource.C = 1.0;
+    problem.manSource.D = 1.0;
+    problem.manSource.F = 1.0;
+    problem.manSource.v1 = v[0];
+    problem.manSource.v2 = v[1];
 
     
     problem.run_timestep();
