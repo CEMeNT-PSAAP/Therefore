@@ -203,7 +203,7 @@ class run{
                     printf( "An unfortunate spectral radius has been detected\n" );
                     printf( "ρ = %1.4e ", spec_rad );
                     printf( "the solution could not be computed" );
-                    exit( 1 );
+                    //exit( 1 );
                 }
             }
         }
@@ -270,7 +270,7 @@ class run{
                         // including false solution protection
                         if ( error < ps.convergence_tolerance*(1-spec_rad) ){ converged = false; } }
 
-                    if (itter > ps.max_iteration){
+                    if (itter >= ps.max_iteration){
                         cout << ">>>WARNING: Computation did not converge after " << ps.max_iteration << "iterations<<<" << endl;
                         cout << "       itter: " << itter << endl;
                         cout << "       error: " << error << endl;
@@ -353,9 +353,8 @@ int main(void){
     ps.angles = angles;
     ps.weights = weights;
     ps.initialize_from_previous = false;
-    ps.max_iteration = int(1e4);
+    ps.max_iteration = int(100);
     ps.boundary_conditions = {0,1};
-
     // size of the cell blocks in all groups and angle
     ps.SIZE_cellBlocks = ps.N_angles*ps.N_groups*4;
     // size of the group blocks in all angle within a cell

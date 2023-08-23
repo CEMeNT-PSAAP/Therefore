@@ -30,9 +30,9 @@ class mms:
     # GROUP 1
     #
 
-    def group1afCONT(self,mu,x,t,sigma):
+    def group1afCONT(self,mu,x,t):
         """the continuous angular flux function for group 1 """
-        return ( self.A*math.cos(mu) + self.Bx**2*t ) 
+        return ( self.A*math.cos(mu) + self.B*x**2*t ) 
 
     def group1afUNINT():
         return ( )
@@ -66,7 +66,7 @@ class mms:
     # GROUP 2
     #
     
-    def group2afCONT(self,mu,x,t,sigma):
+    def group2afCONT(self,mu,x,t):
         """the continuous angular flux function for group 2 """
         return ( self.C * math.exp( -self.F*x*t ) + self.D*mu**2 ) 
 
