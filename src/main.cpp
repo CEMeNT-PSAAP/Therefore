@@ -151,22 +151,24 @@ class run{
         void sourceSource( ){
             vector<double> temp;
             for (int i=0; i<ps.N_cells; ++i){
-                for (int j=0; j<ps.N_angles; ++j){
-                    
-                    // group 1
-                    temp = manSource.group1source(cells[i].x, cells[i].dx, time,  ps.dt, ps.angles[j], cells[i].xsec_total[0]);
-                    cells[i].Q[j  ] = temp[0];
-                    cells[i].Q[j+1] = temp[1];
-                    cells[i].Q[j+2] = temp[2];
-                    cells[i].Q[j+3] = temp[3];
+                //for (int g=0; g<ps.N_groups; g++){ 
+                    for (int j=0; j<ps.N_angles; ++j){
+                        
+                        // group 1
+                        temp = manSource.group1source(cells[i].x, cells[i].dx, time,  ps.dt, ps.angles[j]);
+                        cells[i].Q[8*j  ] = temp[0];
+                        cells[i].Q[8*j+1] = temp[1];
+                        cells[i].Q[8*j+2] = temp[2];
+                        cells[i].Q[8*j+3] = temp[3];
 
-                    // group 2
-                    temp = manSource.group1source(cells[i].x, cells[i].dx, time,  ps.dt, ps.angles[j], cells[i].xsec_total[1]);
-                    cells[i].Q[4+j  ] = temp[0];
-                    cells[i].Q[4+j+1] = temp[1];
-                    cells[i].Q[4+j+2] = temp[2];
-                    cells[i].Q[4+j+3] = temp[3];
-                }
+                        // group 2
+                        temp = manSource.group2source(cells[i].x, cells[i].dx, time,  ps.dt, ps.angles[j]);
+                        cells[i].Q[4+8*j  ] = temp[0];
+                        cells[i].Q[4+8*j+1] = temp[1];
+                        cells[i].Q[4+8*j+2] = temp[2];
+                        cells[i].Q[4+8*j+3] = temp[3];
+                    }
+                //}
             }
         }
 
@@ -187,7 +189,7 @@ class run{
             dgesv_( &ps.N_mat, &nrhs, &A_copy[0], &lda, &i_piv[0], &b[0], &ldb_col, &info );
 
             if( info > 0 ) {
-                printf( ">>>ERROR<<<\n" );
+                printf( "\n>>>ERROR<<<\n" );
                 printf( "The diagonal element of the triangular factor of A,\n" );
                 printf( "U(%i,%i) is zero, so that A is singular;\n", info, info );
                 printf( "the solution could not be computed.\n" );
@@ -199,13 +201,63 @@ class run{
         void checkSpecRad (){
             if (itter > 9){
                 if ( spec_rad > 1.0 ){
-                    printf( ">>>ERROR<<<\n" );
+                    printf( "\n>>>WARNING<<<\n" );
                     printf( "An unfortunate spectral radius has been detected\n" );
                     printf( "ρ = %1.4e ", spec_rad );
-                    printf( "the solution could not be computed" );
+                    printf( "the solution could not be computed\n\n" );
                     //exit( 1 );
                 }
             }
+        }
+
+
+        void publish_mms (){
+
+            std::vector<double> mms_temp(ps.N_mat);
+            std::vector<double> temp(4);
+            int index_start;
+
+            for (int tp=0; tp<ps.N_time; tp++){
+                for (int ip=0; ip<ps.N_cells; ip++){
+                    //for (int gp=0; gp<ps.N_groups; gp++){ //manual override for mms 
+                        for (int jp=0; jp<ps.N_angles; jp++){
+
+                            temp = manSource.group1af(cells[ip].x, cells[ip].dx, ps.dt*tp, ps.dt, ps.angles[jp]);
+                            index_start = (ip*(ps.SIZE_cellBlocks) + 0*(ps.SIZE_groupBlocks) + 4*jp);
+                            mms_temp[index_start] = temp[0];
+                            mms_temp[index_start+1] = temp[1];
+                            mms_temp[index_start+2] = temp[2];
+                            mms_temp[index_start+3] = temp[3];
+
+                            temp = manSource.group2af(cells[ip].x, cells[ip].dx, ps.dt*tp, ps.dt, ps.angles[jp]);
+                            index_start = (ip*(ps.SIZE_cellBlocks) + 1*(ps.SIZE_groupBlocks) + 4*jp);
+                            mms_temp[index_start] = temp[0];
+                            mms_temp[index_start+1] = temp[1];
+                            mms_temp[index_start+2] = temp[2];
+                            mms_temp[index_start+3] = temp[3];
+                        }
+                    //}
+                }
+
+                string ext = ".csv";
+                string file_name = "mms_sol";
+                string dt = to_string(tp);
+
+                file_name = file_name + dt + ext;
+
+                std::ofstream output(file_name);
+                output << "TIME STEP: " << tp << "Unsorted solution vector for mms" << endl;
+                output << "N_space: " << ps.N_cells << " N_groups: " << ps.N_groups << " N_angles: " << ps.N_angles << endl;
+                for (int i=0; i<mms_temp.size(); i++){
+                    output << mms_temp[i] << "," << endl;
+                }
+
+                
+            }
+
+        cout << "mms solutions published " << endl;
+
+
         }
 
 
@@ -306,17 +358,17 @@ int main(void){
     
     // problem definition
     // eventually from an input deck
-    double dx = .01;
+    double dx = .1;
     double dt = 1.0;
-    vector<double> v = {4, 4};
-    vector<double> xsec_total = {1, 1};
-    vector<double> xsec_scatter = {0, 0};
-    vector<double> Q = {1, 0};
+    vector<double> v = {4, 1};
+    vector<double> xsec_total = {1, 0.5};
+    vector<double> xsec_scatter = {.2, 0};
+    vector<double> Q = {0, 0};
 
     double Length = 1;
     double IC_homo = 0;
     
-    int N_cells = 100; //10
+    int N_cells = 10; //10
     int N_angles = 2; 
     int N_time = 5;
     int N_groups = 2;
@@ -354,7 +406,8 @@ int main(void){
     ps.weights = weights;
     ps.initialize_from_previous = false;
     ps.max_iteration = int(100);
-    ps.boundary_conditions = {0,1};
+    // 0 for vac 1 for reflecting 2 for mms
+    ps.boundary_conditions = {0,0};
     // size of the cell blocks in all groups and angle
     ps.SIZE_cellBlocks = ps.N_angles*ps.N_groups*4;
     // size of the group blocks in all angle within a cell
@@ -419,7 +472,7 @@ int main(void){
     vector<cell> cells;
 
     for (int i=0; i<N_cells; i++){
-        // /*building reeds problem from left to right
+        // /*building a single region problem
 
         cell cellCon;
         cellCon.cell_id = i;
@@ -471,9 +524,16 @@ int main(void){
     problem.manSource.F = 1.0;
     problem.manSource.v1 = v[0];
     problem.manSource.v2 = v[1];
+    problem.manSource.sigma1 = xsec_total[0];
+    problem.manSource.sigma2 = xsec_total[1];
+    problem.manSource.sigmaS1 = xsec_scatter[0];
+    problem.manSource.sigmaS2 = xsec_scatter[1];
+    problem.manSource.sigmaS1_2 = 0.0;
 
     
     problem.run_timestep();
+
+    problem.publish_mms();
     
     return(0);
 } // end of main
