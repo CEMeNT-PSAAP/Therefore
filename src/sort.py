@@ -82,12 +82,12 @@ for t in range(N_time):
                 sf_mms[t*2+1,g,2*i]   += weights[n] * mms_raw[index_start+2]
                 sf_mms[t*2+1,g,2*i+1] += weights[n] * mms_raw[index_start+3]
 
-print(error(sf_wp[2,0,:], sf_mms[2,0,:]))
+print(error(sf_wp[2,0,:], sf_mms[2,1,:]))
 
 #print(sf_mms)
 plt.figure()
-plt.plot(x[:,0], sf_wp[0,1,:], label='computed')
-plt.plot(x[:,0], sf_mms[0,1,:], '*', label='mms')
+plt.plot(x[:,0], sf_wp[0,0,:], label='computed')
+plt.plot(x[:,0], sf_mms[0,0,:], '*', label='mms')
 #plt.plot(x[:,0], sf_wp[2,1,:], label='g1 -- no source')
 #plt.plot(x[:,0], sf_wp[5,0,:], label='g1 -- no source')
 #plt.plot(x[:,0], sf_wp[5,1,:], label='g1 -- no source')

@@ -167,7 +167,7 @@ void A_c_gen(int i, std::vector<double> &A_c, std::vector<cell> cells, problem_s
         // down scattering!!!!
         bool ds_flag = false;
         if (g==0){
-            double xsec_ds = 0.0;
+            double xsec_ds = ps.ds;
             //down scattering look the same just with an off axis terms
             DS = scatter(cells[i].dx, xsec_ds, ps.weights, ps.N_angles);
             bool ds_flag = true;

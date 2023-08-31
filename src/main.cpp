@@ -396,6 +396,7 @@ int main(void){
     problem_space ps;
     ps.dt = dt;
     ps.dx = dx;
+    ps.ds = 0.1;
     ps.N_angles = N_angles;
     ps.N_cells = N_cells;
     ps.N_groups = N_groups;
@@ -528,7 +529,7 @@ int main(void){
     problem.manSource.sigma2 = xsec_total[1];
     problem.manSource.sigmaS1 = xsec_scatter[0];
     problem.manSource.sigmaS2 = xsec_scatter[1];
-    problem.manSource.sigmaS1_2 = 0.0;
+    problem.manSource.sigmaS1_2 = ps.ds;
 
     
     problem.run_timestep();
