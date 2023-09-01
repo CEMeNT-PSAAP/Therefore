@@ -6,7 +6,7 @@ from mms import mms
 def error(vec1, vec2):
     return( np.linalg.norm(vec1 - vec2, ord=2) )
 
-N_angles = 2
+N_angles = 6
 N_cells = 10
 N_groups = 2
 N_time = 2
@@ -86,8 +86,8 @@ print(error(sf_wp[2,0,:], sf_mms[2,1,:]))
 
 #print(sf_mms)
 plt.figure()
-plt.plot(x[:,0], sf_wp[0,0,:], label='computed')
-plt.plot(x[:,0], sf_mms[0,0,:], '*', label='mms')
+plt.plot(x[:,0], sf_wp[2,1,:], label='computed')
+plt.plot(x[:,0], sf_mms[2,1,:], '*', label='mms')
 #plt.plot(x[:,0], sf_wp[2,1,:], label='g1 -- no source')
 #plt.plot(x[:,0], sf_wp[5,0,:], label='g1 -- no source')
 #plt.plot(x[:,0], sf_wp[5,1,:], label='g1 -- no source')

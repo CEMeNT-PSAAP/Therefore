@@ -364,14 +364,15 @@ int main(void){
     double dt = 1.0;
     vector<double> v = {4, 1};
     vector<double> xsec_total = {1, 0.5};
-    vector<double> xsec_scatter = {.2, 0};
+    vector<double> xsec_scatter = {.2, .1};
+    double ds = 0.05;
     vector<double> Q = {0, 0};
 
     double Length = 1;
     double IC_homo = 0;
     
     int N_cells = 10; //10
-    int N_angles = 2; 
+    int N_angles = 6; 
     int N_time = 5;
     int N_groups = 2;
 
@@ -398,7 +399,7 @@ int main(void){
     problem_space ps;
     ps.dt = dt;
     ps.dx = dx;
-    ps.ds = 0.1;
+    ps.ds = ds;
     ps.N_angles = N_angles;
     ps.N_cells = N_cells;
     ps.N_groups = N_groups;
