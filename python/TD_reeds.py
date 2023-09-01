@@ -1,7 +1,7 @@
 """
 Created on Sun May 15 20:34:03 2022
 
-@author: jacksonmorgan
+@author: joannamorgan
 """
 
 import numpy as np
@@ -35,7 +35,7 @@ data_type = np.float64
 region_id = np.array([1,2,3,4,5], int)
 region_widths = np.array([2,2,1,1,2], int)
 region_bounds = np.array([2,4,5,6,8], float)
-sigma_s = np.array([.9, .9, 0, 0, 0], data_type)
+sigma_s = np.array([.99, .9, 0, 0, 0], data_type)
 sigma_t = np.array([1, 1, 0, 5, 50], data_type)
 Source = np.array([0, 1, 0, 0, 50], data_type)
 dx = .1/sigma_t

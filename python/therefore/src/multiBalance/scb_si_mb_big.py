@@ -4,11 +4,11 @@ from .matrix import A_pos, A_neg, b_neg, b_pos, b_pos_interior, b_neg_interior
 import therefore.src.utilities as utl
 import numba as nb
 
-import cupyx.scipy.sparse.linalg as gpuLinalg
+#import cupyx.scipy.sparse.linalg as gpuLinalg
 import scipy.sparse.linalg as cpuLinalg
 import scipy.sparse as cpuSpMat
-import cupyx.scipy.sparse as spMat
-import cupy as cu
+#import cupyx.scipy.sparse as spMat
+#import cupy as cu
 from scipy.sparse import csr_matrix, lil_matrix
 import betterspy
 
@@ -56,8 +56,9 @@ def SIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_mid_previous
     scalar_flux_mid_next = np.zeros(N_ans, data_type)
  
     A = buildHer(xsec_mesh, dx_mesh, dt, velocity, angles)
+    print(A)
     A = csr_matrix(A)
-    A_gpu = spMat.csr_matrix(A) 
+    #A_gpu = cpuSpMat.csr_matrix(A)
     #A = A.todense()
 
     while source_converged == False:
@@ -66,12 +67,13 @@ def SIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_mid_previous
         BCr = utl.BoundaryCondition(sim_perams['boundary_condition_right'], -1, N_mesh, angular_flux=angular_flux, incident_flux_mag=sim_perams['right_in_mag'], angle=sim_perams['right_in_angle'], angles=angles)
 
         b = buildHim(angular_flux_mid_previous, scalar_flux, scalar_flux_mid_next, source_mesh, xsec_scatter_mesh, dx_mesh, dt, velocity, angles, BCl, BCr)
-        b_gpu = cu.asarray(b)
+        print(b)
+        #b_gpu = cu.asarray(b)
         
         #angular_flux_raw = np.linalg.solve(A, b)
-        #angular_flux_raw = cpuLinalg.spsolve(A,b)
-        [angular_flux_raw_gpu, info] = gpuLinalg.gmres(A_gpu, b_gpu)
-        angular_flux_raw = cu.asnumpy(angular_flux_raw_gpu.get())
+        angular_flux_raw = cpuLinalg.spsolve(A,b)
+        #[angular_flux_raw_gpu, info] = gpuLinalg.gmres(A_gpu, b_gpu)
+        #angular_flux_raw = cu.asnumpy(angular_flux_raw_gpu.get())
         
 
         [angular_flux, angular_flux_mid] = resort(angular_flux_raw, angles, N_mesh)
