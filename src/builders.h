@@ -49,8 +49,10 @@ void b_gen(std::vector<double> &b, std::vector<double> &aflux_previous, std::vec
                 // negative angle
                 if (ps.angles[j] < 0){
                     if (i == ps.N_cells-1){ // right boundary condition
+                        
                         af_rb = ps.boundary_condition(1,g,j);
                         af_hn_rb = ps.boundary_condition(1,g,j);
+                        std::cout << "boundary condition right" << std::endl;
                     } else { // pulling information from right to left
                         index_start_p1 = index_start + ps.SIZE_cellBlocks;
 
@@ -65,12 +67,15 @@ void b_gen(std::vector<double> &b, std::vector<double> &aflux_previous, std::vec
 
                     }
                     b_small = b_neg(cells[i], g, ps.angles[j], j, af_hl_l, af_hl_r, af_rb, af_hn_rb);
+                    std::cout << "b_neg" << std::endl;
 
                 // positive angles
                 } else {
                     if (i == 0){ // left boundary condition
+                        
                         af_lb    = ps.boundary_condition(0,g,j);
                         af_hn_lb = ps.boundary_condition(0,g,j);
+                        std::cout << "boundary condition left" << std::endl;
 
                     } else { // pulling information from left to right
                         index_start_n1 = index_start - ps.SIZE_cellBlocks;
@@ -78,11 +83,16 @@ void b_gen(std::vector<double> &b, std::vector<double> &aflux_previous, std::vec
                         outofbounds_check(index_start_n1+1, aflux_last);
                         outofbounds_check(index_start_n1+3, aflux_last);
 
+                        std::cout << "information" << std::endl;
+
                         af_lb    = aflux_last[index_start_n1+1];
                         af_hn_lb = aflux_last[index_start_n1+3];
+                        std::cout << "information" << std::endl;
+
                     }
 
                     b_small = b_pos(cells[i], g, ps.angles[j], j, af_hl_l, af_hl_r, af_lb, af_hn_lb);
+                    std::cout << "b_pos" << std::endl;
                 }
 
                 outofbounds_check(index_start,   b);
@@ -166,8 +176,10 @@ void A_c_gen(int i, std::vector<double> &A_c, std::vector<cell> cells, problem_s
 
         // down scattering!!!!
         bool ds_flag = false;
-        if (g==0){
-            double xsec_ds = ps.ds;
+        
+        if (g==1){
+            
+            double xsec_ds = 0;
             //down scattering look the same just with an off axis terms
             DS = scatter(cells[i].dx, xsec_ds, ps.weights, ps.N_angles);
             bool ds_flag = true;
@@ -184,7 +196,7 @@ void A_c_gen(int i, std::vector<double> &A_c, std::vector<cell> cells, problem_s
 
                 A_c[id_c_g] = A_c_g[id_group] - S[id_group];
 
-                if (g==0){
+                if (g==1){
                     A_c[id_c_g-4*ps.N_angles] -= DS[id_group];
                 }
             }

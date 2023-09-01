@@ -271,6 +271,7 @@ class run{
 
             // generation of the whole ass mat
             A_gen(A, cells, ps);
+            std::cout << "here" << std::endl;
             vector<double> A_col = row2colSq(A);
 
             vector<double> b(ps.N_mat);
@@ -300,10 +301,10 @@ class run{
 
                     // lapack requires a copy of data that it uses for row piviot (A after _dgesv != A)
                     A_copy = A_col;
-
                     ps.assign_boundary(aflux_last);
 
                     b_gen(b, aflux_previous, aflux_last, cells, ps);
+                    
                     // reminder: last refers to iteration, previous refers to time step
 
                     //Lapack solver 
