@@ -102,7 +102,7 @@ def b_neg_interior(dx, v, dt, Ql, Qr, Q_halfNext_L, Q_halfNext_R, psi_halfLast_L
                     [dx/4*(xsec_scatter*phi_halfNext_R + Q_halfNext_R)]])
     return(b_n)
 
-@nb.jit(nopython=True)
+#@nb.jit(nopython=True)
 def scatter_source(dx, xsec_scattering, N, w):
     S = np.zeros((4*N,4*N))
     beta = dx*xsec_scattering/4
@@ -118,5 +118,5 @@ def scatter_source(dx, xsec_scattering, N, w):
 
 
 if __name__ == '__main__':
-    S = scatter_source(1, 4, 4, np.array([-2,-1,1,2]))
+    S = scatter_source(1, 4, 2, np.array([-2,-1,1,2]))
     print(S)

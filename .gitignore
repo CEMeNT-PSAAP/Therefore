@@ -12,6 +12,12 @@ __pycache__/
 *.h5
 *.prof
 *.txt
+*.csv
+
+
+# MAC crap--Folder view configuration files
+.DS_Store
+Desktop.ini
 
 # C extensions
 *.so
@@ -137,3 +143,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# vscode
+.vscode/

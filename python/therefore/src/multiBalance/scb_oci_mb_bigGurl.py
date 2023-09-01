@@ -3,10 +3,10 @@ import numpy as np
 from .matrix import A_pos, A_neg, c_neg, c_pos, scatter_source
 import therefore.src.utilities as utl
 import numba as nb
-import cupyx.scipy.sparse.linalg as gpuLinalg
+#import cupyx.scipy.sparse.linalg as gpuLinalg
 import scipy.sparse.linalg as cpuLinalg
-import cupyx.scipy.sparse as spMat
-import cupy as cu
+#import cupyx.scipy.sparse as spMat
+#import cupy as cu
 np.set_printoptions(linewidth=np.inf)
 from scipy.sparse import csr_matrix, lil_matrix
 import betterspy
@@ -44,8 +44,11 @@ def OCIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_midstep_pre
     scalar_flux_next = np.zeros(N_ans, data_type)
 
     A = BuildHer(xsec_mesh, xsec_scatter_mesh, dx_mesh, dt, velocity, angles, weights)
+    print(A)
+    print()
+
     A = csr_matrix(A)
-    A_gpu = spMat.csr_matrix(A) 
+    #A_gpu = spMat.csr_matrix(A) 
 
     np.set_printoptions(linewidth=np.inf)
 
@@ -57,12 +60,15 @@ def OCIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_midstep_pre
         BCr = utl.BoundaryCondition(sim_perams['boundary_condition_right'], -1, N_mesh, angular_flux=angular_flux, incident_flux_mag=sim_perams['right_in_mag'], angle=sim_perams['right_in_angle'], angles=angles)
         
         c = BuildC(angular_flux_midstep_previous, angular_flux_last, angular_flux_mid_last, source_mesh, dx_mesh, dt, velocity, angles, BCl, BCr)
-        c_gpu = cu.asarray(c)
+        print(c)
+        #print()
+        #c_gpu = cu.asarray(c)
 
         #angular_flux_raw = runBig(A, c)
-        [angular_flux_raw_gpu, info] = gpuLinalg.gmres(A_gpu, c_gpu)
-        #[angular_flux_raw, info] = cpuLinalg.gmres(A, c)
-        angular_flux_raw = cu.asnumpy(angular_flux_raw_gpu.get())
+        #[angular_flux_raw_gpu, info] = gpuLinalg.gmres(A_gpu, c_gpu)
+        [angular_flux_raw, info] = cpuLinalg.gmres(A, c)
+        print(angular_flux_raw)
+        #angular_flux_raw = cu.asnumpy(angular_flux_raw_gpu.get())
 
         [angular_flux, angular_flux_midstep] = reset(angular_flux_raw, [N_angles, N_mesh])
 
@@ -95,8 +101,10 @@ def OCIMBTimeStepBig(sim_perams, angular_flux_previous, angular_flux_midstep_pre
         scalar_flux = scalar_flux_next
         
         source_counter  += 1
+        
+    print(angular_flux_raw)
 
-    return(angular_flux, angular_flux_midstep, current, spec_rad, source_counter, source_converged)
+    return(angular_flux, angular_flux_midstep, angular_flux_raw, current, spec_rad, source_counter, source_converged)
 
 
 #@nb.njit
@@ -106,7 +114,7 @@ def BuildHer(xsec, xsec_scatter, dx, dt, v, mu, weight):
     sizer = mu.size*4
     N_angle = mu.size
 
-    A_uge = lil_matrix((4*N_angle*N_mesh, 4*N_angle*N_mesh))
+    A_uge = np.zeros((4*N_angle*N_mesh, 4*N_angle*N_mesh))
 
     for i in range(N_mesh):
         
