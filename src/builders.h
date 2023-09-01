@@ -52,7 +52,6 @@ void b_gen(std::vector<double> &b, std::vector<double> &aflux_previous, std::vec
                         
                         af_rb = ps.boundary_condition(1,g,j);
                         af_hn_rb = ps.boundary_condition(1,g,j);
-                        std::cout << "boundary condition right" << std::endl;
                     } else { // pulling information from right to left
                         index_start_p1 = index_start + ps.SIZE_cellBlocks;
 
@@ -67,7 +66,6 @@ void b_gen(std::vector<double> &b, std::vector<double> &aflux_previous, std::vec
 
                     }
                     b_small = b_neg(cells[i], g, ps.angles[j], j, af_hl_l, af_hl_r, af_rb, af_hn_rb);
-                    std::cout << "b_neg" << std::endl;
 
                 // positive angles
                 } else {
@@ -75,7 +73,6 @@ void b_gen(std::vector<double> &b, std::vector<double> &aflux_previous, std::vec
                         
                         af_lb    = ps.boundary_condition(0,g,j);
                         af_hn_lb = ps.boundary_condition(0,g,j);
-                        std::cout << "boundary condition left" << std::endl;
 
                     } else { // pulling information from left to right
                         index_start_n1 = index_start - ps.SIZE_cellBlocks;
@@ -83,16 +80,12 @@ void b_gen(std::vector<double> &b, std::vector<double> &aflux_previous, std::vec
                         outofbounds_check(index_start_n1+1, aflux_last);
                         outofbounds_check(index_start_n1+3, aflux_last);
 
-                        std::cout << "information" << std::endl;
-
                         af_lb    = aflux_last[index_start_n1+1];
                         af_hn_lb = aflux_last[index_start_n1+3];
-                        std::cout << "information" << std::endl;
 
                     }
 
                     b_small = b_pos(cells[i], g, ps.angles[j], j, af_hl_l, af_hl_r, af_lb, af_hn_lb);
-                    std::cout << "b_pos" << std::endl;
                 }
 
                 outofbounds_check(index_start,   b);

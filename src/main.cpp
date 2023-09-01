@@ -310,17 +310,18 @@ class run{
                     //Lapack solver 
                     linear_solver(A_copy, b);
                     
-                    // compute the relative error between the last and current iteration
-                    error = infNorm_error(aflux_last, b);
+                    // compute the L2 norm between the last and current iteration
+                    error = L2Norm( aflux_last, b );
 
                     // compute spectral radius
-                    spec_rad = abs(error-error_n1) / abs(error_n1 - error_n2);
+                    // np.linalg.norm(scalar_flux_next - scalar_flux, ord=2) / np.linalg.norm((scalar_flux - scalar_flux_last), ord=2)
+                    spec_rad = pow( pow(error+error_n1,2), .5) / pow(pow(error_n1+error_n2, 2), 0.5);
                     checkSpecRad( );
 
                     // too allow for an error & spectral radius computation we need at least three cycles (indexing from zero)
                     if (itter > 2){
                         // if relative error between the last and just down iteration end the time step
-                        // including false solution protection
+                        // including false solution protection!!!!
                         if ( error < ps.convergence_tolerance*(1-spec_rad) ){ converged = false; } }
 
                     if (itter >= ps.max_iteration){
